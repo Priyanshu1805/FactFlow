@@ -322,8 +322,6 @@ export function Navbar() {
               className="fixed inset-y-0 right-0 w-full sm:w-80 z-50 bg-slate-950 border-l border-white/10 shadow-2xl p-6 overflow-y-auto lg:hidden text-white"
               style={{ backgroundColor: '#050505' }}
             >
-              <div className="flex flex-col min-h-full">
-                <div className="flex-1">
                 {/* Header */}
                 <div className="flex items-center justify-between pb-6 border-b border-white/10">
                   <div className="flex items-center gap-2">
@@ -458,7 +456,7 @@ export function Navbar() {
 
               {/* Drawer Footer / Sign Out */}
               {isAuthenticated && (
-                <div className="pt-4 border-t border-white/10 mt-auto">
+                <div className="pt-4 border-t border-white/10 mt-6">
                   <button
                     onClick={async () => {
                       setIsOpen(false);
@@ -477,7 +475,6 @@ export function Navbar() {
                   </button>
                 </div>
               )}
-              </div>
             </motion.div>
           </>
         )}
