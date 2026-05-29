@@ -94,42 +94,45 @@ export function NewspaperSection() {
         <hr className="newspaper-triple-rule mb-6 mt-1" />
 
         {/* ═══ DESKTOP/TABLET FRONT PAGE (md and larger) ═══ */}
-        <div className="hidden md:grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-0">
+        <div className="hidden md:grid lg:grid-cols-12 md:grid-cols-2 gap-0" style={{ gridAutoRows: 'min-content' }}>
           
           {/* ─── LEFT COLUMN (Opinion/Secondary) ─── */}
-          <div className="md:col-span-1 lg:col-span-3 border-r-0 lg:border-r lg:border-[#e5e5e5] pr-0 lg:pr-4 pb-6 lg:pb-0">
-            {leftStories.map((article, idx) => (
-              <Link href={`/article/${article.id}`} key={article.id} className="block group">
-                <motion.article
-                  initial={{ opacity: 0, x: -15 }}
-                  whileInView={{ opacity: 1, x: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: idx * 0.1 }}
-                  className={`pb-4 mb-4 ${idx < leftStories.length - 1 ? 'border-b border-[#111]' : ''}`}
-                >
-                  <h3 className="font-newspaper-headline text-xl sm:text-2xl md:text-3xl font-normal leading-tight mb-2 group-hover:underline text-[#111]">
-                    {article.title}
-                  </h3>
-                  <div className="font-newspaper-body text-[10px] font-bold uppercase mb-2 text-[#111]">
-                    {article.authorName}
-                  </div>
-                  <hr className="border-t border-[#111] mb-2" />
-                  <p className="font-newspaper-body text-sm leading-snug text-justify line-clamp-4 sm:line-clamp-6 text-[#111]">
-                    {article.excerpt}
-                  </p>
-                </motion.article>
-              </Link>
-            ))}
+          <div className="md:col-span-1 lg:col-span-3 md:border-r md:border-[#e5e5e5] pr-0 md:pr-4">
+            <div className="flex flex-col h-auto">
+              {leftStories.map((article, idx) => (
+                <Link href={`/article/${article.id}`} key={article.id} className="block group">
+                  <motion.article
+                    initial={{ opacity: 0, x: -15 }}
+                    whileInView={{ opacity: 1, x: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ delay: idx * 0.1 }}
+                    className={`flex flex-col pb-4 mb-4 ${idx < leftStories.length - 1 ? 'border-b border-[#111]' : ''}`}
+                  >
+                    <h3 className="font-newspaper-headline text-xl sm:text-2xl md:text-3xl font-normal leading-tight mb-2 group-hover:underline text-[#111]">
+                      {article.title}
+                    </h3>
+                    <div className="font-newspaper-body text-[10px] font-bold uppercase mb-2 text-[#111]">
+                      {article.authorName}
+                    </div>
+                    <hr className="border-t border-[#111] mb-2" />
+                    <p className="font-newspaper-body text-sm leading-snug text-justify line-clamp-5 text-[#111]">
+                      {article.excerpt}
+                    </p>
+                  </motion.article>
+                </Link>
+              ))}
+            </div>
           </div>
 
           {/* ─── CENTER COLUMN (Main Story) ─── */}
-          <div className="md:col-span-1 lg:col-span-6 border-r-0 lg:border-r lg:border-[#e5e5e5] px-4 md:px-4 lg:px-6 pb-6 lg:pb-0">
+          <div className="md:col-span-1 lg:col-span-6 md:border-r md:border-[#e5e5e5] px-4 md:px-4 lg:px-6">
             {featured && (
               <Link href={`/article/${featured.id}`} className="block group">
                 <motion.article
                   initial={{ opacity: 0, y: 20 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
+                  className="flex flex-col h-auto"
                 >
                   <div className="flex justify-between items-end border-b border-[#111] pb-1 mb-2">
                     <span className="font-newspaper-body text-[10px] uppercase font-bold text-[#111]">Global Affairs</span>
@@ -167,35 +170,37 @@ export function NewspaperSection() {
           </div>
 
           {/* ─── RIGHT COLUMN ─── */}
-          <div className="md:col-span-2 lg:col-span-3 pl-0 lg:pl-4 flex flex-col">
-            {rightStories.map((article, idx) => (
-              <Link href={`/article/${article.id}`} key={article.id} className="block group">
-                <motion.article
-                  initial={{ opacity: 0, x: 15 }}
-                  whileInView={{ opacity: 1, x: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: idx * 0.1 }}
-                  className={`pb-4 mb-4 ${idx < rightStories.length - 1 ? 'border-b border-[#111]' : ''}`}
-                >
-                  <h3 className="font-newspaper-headline text-lg sm:text-xl lg:text-2xl font-normal leading-tight mb-2 group-hover:underline text-[#111]">
-                    {article.title}
-                  </h3>
-                  <div className="font-newspaper-body text-[10px] leading-tight mb-2 text-[#111]">
-                    <span className="uppercase font-bold">By {article.authorName}</span> <br/>
-                    {article.time}
-                  </div>
-                  <p className="font-newspaper-body text-sm leading-snug text-justify line-clamp-3 sm:line-clamp-4 text-[#111]">
-                    {article.excerpt}
-                  </p>
-                </motion.article>
-              </Link>
-            ))}
+          <div className="md:col-span-2 lg:col-span-3 pl-0 lg:pl-4">
+            <div className="flex flex-col h-auto">
+              {rightStories.map((article, idx) => (
+                <Link href={`/article/${article.id}`} key={article.id} className="block group">
+                  <motion.article
+                    initial={{ opacity: 0, x: 15 }}
+                    whileInView={{ opacity: 1, x: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ delay: idx * 0.1 }}
+                    className={`flex flex-col pb-4 mb-4 ${idx < rightStories.length - 1 ? 'border-b border-[#111]' : ''}`}
+                  >
+                    <h3 className="font-newspaper-headline text-lg sm:text-xl lg:text-2xl font-normal leading-tight mb-2 group-hover:underline text-[#111]">
+                      {article.title}
+                    </h3>
+                    <div className="font-newspaper-body text-[10px] leading-tight mb-2 text-[#111]">
+                      <span className="uppercase font-bold">By {article.authorName}</span> <br/>
+                      {article.time}
+                    </div>
+                    <p className="font-newspaper-body text-sm leading-snug text-justify line-clamp-4 text-[#111]">
+                      {article.excerpt}
+                    </p>
+                  </motion.article>
+                </Link>
+              ))}
+            </div>
           </div>
         </div>
 
         {/* ═══ DESKTOP BOTTOM GRID ═══ */}
         {bottomStories.length > 0 && (
-          <div className="hidden md:grid grid-cols-1 md:grid-cols-4 gap-0 border-t border-[#111] mt-6 pt-6">
+          <div className="hidden md:grid md:grid-cols-4 gap-0 border-t border-[#111] mt-6 pt-6" style={{ gridAutoRows: 'min-content' }}>
             {bottomStories.map((article, idx) => (
               <Link href={`/article/${article.id}`} key={article.id} className="block group">
                 <motion.article
@@ -203,19 +208,24 @@ export function NewspaperSection() {
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
                   transition={{ delay: idx * 0.08 }}
-                  className={`px-4 py-4 ${idx % 4 !== 3 ? 'md:border-r border-[#e5e5e5]' : ''} ${idx >= bottomStories.length - 4 ? 'md:pb-0' : 'border-b md:border-b-0 border-[#e5e5e5] pb-4 mb-4'}`}
+                  className={`flex flex-col justify-between h-full px-4 py-4 ${idx % 4 !== 3 ? 'md:border-r border-[#e5e5e5]' : ''} ${idx >= 4 ? 'border-t border-[#e5e5e5]' : ''}`}
                 >
                   {displayOptions.thumbnails !== false && (
                     <div className="relative w-full aspect-[3/2] overflow-hidden grayscale hover:grayscale-0 transition-all duration-500 mb-2">
                       <Image src={article.image || "https://images.unsplash.com/photo-1504711434969-e33886168f5c"} alt={article.title} fill className="object-cover" />
                     </div>
                   )}
-                  <h4 className="font-newspaper-headline text-base sm:text-lg font-normal leading-tight mb-2 group-hover:underline text-[#111]">
-                    {article.title}
-                  </h4>
-                  <p className="font-newspaper-body text-xs leading-snug text-justify line-clamp-3 text-[#111]">
-                    {article.excerpt}
-                  </p>
+                  <div className="flex-1 flex flex-col">
+                    <h4 className="font-newspaper-headline text-base sm:text-lg font-normal leading-tight mb-2 group-hover:underline text-[#111]">
+                      {article.title}
+                    </h4>
+                    <p className="font-newspaper-body text-xs leading-snug text-justify line-clamp-3 text-[#111]">
+                      {article.excerpt}
+                    </p>
+                  </div>
+                  <div className="font-newspaper-body text-[9px] text-[#555] uppercase mt-2 pt-1.5 border-t border-dotted border-[#111]/15">
+                    {article.authorName} · {article.time}
+                  </div>
                 </motion.article>
               </Link>
             ))}
@@ -228,7 +238,7 @@ export function NewspaperSection() {
           {/* Main Featured Story */}
           {featured && (
             <Link href={`/article/${featured.id}`} className="block group pb-6 mb-6 border-b-2 border-double border-[#111]">
-              <article>
+              <article className="flex flex-col">
                 <div className="text-center mb-3">
                   <span className="font-newspaper-body text-[10px] font-black uppercase tracking-widest text-red-800 border border-red-800/40 px-2.5 py-0.5 rounded">
                     LATE CITY BULLETINS
@@ -250,38 +260,35 @@ export function NewspaperSection() {
                   </div>
                 )}
                 
-                <p className="font-newspaper-body text-sm leading-relaxed text-justify newspaper-dropcap text-[#111] px-1">
+                <p className="font-newspaper-body text-sm leading-relaxed text-justify newspaper-dropcap text-[#111] px-1 line-clamp-6">
                   {featured.excerpt}
-                </p>
-                <p className="font-newspaper-body text-sm leading-relaxed text-justify text-[#222] px-1 mt-2.5">
-                  The current events mark an important chapter, causing shifts in public opinion. Correspondents report high engagement, and updates will be filed as they materialize.
                 </p>
               </article>
             </Link>
           )}
 
           {/* 2-Column Print Style Layout (6 stories) */}
-          <div className="grid grid-cols-2 gap-x-4 gap-y-6">
+          <div className="grid grid-cols-2 gap-x-4 gap-y-0">
             {newspaperNews.slice(1, 7).map((article, idx) => {
               const isLeftCol = idx % 2 === 0;
               return (
                 <Link 
                   href={`/article/${article.id}`} 
                   key={article.id} 
-                  className={`block group relative ${
+                  className={`block group ${
                     isLeftCol 
-                      ? "pr-4 after:content-[''] after:absolute after:top-0 after:bottom-0 after:right-0 after:w-[1px] after:bg-[#111]/15" 
+                      ? "pr-4 border-r border-[#111]/15" 
                       : "pl-1"
                   } ${
-                    idx < 4 ? "border-b border-dotted border-[#111]/20 pb-4" : ""
+                    idx < 4 ? "border-b border-dotted border-[#111]/20 pb-4 mb-4" : "pb-4"
                   }`}
                 >
-                  <article className="h-full flex flex-col justify-between">
+                  <article className="flex flex-col justify-between h-full">
                     <div>
                       <div className="font-newspaper-body text-[8px] font-bold uppercase tracking-wider text-red-800 mb-1">
                         {article.tag || "Dispatch"}
                       </div>
-                      <h3 className="font-newspaper-headline text-base font-bold leading-tight mb-2 text-[#111] group-hover:underline">
+                      <h3 className="font-newspaper-headline text-base font-bold leading-tight mb-2 text-[#111] group-hover:underline line-clamp-3">
                         {article.title}
                       </h3>
                       <p className="font-newspaper-body text-[11px] leading-snug text-justify text-[#222] line-clamp-4">

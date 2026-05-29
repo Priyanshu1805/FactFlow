@@ -27,11 +27,6 @@ export function NewsTicker() {
       .catch(() => {})
   }, [])
 
-  // CSS-based marquee animation (smooth, no JS jank)
-  const tickerText = articles.length
-    ? articles.map((a) => `🔥 ${a.title}`).join("   ·   ")
-    : "🔥 Loading latest news from around the world..."
-
   return (
     <div
       className={`relative border-y overflow-hidden ${
@@ -41,9 +36,9 @@ export function NewsTicker() {
       }`}
     >
       <div className="flex items-center">
-        {/* LIVE badge */}
-        <div className="shrink-0 px-4 py-2.5 bg-red-600 text-white font-black text-xs tracking-widest z-10 uppercase flex items-center gap-2 shadow-lg">
-          <span className="w-2 h-2 bg-white rounded-full animate-pulse" />
+        {/* LIVE badge - smaller on mobile */}
+        <div className="shrink-0 px-2.5 sm:px-4 py-1.5 sm:py-2.5 bg-red-600 text-white font-black text-[10px] sm:text-xs tracking-widest z-10 uppercase flex items-center gap-1.5 sm:gap-2 shadow-lg">
+          <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-white rounded-full animate-pulse" />
           LIVE
         </div>
 
@@ -58,16 +53,16 @@ export function NewsTicker() {
                       <span
                         key={`${copy}-${a._id}`}
                         onClick={() => router.push(`/article/${a._id}`)}
-                        className={`inline-flex items-center cursor-pointer px-6 py-3.5 sm:py-2.5 text-sm font-medium transition-colors hover:text-red-500 ${
+                        className={`inline-flex items-center cursor-pointer px-3 sm:px-6 py-2 sm:py-2.5 text-xs sm:text-sm font-medium transition-colors hover:text-red-500 ${
                           isDark ? "text-white/85" : "text-gray-700"
                         }`}
                       >
                         🔥 {a.title}
-                        <span className="mx-5 text-red-400/60">|</span>
+                        <span className="mx-3 sm:mx-5 text-red-400/60">|</span>
                       </span>
                     ))
                   : (
-                      <span className={`inline-block px-6 py-2.5 text-sm ${isDark ? "text-white/[0.85]" : "text-gray-400"}`}>
+                      <span className={`inline-block px-4 py-2 text-xs sm:text-sm ${isDark ? "text-white/[0.85]" : "text-gray-400"}`}>
                         Loading latest news...
                       </span>
                     )}
@@ -81,13 +76,19 @@ export function NewsTicker() {
         .ticker-scroll-wrapper {
           display: flex;
           white-space: nowrap;
-          animation: ticker-move 18s linear infinite;
-          -webkit-animation: ticker-move 18s linear infinite;
+          animation: ticker-move 12s linear infinite;
+          -webkit-animation: ticker-move 12s linear infinite;
           will-change: transform;
           -webkit-backface-visibility: hidden;
           backface-visibility: hidden;
           transform: translateZ(0);
           -webkit-transform: translateZ(0);
+        }
+        @media (min-width: 640px) {
+          .ticker-scroll-wrapper {
+            animation-duration: 18s;
+            -webkit-animation-duration: 18s;
+          }
         }
         .ticker-scroll-wrapper:hover {
           animation-play-state: paused;
