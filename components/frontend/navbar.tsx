@@ -1,5 +1,5 @@
 "use client"
-// Cache busting comment for Turbopack HMR
+// Cache busting comment for Turbopack HMR v2
 
 import { useState, useRef, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
@@ -319,7 +319,8 @@ export function Navbar() {
               animate={{ x: 0 }}
               exit={{ x: "100%" }}
               transition={{ type: "spring", damping: 25, stiffness: 220 }}
-              className="fixed inset-y-0 right-0 w-full sm:w-80 z-50 bg-slate-950 border-l border-white/10 shadow-2xl p-6 flex flex-col overflow-y-auto lg:hidden text-white"
+              className="fixed inset-y-0 right-0 w-full sm:w-80 z-50 bg-black border-l border-white/10 shadow-2xl p-6 flex flex-col overflow-y-auto lg:hidden text-white"
+              style={{ backgroundColor: '#050505' }}
             >
               <div className="flex-1">
                 {/* Header */}
