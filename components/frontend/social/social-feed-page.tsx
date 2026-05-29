@@ -48,7 +48,10 @@ function ReelsScroller() {
 
   useEffect(() => {
     fetch(`${API}/reels?limit=10`)
-      .then((res) => res.json())
+      .then((res) => {
+        if (!res.ok) throw new Error("Fetch failed")
+        return res.json()
+      })
       .then((data) => {
         if (data.success && data.data) {
           const formatted = data.data.map((item: any) => ({
@@ -219,11 +222,17 @@ export function SocialFeedPage({ isDark, onStoryClick }: SocialFeedPageProps) {
     setExploreLoading(true)
     
     const fetchReels = fetch(`${API}/reels?limit=6`)
-      .then(res => res.json())
+      .then(res => {
+        if (!res.ok) throw new Error("Fetch failed")
+        return res.json()
+      })
       .catch(() => ({ success: false, data: [] }))
     
     const fetchPosts = fetch(`${API}/posts/feed?limit=6`)
-      .then(res => res.json())
+      .then(res => {
+        if (!res.ok) throw new Error("Fetch failed")
+        return res.json()
+      })
       .catch(() => ({ success: false, posts: [] }))
     
     Promise.all([fetchReels, fetchPosts])
@@ -314,6 +323,7 @@ export function SocialFeedPage({ isDark, onStoryClick }: SocialFeedPageProps) {
     setNotifLoading(true)
     try {
       const res = await fetch(`${API}/notifications?firebaseUid=${user.uid}`)
+      if (!res.ok) throw new Error("Fetch failed")
       const data = await res.json()
       if (data.success) {
         setNotifications(data.notifications)
@@ -357,15 +367,24 @@ export function SocialFeedPage({ isDark, onStoryClick }: SocialFeedPageProps) {
     setSearchLoading(true)
     const delay = setTimeout(() => {
       const fetchUsers = fetch(`${API}/users?search=${encodeURIComponent(searchVal)}&limit=20`)
-        .then(res => res.json())
+        .then(res => {
+          if (!res.ok) throw new Error("Fetch failed")
+          return res.json()
+        })
         .catch(() => ({ success: false, users: [] }))
 
       const fetchSearchPosts = fetch(`${API}/posts/feed?search=${encodeURIComponent(searchVal)}&limit=10`)
-        .then(res => res.json())
+        .then(res => {
+          if (!res.ok) throw new Error("Fetch failed")
+          return res.json()
+        })
         .catch(() => ({ success: false, posts: [] }))
 
       const fetchSearchReels = fetch(`${API}/reels?search=${encodeURIComponent(searchVal)}&limit=10`)
-        .then(res => res.json())
+        .then(res => {
+          if (!res.ok) throw new Error("Fetch failed")
+          return res.json()
+        })
         .catch(() => ({ success: false, data: [] }))
 
       Promise.all([fetchUsers, fetchSearchPosts, fetchSearchReels])
@@ -395,6 +414,7 @@ export function SocialFeedPage({ isDark, onStoryClick }: SocialFeedPageProps) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ firebaseUid: user.uid, targetUsername: targetUser.username })
       })
+      if (!res.ok) throw new Error("Fetch failed")
       const data = await res.json()
       if (data.success) {
         setSearchResults(prev => prev.map(u => {
@@ -425,6 +445,7 @@ export function SocialFeedPage({ isDark, onStoryClick }: SocialFeedPageProps) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ firebaseUid: user.uid, userId: targetUser._id })
       })
+      if (!res.ok) throw new Error("Fetch failed")
       const data = await res.json()
       if (data.success) {
         router.push("/social?tab=chats")

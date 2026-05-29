@@ -67,6 +67,7 @@ export async function getMarketData(symbol: string) {
     // We hit our own Next.js API route to bypass CORS.
     // The backend route then fetches from Yahoo Finance's free public tier.
     const res = await fetch(`/api/finance?symbols=${symbol}`)
+    if (!res.ok) throw new Error("Market data fetch failed")
     const data = await res.json()
     
     if (data.results && data.results.length > 0) {
@@ -88,6 +89,7 @@ export async function getMetalPrice(metal: "gold" | "silver") {
     // Yahoo Finance symbols: Gold is GC=F, Silver is SI=F
     const symbol = metal === "gold" ? "GC=F" : "SI=F"
     const res = await fetch(`/api/finance?symbols=${symbol}`)
+    if (!res.ok) throw new Error("Metal price fetch failed")
     const data = await res.json()
     
     if (data.results && data.results.length > 0) {
@@ -111,6 +113,7 @@ export async function getMetalPrice(metal: "gold" | "silver") {
 export async function getCurrencyRate(pair: string = "INR=X") {
   try {
     const res = await fetch(`/api/finance?symbols=${pair}`)
+    if (!res.ok) throw new Error("Currency rate fetch failed")
     const data = await res.json()
     
     if (data.results && data.results.length > 0) {
@@ -130,6 +133,7 @@ export async function getCurrencyRate(pair: string = "INR=X") {
 export async function getFuelPrice(city: string = "Delhi") {
   try {
     const res = await fetch(`/api/fuel?city=${encodeURIComponent(city)}`)
+    if (!res.ok) throw new Error("Fuel price fetch failed")
     const data = await res.json()
     
     if (data.success && data.price) {

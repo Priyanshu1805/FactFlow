@@ -90,7 +90,10 @@ export function NotificationBell() {
   const fetchCount = useCallback(() => {
     if (!isAuthenticated || !user) return
     fetch(`${API}/notifications/unread-count?firebaseUid=${user.uid}`)
-      .then(r => r.json())
+      .then(r => {
+        if (!r.ok) throw new Error("Fetch failed")
+        return r.json()
+      })
       .then(d => { if (d.success) setUnreadCount(d.unreadCount) })
       .catch(() => {})
   }, [isAuthenticated, user])
@@ -114,6 +117,7 @@ export function NotificationBell() {
     setLoading(true)
     try {
       const res = await fetch(`${API}/notifications?firebaseUid=${user.uid}&limit=40`)
+      if (!res.ok) throw new Error("Fetch failed")
       const data = await res.json()
       if (data.success) {
         setNotifications(data.notifications)

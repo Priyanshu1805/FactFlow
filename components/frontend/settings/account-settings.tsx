@@ -45,7 +45,10 @@ export function AccountSettings() {
   useEffect(() => {
     if (!user?.uid) return
     fetch(`${API}/users/profile?firebaseUid=${user.uid}&email=${user.email}&name=${encodeURIComponent(user.displayName || "")}&avatar=${encodeURIComponent(user.photoURL || "")}`)
-      .then(r => r.json())
+      .then(r => {
+        if (!r.ok) throw new Error("Fetch failed")
+        return r.json()
+      })
       .then(data => {
         if (data.user) {
           setName(data.user.name || user.displayName || "")
@@ -75,6 +78,7 @@ export function AccountSettings() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ firebaseUid: user.uid, email: user.email, name, phone, bio }),
       })
+      if (!res.ok) throw new Error("Fetch failed")
       const data = await res.json()
       if (!data.success) throw new Error(data.error)
 
@@ -114,6 +118,7 @@ export function AccountSettings() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ firebaseUid: user.uid, email: user.email })
       })
+      if (!res.ok) throw new Error("Fetch failed")
       const data = await res.json()
       if (data.success) {
         setQrCodeUrl(data.qrCodeUrl)
@@ -141,6 +146,7 @@ export function AccountSettings() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ firebaseUid: user.uid, token: token2FA })
       })
+      if (!res.ok) throw new Error("Fetch failed")
       const data = await res.json()
       if (data.success) {
         setIs2FAEnabled(!isDisabling2FA)
@@ -201,6 +207,7 @@ export function AccountSettings() {
           reason: actionReason,
         }),
       })
+      if (!res.ok) throw new Error("Fetch failed")
       const data = await res.json()
       if (data.success) {
         setShowDeleteDialog(false)

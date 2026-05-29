@@ -14,6 +14,9 @@ import { useAuthStore } from "@/store/auth-store"
 import { getSavedItems, saveItem, unsaveItem } from "@/lib/api/saved"
 import { toast } from "sonner"
 import dynamic from "next/dynamic"
+import { PremiumBadge } from "@/components/frontend/premium-badge"
+import { PaywallOverlay } from "@/components/frontend/paywall-overlay"
+import { useSubscription } from "@/lib/use-subscription"
 
 const ReactPlayer = dynamic(() => import("react-player"), { ssr: false }) as any
 
@@ -24,6 +27,7 @@ export default function ArticlePage() {
   const { theme } = useTheme()
   const isDark = theme !== "light"
   const { user } = useAuthStore()
+  const { canAccess } = useSubscription()
   const [article, setArticle] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [videoPlaying, setVideoPlaying] = useState(false)
@@ -60,6 +64,7 @@ export default function ArticlePage() {
     const fetchArticle = async () => {
       try {
         const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/news/${slug}`)
+        if (!res.ok) throw new Error("Fetch failed")
         const data = await res.json()
         if (data.success && data.data) {
           setArticle(data.data)
@@ -125,6 +130,7 @@ export default function ArticlePage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ deviceId: getDeviceId(), userId: user?.uid })
       })
+      if (!res.ok) throw new Error("Fetch failed")
       const data = await res.json()
       if (data.success) setLikes(data.data.likes)
     } catch {
@@ -262,6 +268,7 @@ export default function ArticlePage() {
                 Breaking
               </span>
             )}
+            {article.isPremium && <PremiumBadge size="md" />}
             {article.location && article.location !== "Global" && (
               <span className={`flex items-center gap-1 px-3 py-1 rounded-full text-[11px] font-bold border ${
                 isDark ? "border-white/20 text-white/70 bg-white/5" : "border-gray-300 text-gray-600 bg-gray-50"
@@ -332,70 +339,74 @@ export default function ArticlePage() {
             </figure>
           )}
 
-          <div className={`mb-8 space-y-6 relative ${
-            isDark ? "text-white/[0.85]" : "text-gray-800"
-          } ${!articleExpanded && paragraphs.length > 2 ? "pb-24 overflow-hidden" : ""}`}>
-            {(articleExpanded ? paragraphs : paragraphs.slice(0, 2)).map((para, i) => {
-              if (i === 0) {
+          {article.isPremium && !canAccess("pro") ? (
+            <PaywallOverlay />
+          ) : (
+            <div className={`mb-8 space-y-6 relative ${
+              isDark ? "text-white/[0.85]" : "text-gray-800"
+            } ${!articleExpanded && paragraphs.length > 2 ? "pb-24 overflow-hidden" : ""}`}>
+              {(articleExpanded ? paragraphs : paragraphs.slice(0, 3)).map((para, i) => {
+                if (i === 0) {
+                  return (
+                    <p
+                      key={i}
+                      className={`text-[1.15rem] leading-[1.9] font-medium first-letter:text-6xl first-letter:font-black first-letter:float-left first-letter:mr-3 first-letter:mt-1 first-letter:leading-[0.8] ${
+                        isDark ? "first-letter:text-red-400" : "first-letter:text-red-500"
+                      }`}
+                    >
+                      {para}
+                    </p>
+                  )
+                }
+                if (i % 4 === 0 && i !== 0) {
+                  return (
+                    <div key={`wrap-${i}`}>
+                      <hr className={`border-0 border-t my-2 ${
+                        isDark ? "border-white/5" : "border-gray-100"
+                      }`} />
+                      <p className="text-[1.08rem] leading-[1.9]">{para}</p>
+                    </div>
+                  )
+                }
                 return (
-                  <p
-                    key={i}
-                    className={`text-[1.15rem] leading-[1.9] font-medium first-letter:text-6xl first-letter:font-black first-letter:float-left first-letter:mr-3 first-letter:mt-1 first-letter:leading-[0.8] ${
-                      isDark ? "first-letter:text-red-400" : "first-letter:text-red-500"
+                  <p key={i} className="text-[1.08rem] leading-[1.9]">{para}</p>
+                )
+              })}
+
+              {!articleExpanded && paragraphs.length > 3 && (
+                <div className={`absolute bottom-0 left-0 w-full pt-32 pb-2 flex justify-center bg-gradient-to-t ${
+                  isDark ? "from-[#0a0a0a] via-[#0a0a0a]/80" : "from-white via-white/80"
+                } to-transparent pointer-events-none`}>
+                  <button
+                    onClick={() => setArticleExpanded(true)}
+                    className={`pointer-events-auto flex items-center gap-2 px-6 py-3 rounded-full font-bold text-sm shadow-xl transition-all active:scale-95 ${
+                      isDark ? "bg-white text-black hover:bg-gray-200" : "bg-black text-white hover:bg-gray-800"
                     }`}
                   >
-                    {para}
-                  </p>
-                )
-              }
-              if (i % 4 === 0 && i !== 0) {
-                return (
-                  <div key={`wrap-${i}`}>
-                    <hr className={`border-0 border-t my-2 ${
-                      isDark ? "border-white/5" : "border-gray-100"
-                    }`} />
-                    <p className="text-[1.08rem] leading-[1.9]">{para}</p>
-                  </div>
-                )
-              }
-              return (
-                <p key={i} className="text-[1.08rem] leading-[1.9]">{para}</p>
-              )
-            })}
+                    Read full article
+                    <ChevronDown className="w-4 h-4 animate-bounce" />
+                  </button>
+                </div>
+              )}
 
-            {!articleExpanded && paragraphs.length > 2 && (
-              <div className={`absolute bottom-0 left-0 w-full pt-32 pb-2 flex justify-center bg-gradient-to-t ${
-                isDark ? "from-[#0a0a0a] via-[#0a0a0a]/80" : "from-white via-white/80"
-              } to-transparent pointer-events-none`}>
-                <button
-                  onClick={() => setArticleExpanded(true)}
-                  className={`pointer-events-auto flex items-center gap-2 px-6 py-3 rounded-full font-bold text-sm shadow-xl transition-all active:scale-95 ${
-                    isDark ? "bg-white text-black hover:bg-gray-200" : "bg-black text-white hover:bg-gray-800"
-                  }`}
-                >
-                  Read full article
-                  <ChevronDown className="w-4 h-4 animate-bounce" />
-                </button>
-              </div>
-            )}
-
-            {articleExpanded && paragraphs.length > 2 && (
-              <div className="flex justify-center mt-6">
-                <button
-                  onClick={() => {
-                    setArticleExpanded(false);
-                    window.scrollTo({ top: 300, behavior: "smooth" });
-                  }}
-                  className={`flex items-center gap-2 px-5 py-2.5 rounded-full font-semibold text-sm transition-all active:scale-95 ${
-                    isDark ? "bg-white/10 text-white hover:bg-white/20" : "bg-gray-100 text-gray-800 hover:bg-gray-200"
-                  }`}
-                >
-                  Close article
-                  <ChevronUp className="w-4 h-4" />
-                </button>
-              </div>
-            )}
-          </div>
+              {articleExpanded && paragraphs.length > 3 && (
+                <div className="flex justify-center mt-6">
+                  <button
+                    onClick={() => {
+                      setArticleExpanded(false);
+                      window.scrollTo({ top: 300, behavior: "smooth" });
+                    }}
+                    className={`flex items-center gap-2 px-5 py-2.5 rounded-full font-semibold text-sm transition-all active:scale-95 ${
+                      isDark ? "bg-white/10 text-white hover:bg-white/20" : "bg-gray-100 text-gray-800 hover:bg-gray-200"
+                    }`}
+                  >
+                    Close article
+                    <ChevronUp className="w-4 h-4" />
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Tags */}
           {article.tags && article.tags.length > 0 && (

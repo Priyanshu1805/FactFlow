@@ -88,6 +88,7 @@ export function StoryViewer({ groupedStories, initialGroupIndex, onClose }: Stor
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/stories/${currentStory._id}`, {
         method: "DELETE"
       })
+      if (!res.ok) throw new Error("Fetch failed")
       const data = await res.json()
       if (data.success) {
         toast.success("Story deleted!")
@@ -145,6 +146,7 @@ export function StoryViewer({ groupedStories, initialGroupIndex, onClose }: Stor
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ firebaseUid: user.uid, userId: currentGroup.user._id })
       })
+      if (!chatRes.ok) throw new Error("Fetch failed")
       const chatData = await chatRes.json()
       
       if (!chatData.success) {
@@ -161,6 +163,7 @@ export function StoryViewer({ groupedStories, initialGroupIndex, onClose }: Stor
         method: "POST",
         body: formData
       })
+      if (!msgRes.ok) throw new Error("Fetch failed")
       const msgData = await msgRes.json()
 
       if (msgData.success) {

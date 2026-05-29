@@ -16,7 +16,10 @@ export default function ReelsPage() {
 
   useEffect(() => {
     fetch(`${process.env.NEXT_PUBLIC_API_URL}/reels`)
-      .then((res) => res.json())
+      .then((res) => {
+        if (!res.ok) throw new Error("Fetch failed")
+        return res.json()
+      })
       .then((data) => {
         if (data.success && data.data) {
           setReels(data.data)

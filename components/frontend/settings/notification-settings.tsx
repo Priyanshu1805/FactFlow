@@ -41,7 +41,10 @@ export function NotificationSettings() {
   useEffect(() => {
     if (!user?.uid) return
     fetch(`${API}/users/settings/${user.uid}`)
-      .then(r => r.json())
+      .then(r => {
+        if (!r.ok) throw new Error("Fetch failed")
+        return r.json()
+      })
       .then(d => {
         if (d.success && d.settings?.notifications) {
           setPrefs(prev => ({ ...prev, ...d.settings.notifications }))

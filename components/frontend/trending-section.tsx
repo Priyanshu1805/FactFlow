@@ -7,6 +7,7 @@ import { useTheme } from "@/components/theme-provider"
 import { SafeImage as Image } from "@/components/frontend/safe-image"
 import Link from "next/link"
 import { useSettings } from "@/lib/use-settings"
+import { PremiumBadge } from "@/components/frontend/premium-badge"
 
 export function TrendingSection() {
   const { theme } = useTheme()
@@ -23,7 +24,10 @@ export function TrendingSection() {
   useEffect(() => {
     const fetchNews = () => {
       fetch(`${process.env.NEXT_PUBLIC_API_URL}/news?limit=4`)
-        .then((res) => res.json())
+        .then((res) => {
+          if (!res.ok) throw new Error("Fetch failed")
+          return res.json()
+        })
         .then((data) => {
           if (data.success && data.data) {
             const colors = ["bg-blue-500", "bg-green-500", "bg-purple-500", "bg-orange-500"]
@@ -39,6 +43,7 @@ export function TrendingSection() {
               isBreaking: item.isBreaking || false,
               authorName: item.author?.name || "Fact Flow Staff",
               readingTime: Math.max(1, Math.ceil((item.excerpt?.length || 100) / 100)) + " min read",
+              isPremium: item.isPremium || false,
             }))
             setTrendingNews(formatted)
           }
@@ -95,7 +100,7 @@ export function TrendingSection() {
                 viewport={{ once: true }}
                 transition={{ delay: index * 0.08 }}
                 className={`rounded-xl overflow-hidden border transition-all duration-300 hover:-translate-y-1 flex ${
-                  layout === "compact" ? "flex-row items-center h-28 p-3 gap-4" : 
+                  layout === "compact" ? "flex-row items-center min-h-[100px] p-3 gap-4" : 
                   layout === "spacious" ? "flex-col p-6 gap-5" : 
                   "flex-col h-full"
                 } ${
@@ -121,6 +126,7 @@ export function TrendingSection() {
                       <span className={`px-2.5 py-1 ${article.categoryColor} text-white text-xs font-semibold rounded-md`}>
                         {article.category}
                       </span>
+{article.isPremium && <PremiumBadge size="sm" />}
                       {article.isBreaking && (
                         <span className="px-2.5 py-1 bg-red-500 text-white text-xs font-semibold rounded-md animate-pulse">
                           Breaking
@@ -137,6 +143,7 @@ export function TrendingSection() {
                       <span className={`px-2.5 py-1 ${article.categoryColor} text-white text-xs font-semibold rounded-md`}>
                         {article.category}
                       </span>
+{article.isPremium && <PremiumBadge size="sm" />}
                       {article.isBreaking && (
                         <span className="px-2.5 py-1 bg-red-500 text-white text-xs font-semibold rounded-md animate-pulse">
                           Breaking

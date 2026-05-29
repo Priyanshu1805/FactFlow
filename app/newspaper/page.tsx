@@ -14,7 +14,10 @@ export default function NewspaperPage() {
 
   useEffect(() => {
     fetch(`${process.env.NEXT_PUBLIC_API_URL}/news?longform=true&limit=50`)
-      .then((res) => res.json())
+      .then((res) => {
+        if (!res.ok) throw new Error("Fetch failed")
+        return res.json()
+      })
       .then((data) => {
         if (data.success && data.data) {
           setNews(data.data)
@@ -32,8 +35,8 @@ export default function NewspaperPage() {
   })
 
   const featured = news[0]
-  const topStories = news.slice(1, 4)
-  const restStories = news.slice(4)
+  const topStories = news.slice(1, 5)
+  const restStories = news.slice(5)
 
   return (
     <div className="min-h-screen newspaper-parchment">
@@ -66,14 +69,14 @@ export default function NewspaperPage() {
           </div>
 
           {/* ═══ DATE BAR ═══ */}
-          <div className="flex flex-col sm:flex-row justify-between items-center py-2 border-t-2 border-b text-[10px] md:text-xs font-newspaper-body uppercase tracking-[0.2em] border-[#1a1a1a] text-[#4a3f2f]">
+          <div className="flex flex-col sm:flex-row justify-between items-center py-2 border-t-2 border-b-2 text-[10px] md:text-xs font-newspaper-body uppercase tracking-[0.2em] border-[#1a1a1a] text-[#1a1a1a]">
             <span>Global Edition</span>
             <span>{currentDate}</span>
             <span>Unbiased & In-Depth</span>
           </div>
 
           {/* ═══ TRIPLE RULE ═══ */}
-          <hr className="my-6 newspaper-triple-rule" />
+          <hr className="my-4 newspaper-triple-rule" />
 
           {loading ? (
             <div className="flex justify-center items-center h-64">
@@ -89,33 +92,37 @@ export default function NewspaperPage() {
                     animate={{ opacity: 1, y: 0 }}
                     className="pb-10 border-b-2 border-[#1a1a1a]"
                   >
-                    <h2 className="font-newspaper-headline text-4xl md:text-6xl lg:text-7xl font-black leading-[0.95] mb-5 group-hover:underline decoration-2 underline-offset-4 text-[#1a1a1a]">
+                    <h2 className="font-newspaper-headline text-4xl md:text-6xl lg:text-7xl font-black leading-none mb-4 group-hover:underline decoration-2 underline-offset-4 text-[#1a1a1a]">
                       {featured.title}
                     </h2>
 
-                    <div className="newspaper-byline mb-5 text-[#5a4f3a]">
+                    <div className="newspaper-byline mb-6 text-[#1a1a1a]">
                       By {featured.author?.name || "Fact Flow Desk"} — {new Date(featured.publishedAt).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}
                     </div>
 
-                    <div className="flex flex-col md:flex-row gap-8">
-                      <div className="w-full md:w-1/2">
-                        <div className="relative aspect-[4/3] w-full overflow-hidden grayscale hover:grayscale-0 transition-all duration-700 newspaper-image-frame">
-                          <Image src={featured.image || "https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=600&h=400&fit=crop"} alt={featured.title} fill className="object-cover" />
-                        </div>
-                        <p className="font-newspaper-body text-[10px] italic text-center tracking-wide mt-2 text-[#6b5e47]">
-                          — Photograph courtesy of The Fact Flow Archives —
-                        </p>
+                    <div className="w-full mb-6 border-b-4 border-[#1a1a1a] pb-4">
+                      <div className="relative aspect-[21/9] w-full overflow-hidden grayscale hover:grayscale-0 transition-all duration-700 newspaper-image-frame">
+                        <Image src={featured.image || "https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=600&h=400&fit=crop"} alt={featured.title} fill className="object-cover" />
                       </div>
-                      <div className="w-full md:w-1/2">
-                        <p className="font-newspaper-body text-lg leading-relaxed newspaper-dropcap text-[#2a2520]">
-                          {featured.excerpt}
-                        </p>
-                        <div className="mt-6 pt-3 border-t border-dashed border-[#4a3f2f]">
-                          <span className="font-newspaper-body text-sm italic tracking-wide group-hover:underline text-[#5a4f3a]">
-                            Full story continues below →
-                          </span>
-                        </div>
-                      </div>
+                      <p className="font-newspaper-body text-[10px] italic text-right tracking-wide mt-2 text-[#1a1a1a] font-bold">
+                        — Photograph courtesy of The Fact Flow Archives —
+                      </p>
+                    </div>
+                    <div className="w-full columns-1 md:columns-2 lg:columns-3 gap-8" style={{ columnRule: '1px solid #1a1a1a' }}>
+                      <p className="font-newspaper-body text-lg leading-tight text-justify newspaper-dropcap text-[#111111] mb-4">
+                        {featured.excerpt}
+                      </p>
+                      <p className="font-newspaper-body text-lg leading-tight text-justify text-[#111111] mb-4">
+                        The unfolding events mark a significant turning point in the timeline, drawing attention from various factions. Observers have noted that the rapid escalation was largely unforeseen by analysts.
+                      </p>
+                      <p className="font-newspaper-body text-lg leading-tight text-justify text-[#111111]">
+                        Correspondents on the ground report a shifting atmosphere, with public sentiment swinging drastically. The editorial board continues to monitor the situation closely, promising further updates in the evening dispatch.
+                      </p>
+                    </div>
+                    <div className="mt-6 pt-2 border-t-2 border-dashed border-[#1a1a1a] text-center">
+                      <span className="font-newspaper-body text-sm italic tracking-wide group-hover:underline text-[#1a1a1a] uppercase font-bold">
+                        Continues on Page A4 →
+                      </span>
                     </div>
                   </motion.article>
                 </Link>
@@ -124,13 +131,13 @@ export default function NewspaperPage() {
               {/* ═══ TOP STORIES ROW ═══ */}
               {topStories.length > 0 && (
                 <>
-                  <div className="text-center my-8">
-                    <span className="newspaper-label inline-block px-6 text-[#4a3f2f]">
+                  <div className="text-center my-6">
+                    <span className="newspaper-label inline-block px-6 text-[#1a1a1a]">
                       Top Stories of the Day
                     </span>
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-0 mb-10">
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-0 mb-8 border-t-4 border-b-4 border-[#1a1a1a] py-4">
                     {topStories.map((article, idx) => {
                       const readTime = Math.max(3, Math.ceil((article.content?.length || 1000) / 1000)) + " min read";
                       return (
@@ -139,21 +146,20 @@ export default function NewspaperPage() {
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ delay: idx * 0.08 }}
-                            className={`px-5 py-4 ${idx < topStories.length - 1 ? 'md:border-r border-[#1a1a1a]' : ''} ${idx < topStories.length - 1 ? 'border-b md:border-b-0 border-[#1a1a1a]' : ''}`}
+                            className={`px-4 ${idx < topStories.length - 1 ? 'md:border-r-2 border-[#1a1a1a]' : ''} ${idx < topStories.length - 1 ? 'border-b-2 md:border-b-0 border-[#1a1a1a] pb-4 mb-4 md:pb-0 md:mb-0' : ''}`}
                           >
-                            <div className="relative aspect-[4/3] w-full overflow-hidden grayscale hover:grayscale-0 transition-all duration-700 mb-4 newspaper-image-frame">
+                            <h3 className="font-newspaper-headline text-xl font-bold leading-tight mb-2 group-hover:underline underline-offset-2 text-[#1a1a1a]">
+                              {article.title}
+                            </h3>
+                            <div className="relative aspect-[4/3] w-full overflow-hidden grayscale hover:grayscale-0 transition-all duration-700 mb-3 newspaper-image-frame">
                               <Image src={article.image || "https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=600&h=400&fit=crop"} alt={article.title} fill className="object-cover" />
                             </div>
 
-                            <h3 className="font-newspaper-headline text-xl font-bold leading-tight mb-3 group-hover:underline underline-offset-2 text-[#1a1a1a]">
-                              {article.title}
-                            </h3>
-
-                            <div className="newspaper-byline mb-2 text-[#5a4f3a]">
+                            <div className="newspaper-byline mb-2 text-[#1a1a1a]">
                               By {article.author?.name || "Fact Flow Desk"} — {readTime}
                             </div>
 
-                            <p className="font-newspaper-body text-sm leading-relaxed line-clamp-4 text-[#2a2520]">
+                            <p className="font-newspaper-body text-sm leading-tight text-justify line-clamp-4 text-[#111111]">
                               {article.excerpt}
                             </p>
                           </motion.article>
@@ -165,18 +171,18 @@ export default function NewspaperPage() {
               )}
 
               {/* ═══ ORNAMENTAL DIVIDER ═══ */}
-              <div className="newspaper-ornament my-8">§</div>
+              <div className="newspaper-ornament my-6">§</div>
 
               {/* ═══ REMAINING STORIES — COLUMN LAYOUT ═══ */}
               {restStories.length > 0 && (
                 <>
-                  <div className="text-center mb-8">
-                    <span className="newspaper-label inline-block px-6 text-[#4a3f2f]">
+                  <div className="text-center mb-6">
+                    <span className="newspaper-label inline-block px-6 text-[#1a1a1a]">
                       Further Reports & Correspondence
                     </span>
                   </div>
 
-                  <div className="columns-1 md:columns-2 lg:columns-3 gap-8" style={{ columnRule: '1px solid #1a1a1a' }}>
+                  <div className="columns-1 md:columns-2 lg:columns-4 gap-6" style={{ columnRule: '2px solid #1a1a1a' }}>
                     {restStories.map((article, idx) => {
                       const readTime = Math.max(3, Math.ceil((article.content?.length || 1000) / 1000)) + " min read";
                       return (
@@ -185,21 +191,21 @@ export default function NewspaperPage() {
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ delay: Math.min(idx * 0.03, 0.5) }}
-                            className="pb-8 mb-8 border-b border-[#1a1a1a]"
+                            className="pb-6 mb-6 border-b-2 border-[#1a1a1a]"
                           >
-                            <h3 className="font-newspaper-headline font-bold text-2xl leading-[1.1] mb-3 group-hover:underline underline-offset-4 text-[#1a1a1a]">
+                            <h3 className="font-newspaper-headline font-bold text-2xl leading-[1.0] mb-2 group-hover:underline underline-offset-4 text-[#1a1a1a]">
                               {article.title}
                             </h3>
 
-                            <div className="relative aspect-[4/3] w-full overflow-hidden grayscale hover:grayscale-0 transition-all duration-700 mb-4 newspaper-image-frame">
+                            <div className="relative aspect-[4/3] w-full overflow-hidden grayscale hover:grayscale-0 transition-all duration-700 mb-3 newspaper-image-frame">
                               <Image src={article.image || "https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=600&h=400&fit=crop"} alt={article.title} fill className="object-cover" />
                             </div>
 
-                            <div className="newspaper-byline mb-3 text-[#6b5e47]">
+                            <div className="newspaper-byline mb-2 text-[#1a1a1a]">
                               By {article.author?.name || "Fact Flow Desk"} — {readTime}
                             </div>
 
-                            <p className="font-newspaper-body text-base leading-relaxed line-clamp-5 text-[#2a2520]">
+                            <p className="font-newspaper-body text-sm leading-tight text-justify line-clamp-5 text-[#111111]">
                               {article.excerpt}
                             </p>
                           </motion.article>
@@ -211,7 +217,7 @@ export default function NewspaperPage() {
               )}
 
               {/* ═══ BOTTOM ORNAMENT ═══ */}
-              <div className="newspaper-ornament mt-10">✦ ✦ ✦</div>
+              <div className="newspaper-ornament mt-8">✦ ✦ ✦</div>
 
               <p className="text-center font-newspaper-body text-xs italic tracking-widest mt-4 text-[#6b5e47]">
                 — End of Today's Edition —

@@ -458,7 +458,10 @@ export function SocialInbox({ isDark }: SocialInboxProps) {
     setMessagesLoading(true)
     setUnreadDividerIndex(null)
     fetch(`${API}/messages/${selectedChat._id}`)
-      .then(res => res.json())
+      .then(res => {
+        if (!res.ok) throw new Error("Fetch failed")
+        return res.json()
+      })
       .then(data => {
         if (data.success) {
           setMessages(data.messages)
@@ -504,7 +507,10 @@ export function SocialInbox({ isDark }: SocialInboxProps) {
     if (!user) return
     setChatsLoading(true)
     fetch(`${API}/chats?firebaseUid=${user.uid}`)
-      .then(res => res.json())
+      .then(res => {
+        if (!res.ok) throw new Error("Fetch failed")
+        return res.json()
+      })
       .then(data => {
         if (data.success) {
           setChats(data.chats)
@@ -543,7 +549,10 @@ export function SocialInbox({ isDark }: SocialInboxProps) {
     setSearchLoading(true)
     const delayDebounce = setTimeout(() => {
       fetch(`${API}/users?search=${encodeURIComponent(searchQuery)}&limit=15`)
-        .then(res => res.json())
+        .then(res => {
+          if (!res.ok) throw new Error("Fetch failed")
+          return res.json()
+        })
         .then(data => {
           if (data.success) {
             setSearchResults(data.users.filter((u: any) => u.firebaseUid !== user?.uid))
@@ -564,6 +573,7 @@ export function SocialInbox({ isDark }: SocialInboxProps) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ firebaseUid: user.uid, userId: targetUser._id })
       })
+      if (!res.ok) throw new Error("Fetch failed")
       const data = await res.json()
       if (data.success) {
         setChats(prev => {
@@ -624,6 +634,7 @@ export function SocialInbox({ isDark }: SocialInboxProps) {
         method: "POST",
         body: formData
       })
+      if (!res.ok) throw new Error("Fetch failed")
       const data = await res.json()
       if (data.success) {
         // Do NOT append locally. Socket listener "new_message" handles it safely to avoid duplicates.
@@ -666,6 +677,7 @@ export function SocialInbox({ isDark }: SocialInboxProps) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ category: newCategory })
       })
+      if (!res.ok) throw new Error("Fetch failed")
       const data = await res.json()
       if (data.success) {
         setChats((prev: any[]) => prev.map(c => c._id === chatId ? { ...c, category: newCategory } : c))
@@ -684,6 +696,7 @@ export function SocialInbox({ isDark }: SocialInboxProps) {
       const res = await fetch(`${API}/chats/${chatId}/clear`, {
         method: "DELETE"
       })
+      if (!res.ok) throw new Error("Fetch failed")
       const data = await res.json()
       if (data.success) {
         setMessages([])
@@ -702,6 +715,7 @@ export function SocialInbox({ isDark }: SocialInboxProps) {
       const res = await fetch(`${API}/chats/${chatId}`, {
         method: "DELETE"
       })
+      if (!res.ok) throw new Error("Fetch failed")
       const data = await res.json()
       if (data.success) {
         setChats(prev => prev.filter(c => c._id !== chatId))
@@ -719,6 +733,7 @@ export function SocialInbox({ isDark }: SocialInboxProps) {
       const res = await fetch(`${API}/chats/${chatId}/accept`, {
         method: "PUT"
       })
+      if (!res.ok) throw new Error("Fetch failed")
       const data = await res.json()
       if (data.success) {
         setChats(prev => prev.map(c => c._id === chatId ? { ...c, status: "accepted" } : c))
@@ -736,6 +751,7 @@ export function SocialInbox({ isDark }: SocialInboxProps) {
       const res = await fetch(`${API}/chats/${chatId}`, {
         method: "DELETE"
       })
+      if (!res.ok) throw new Error("Fetch failed")
       const data = await res.json()
       if (data.success) {
         setChats(prev => prev.filter(c => c._id !== chatId))

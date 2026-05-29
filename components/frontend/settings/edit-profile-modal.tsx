@@ -35,7 +35,10 @@ export function EditProfileModal({ isOpen, onClose, onSuccess, isDark }: EditPro
   useEffect(() => {
     if (!user?.uid || !isOpen) return
     fetch(`${API}/users/profile?firebaseUid=${user.uid}&email=${user.email}&name=${encodeURIComponent(user.displayName || "")}&avatar=${encodeURIComponent(user.photoURL || "")}`)
-      .then(r => r.json())
+      .then(r => {
+        if (!r.ok) throw new Error("Fetch failed")
+        return r.json()
+      })
       .then(data => {
         if (data.user) {
           setName(data.user.name || user.displayName || "")
@@ -74,6 +77,7 @@ export function EditProfileModal({ isOpen, onClose, onSuccess, isDark }: EditPro
       formData.append("firebaseUid", user.uid)
 
       const res = await fetch(`${API}/users/avatar`, { method: "POST", body: formData })
+      if (!res.ok) throw new Error("Fetch failed")
       const data = await res.json()
       if (!data.success) throw new Error(data.error)
 
@@ -98,6 +102,7 @@ export function EditProfileModal({ isOpen, onClose, onSuccess, isDark }: EditPro
       formData.append("firebaseUid", user.uid)
 
       const res = await fetch(`${API}/users/cover`, { method: "POST", body: formData })
+      if (!res.ok) throw new Error("Fetch failed")
       const data = await res.json()
       if (!data.success) throw new Error(data.error)
 
@@ -121,6 +126,7 @@ export function EditProfileModal({ isOpen, onClose, onSuccess, isDark }: EditPro
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ firebaseUid: user.uid, email: user.email, name, username, bio }),
       })
+      if (!res.ok) throw new Error("Fetch failed")
       const data = await res.json()
       if (!data.success) throw new Error(data.error)
 

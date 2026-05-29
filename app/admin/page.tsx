@@ -48,6 +48,7 @@ export default function AdminDashboard() {
     setUsersLoading(true)
     try {
       const res = await fetch(`${API}/users?limit=100`)
+      if (!res.ok) throw new Error("Fetch failed")
       const data = await res.json()
       if (data.success) {
         setUsersList(data.users)
@@ -73,6 +74,7 @@ export default function AdminDashboard() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ adminFirebaseUid: user?.uid })
       })
+      if (!res.ok) throw new Error("Fetch failed")
       const data = await res.json()
       if (data.success) {
         setUsersList(prev => prev.map(u => u._id === targetUser._id ? { ...u, isVerified: data.isVerified } : u))
@@ -92,6 +94,7 @@ export default function AdminDashboard() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ adminFirebaseUid: user?.uid })
       })
+      if (!res.ok) throw new Error("Fetch failed")
       const data = await res.json()
       if (data.success) {
         setUsersList(prev => prev.map(u => u._id === targetUser._id ? { ...u, isDisabled: data.isDisabled } : u))
@@ -136,6 +139,7 @@ export default function AdminDashboard() {
         body: JSON.stringify(payload),
       })
 
+      if (!res.ok) throw new Error("Fetch failed")
       const data = await res.json()
       if (data.success) {
         setStatus({ type: "success", message: "News published successfully! 🎉" })

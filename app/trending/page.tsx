@@ -16,7 +16,10 @@ export default function TrendingPage() {
 
   useEffect(() => {
     fetch(`${process.env.NEXT_PUBLIC_API_URL}/news?limit=50&sort=views`)
-      .then((res) => res.json())
+      .then((res) => {
+        if (!res.ok) throw new Error("Fetch failed")
+        return res.json()
+      })
       .then((data) => {
         if (data.success && data.data) {
           setNews(data.data)

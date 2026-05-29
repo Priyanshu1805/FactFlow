@@ -64,6 +64,7 @@ export function PostCommentsSheet({ isOpen, onClose, post, isDark, socket }: Pos
     try {
       const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api"
       const res = await fetch(`${API}/posts/${post._id}/comments`)
+      if (!res.ok) throw new Error("Fetch failed")
       const data = await res.json()
       if (data.success) {
         setComments(data.comments)
@@ -92,6 +93,7 @@ export function PostCommentsSheet({ isOpen, onClose, post, isDark, socket }: Pos
           parentId: replyingTo?._id || null
         })
       })
+      if (!res.ok) throw new Error("Fetch failed")
       const data = await res.json()
       if (data.success) {
         setNewText("")
@@ -116,6 +118,7 @@ export function PostCommentsSheet({ isOpen, onClose, post, isDark, socket }: Pos
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ firebaseUid: user.uid, actionType })
       })
+      if (!res.ok) throw new Error("Fetch failed")
       const data = await res.json()
       if (!data.success) throw new Error(data.error)
       if (actionType === "delete" && !socket) {

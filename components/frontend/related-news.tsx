@@ -5,6 +5,7 @@ import { motion } from "framer-motion"
 import { useTheme } from "@/components/theme-provider"
 import { SafeImage as Image } from "@/components/frontend/safe-image"
 import Link from "next/link"
+import { PremiumBadge } from "@/components/frontend/premium-badge"
 
 export function RelatedNews({ currentCategory, currentArticleId }: { currentCategory: string, currentArticleId: string }) {
   const { theme } = useTheme()
@@ -15,7 +16,10 @@ export function RelatedNews({ currentCategory, currentArticleId }: { currentCate
   useEffect(() => {
     // Fetch related news (limit 7 to ensure we have 6 after filtering out the current article)
     fetch(`${process.env.NEXT_PUBLIC_API_URL}/news?category=${currentCategory}&limit=7`)
-      .then((res) => res.json())
+      .then((res) => {
+        if (!res.ok) throw new Error("Fetch failed")
+        return res.json()
+      })
       .then((data) => {
         if (data.success && data.data) {
           const filtered = data.data
@@ -60,6 +64,7 @@ export function RelatedNews({ currentCategory, currentArticleId }: { currentCate
                 />
               </div>
               <div className="p-4 flex flex-col flex-grow">
+                {article.isPremium && <PremiumBadge size="sm" className="mb-1.5" />}
                 <h4 className={`font-bold text-sm leading-snug line-clamp-2 mb-2 group-hover:text-red-500 transition-colors ${
                   isDark ? "text-white" : "text-gray-900"
                 }`}>

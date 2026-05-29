@@ -29,6 +29,7 @@ export function SharePostModal({ isOpen, onClose, post, isDark }: SharePostModal
         ? `${API}/users?search=${encodeURIComponent(q)}&limit=30`
         : `${API}/users?limit=30`
       const res = await fetch(url)
+      if (!res.ok) throw new Error("Fetch failed")
       const data = await res.json()
       if (data.success) {
         // Exclude self
@@ -64,6 +65,7 @@ export function SharePostModal({ isOpen, onClose, post, isDark }: SharePostModal
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ firebaseUid: user.uid, friendIds: [friendId] }),
       })
+      if (!res.ok) throw new Error("Fetch failed")
       const data = await res.json()
       if (!data.success) throw new Error(data.error)
     } catch (err: any) {

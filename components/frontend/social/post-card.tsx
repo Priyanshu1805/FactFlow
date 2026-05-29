@@ -88,6 +88,7 @@ export function PostCard({ post, isDark, socket }: PostCardProps) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ firebaseUid: user.uid }),
       })
+      if (!res.ok) throw new Error("Fetch failed")
       const data = await res.json()
       if (data.success) {
         setIsLiked(data.hasLiked)
@@ -115,6 +116,7 @@ export function PostCard({ post, isDark, socket }: PostCardProps) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ firebaseUid: user.uid }),
       })
+      if (!res.ok) throw new Error("Fetch failed")
       const data = await res.json()
       if (data.success) {
         setIsSaved(data.hasSaved)

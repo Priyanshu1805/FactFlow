@@ -96,7 +96,7 @@ export function Footer() {
                 <a
                   key={link.name}
                   href={link.href}
-                  className={`p-2.5 rounded-lg bg-secondary text-secondary-foreground transition-colors ${link.color}`}
+                  className={`p-3 sm:p-2.5 rounded-lg bg-secondary text-secondary-foreground transition-colors ${link.color}`}
                   target="_blank"
                   rel="noopener noreferrer"
                 >
@@ -151,9 +151,9 @@ export function Footer() {
                 suppressHydrationWarning
                 type="email"
                 placeholder="Your email"
-                className="flex-1 px-3 py-2.5 rounded-lg bg-secondary border border-border text-foreground placeholder:text-muted-foreground text-sm focus:outline-none focus:border-red-500 transition-colors"
+                className="flex-1 px-3 py-3 sm:py-2.5 rounded-lg bg-secondary border border-border text-foreground placeholder:text-muted-foreground text-sm focus:outline-none focus:border-red-500 transition-colors"
               />
-              <button suppressHydrationWarning className="p-2.5 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors">
+              <button suppressHydrationWarning className="p-3 sm:p-2.5 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors">
                 <Send className="w-4 h-4" />
               </button>
             </div>

@@ -61,7 +61,10 @@ export function MobileBottomNav() {
     const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api"
     const checkNotifications = () => {
       fetch(`${API_URL}/notifications?firebaseUid=${user.uid}`)
-        .then(res => res.json())
+        .then(res => {
+          if (!res.ok) throw new Error("Fetch failed")
+          return res.json()
+        })
         .then(data => {
           if (data.success && data.notifications) {
             const hasUnread = data.notifications.some((n: any) => !n.isRead)

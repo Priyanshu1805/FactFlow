@@ -36,6 +36,9 @@ export default function RootLayout({
             }
           }, { capture: true });
         `}} />
+        <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+        <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)" />
+        <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400;1,700&family=Old+Standard+TT:ital,wght@0,400;0,700;1,400&family=UnifrakturMaguntia&display=swap" rel="stylesheet" />
@@ -48,7 +51,7 @@ export default function RootLayout({
               <DynamicClients />
               <TwoFactorGuard>
                 <AccountStatusGuard>
-                  <div className="flex flex-col min-h-screen pb-16">
+                  <div className="flex flex-col min-h-screen">
                     {children}
                   </div>
                 </AccountStatusGuard>

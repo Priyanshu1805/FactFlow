@@ -141,7 +141,10 @@ export default function DirectInboxPage() {
     // Fetch messages for selected chat
     setMessagesLoading(true)
     fetch(`${API}/messages/${selectedChat._id}`)
-      .then(res => res.json())
+      .then(res => {
+        if (!res.ok) throw new Error("Fetch failed")
+        return res.json()
+      })
       .then(data => {
         if (data.success) {
           setMessages(data.messages)
@@ -170,7 +173,10 @@ export default function DirectInboxPage() {
     if (!user) return
     setChatsLoading(true)
     fetch(`${API}/chats?firebaseUid=${user.uid}`)
-      .then(res => res.json())
+      .then(res => {
+        if (!res.ok) throw new Error("Fetch failed")
+        return res.json()
+      })
       .then(data => {
         if (data.success) {
           setChats(data.chats)
@@ -193,7 +199,10 @@ export default function DirectInboxPage() {
     setSearchLoading(true)
     const delayDebounce = setTimeout(() => {
       fetch(`${API}/users?search=${encodeURIComponent(searchQuery)}&limit=15`)
-        .then(res => res.json())
+        .then(res => {
+          if (!res.ok) throw new Error("Fetch failed")
+          return res.json()
+        })
         .then(data => {
           if (data.success) {
             setSearchResults(data.users.filter((u: any) => u.firebaseUid !== user?.uid))
@@ -215,6 +224,7 @@ export default function DirectInboxPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ firebaseUid: user.uid, userId: targetUser._id })
       })
+      if (!res.ok) throw new Error("Fetch failed")
       const data = await res.json()
       if (data.success) {
         setChats(prev => {
@@ -278,6 +288,7 @@ export default function DirectInboxPage() {
         method: "POST",
         body: formData
       })
+      if (!res.ok) throw new Error("Fetch failed")
       const data = await res.json()
       if (data.success) {
         setMessages(prev => [...prev, data.message])

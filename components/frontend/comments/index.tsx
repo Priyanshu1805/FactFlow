@@ -49,6 +49,7 @@ export function CommentsSection({ articleId }: { articleId: string }) {
   const fetchComments = async () => {
     try {
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/comments/${articleId}`)
+      if (!res.ok) throw new Error("Fetch failed")
       const data = await res.json()
       if (data.success) {
         setComments(data.data)

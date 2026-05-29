@@ -113,7 +113,7 @@ export function LiveWidgetsDashboard() {
           className="flex gap-4 overflow-x-auto pb-4 snap-x snap-mandatory scrollbar-hide cursor-grab active:cursor-grabbing"
           style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
         >
-          <AnimatePresence mode="popLayout">
+          <AnimatePresence>
             {renderWidgets.map((widgetConfig: any) => {
               const { Component, props, id } = widgetConfig
               return (

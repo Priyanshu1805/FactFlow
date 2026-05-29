@@ -38,6 +38,7 @@ export function PostOptionsMenu({ isOpen, onClose, post, isDark, onEdit }: PostO
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ firebaseUid: user.uid })
         })
+        if (!res.ok) throw new Error("Fetch failed")
         const data = await res.json()
         if (data.success) {
           toast.success(data.hasSaved ? "Saved successfully" : "Removed from saved")
@@ -48,12 +49,14 @@ export function PostOptionsMenu({ isOpen, onClose, post, isDark, onEdit }: PostO
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ firebaseUid: user.uid, targetUsername: post.author?.username })
         })
+        if (!res.ok) throw new Error("Fetch failed")
         const data = await res.json()
         if (data.success) {
           toast.success(data.isFollowing ? `Followed @${post.author?.username}` : `Unfollowed @${post.author?.username}`)
         } else throw new Error(data.error)
       } else if (actionType === "delete") {
         const res = await fetch(`${API}/posts/${post._id}?firebaseUid=${user.uid}`, { method: "DELETE" })
+        if (!res.ok) throw new Error("Fetch failed")
         const data = await res.json()
         if (data.success) toast.success("Post deleted")
         else throw new Error(data.error)
@@ -66,6 +69,7 @@ export function PostOptionsMenu({ isOpen, onClose, post, isDark, onEdit }: PostO
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ firebaseUid: user.uid, actionType })
         })
+        if (!res.ok) throw new Error("Fetch failed")
         const data = await res.json()
         if (data.success) {
           toast.success(data.message || "Action successful")

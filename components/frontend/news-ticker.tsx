@@ -58,7 +58,7 @@ export function NewsTicker() {
                       <span
                         key={`${copy}-${a._id}`}
                         onClick={() => router.push(`/article/${a._id}`)}
-                        className={`inline-flex items-center cursor-pointer px-6 py-2.5 text-sm font-medium transition-colors hover:text-red-500 ${
+                        className={`inline-flex items-center cursor-pointer px-6 py-3.5 sm:py-2.5 text-sm font-medium transition-colors hover:text-red-500 ${
                           isDark ? "text-white/85" : "text-gray-700"
                         }`}
                       >
@@ -81,14 +81,25 @@ export function NewsTicker() {
         .ticker-scroll-wrapper {
           display: flex;
           white-space: nowrap;
-          animation: ticker-move 60s linear infinite;
+          animation: ticker-move 18s linear infinite;
+          -webkit-animation: ticker-move 18s linear infinite;
+          will-change: transform;
+          -webkit-backface-visibility: hidden;
+          backface-visibility: hidden;
+          transform: translateZ(0);
+          -webkit-transform: translateZ(0);
         }
         .ticker-scroll-wrapper:hover {
           animation-play-state: paused;
+          -webkit-animation-play-state: paused;
         }
         .ticker-scroll-inner {
           display: inline-flex;
           flex-shrink: 0;
+        }
+        @-webkit-keyframes ticker-move {
+          from { -webkit-transform: translateX(0); transform: translateX(0); }
+          to { -webkit-transform: translateX(-50%); transform: translateX(-50%); }
         }
         @keyframes ticker-move {
           from { transform: translateX(0); }

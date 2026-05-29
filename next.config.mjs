@@ -1,6 +1,16 @@
+// Triggering Next.js dev server restart to clear compilation cache
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   compress: true,
+  allowedDevOrigins: [
+    "localhost",
+    "127.0.0.1",
+    "28ed3beb92e94308-47-11-19-61.serveousercontent.com",
+    "*.serveousercontent.com",
+    "*.loca.lt",
+    "*.pinggy.link",
+    "*.lhr.life"
+  ],
   images: {
     remotePatterns: [
       { protocol: "https", hostname: "**" },
@@ -13,7 +23,6 @@ const nextConfig = {
   },
   experimental: {
     optimizePackageImports: [
-      "lucide-react",
       "framer-motion",
       "date-fns",
       "sonner",
@@ -40,22 +49,16 @@ const nextConfig = {
         { key: "Cache-Control", value: "public, s-maxage=60, stale-while-revalidate=300" },
       ],
     },
-    {
-      source: "/_next/static/(.*)",
-      headers: [
-        { key: "Cache-Control", value: "public, max-age=31536000, immutable" },
-      ],
-    },
   ],
   async rewrites() {
     return [
       {
         source: "/api/backend/:path*",
-        destination: "http://localhost:5000/api/:path*",
+        destination: "http://127.0.0.1:5000/api/:path*",
       },
       {
         source: "/socket.io/:path*",
-        destination: "http://localhost:5000/socket.io/:path*",
+        destination: "http://127.0.0.1:5000/socket.io/:path*",
       },
     ]
   },

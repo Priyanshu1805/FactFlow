@@ -6,6 +6,7 @@ import { AlertTriangle, ChevronLeft, ChevronRight, Play, MessageSquare, Twitter,
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useTheme } from "@/components/theme-provider"
+import { PremiumBadge } from "@/components/frontend/premium-badge"
 
 interface Article {
   _id: string
@@ -16,6 +17,7 @@ interface Article {
   category: string
   source?: string
   tags?: string[]
+  isPremium?: boolean
 }
 
 function SocialUpdateCard({ article }: { article: Article }) {
@@ -32,7 +34,7 @@ function SocialUpdateCard({ article }: { article: Article }) {
   return (
     <div 
       onClick={handleCardClick}
-      className="relative flex-shrink-0 w-[85vw] sm:w-[600px] lg:w-[800px] h-[400px] sm:h-[500px] rounded-2xl overflow-hidden group shadow-2xl cursor-pointer block bg-black border border-white/10"
+      className="relative flex-shrink-0 w-[90vw] sm:w-[600px] lg:w-[800px] h-[320px] sm:h-[500px] rounded-2xl overflow-hidden group shadow-2xl cursor-pointer block bg-black border border-white/10"
     >
       {/* Sleek Looping Video Background */}
       <div className="absolute inset-0 w-full h-full pointer-events-none scale-105">
@@ -52,37 +54,37 @@ function SocialUpdateCard({ article }: { article: Article }) {
       <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-transparent to-transparent opacity-50" />
       
       {/* Top Left: LATEST UPDATE Badge */}
-      <div className="absolute top-6 left-6 flex items-center gap-3 z-10">
-        <div className="flex items-center gap-2 bg-white/10 backdrop-blur-md px-4 py-2 rounded-full border border-white/20 shadow-xl">
-          <span className="text-white text-xs font-black tracking-widest uppercase">
+      <div className="absolute top-4 left-4 sm:top-6 sm:left-6 flex items-center gap-3 z-10">
+        <div className="flex items-center gap-2 bg-white/10 backdrop-blur-md px-3 py-1.5 sm:px-4 sm:py-2 rounded-full border border-white/20 shadow-xl">
+          <span className="text-white text-[10px] sm:text-xs font-black tracking-widest uppercase">
             LATEST UPDATE • FACT FLOW
           </span>
         </div>
       </div>
 
       {/* Top Right: Glowing Logo */}
-      <div className="absolute top-6 right-6 z-10 opacity-70 group-hover:opacity-100 transition-opacity">
-        <div className="w-12 h-12 bg-white/5 backdrop-blur-xl border border-white/20 rounded-full flex items-center justify-center shadow-[0_0_15px_rgba(255,255,255,0.1)] text-white font-bold">
+      <div className="absolute top-4 right-4 sm:top-6 sm:right-6 z-10 opacity-70 group-hover:opacity-100 transition-opacity">
+        <div className="w-9 h-9 sm:w-12 sm:h-12 bg-white/5 backdrop-blur-xl border border-white/20 rounded-full flex items-center justify-center shadow-[0_0_15px_rgba(255,255,255,0.1)] text-white text-sm sm:font-bold">
           F
         </div>
       </div>
 
       {/* Center: The Actual Update Text */}
-      <div className="absolute inset-0 flex flex-col justify-end p-8 sm:p-10 z-10">
-        <div className="bg-black/40 backdrop-blur-xl border border-white/10 rounded-2xl p-6 shadow-2xl transform translate-y-4 group-hover:translate-y-0 transition-transform duration-300">
-          <p className="text-white/[0.85] text-sm font-bold uppercase tracking-wider mb-2 flex items-center gap-2">
+      <div className="absolute inset-0 flex flex-col justify-end p-4 sm:p-10 z-10">
+        <div className="bg-black/40 backdrop-blur-xl border border-white/10 rounded-2xl p-4 sm:p-6 shadow-2xl transform translate-y-4 group-hover:translate-y-0 transition-transform duration-300">
+          <p className="text-white/[0.85] text-xs sm:text-sm font-bold uppercase tracking-wider mb-1 sm:mb-2 flex items-center gap-2">
             <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
             Breaking from Fact Flow Desk
           </p>
-          <h2 className="text-white font-black text-xl sm:text-2xl lg:text-3xl leading-tight line-clamp-3">
+          <h2 className="text-white font-black text-lg sm:text-2xl lg:text-3xl leading-tight line-clamp-2 sm:line-clamp-3">
             "{article.title}"
           </h2>
-          <p className="text-white/[0.85] mt-3 text-sm max-w-2xl line-clamp-2">
+          <p className="text-white/[0.85] mt-1.5 sm:mt-3 text-xs sm:text-sm max-w-2xl line-clamp-1 sm:line-clamp-2">
             {article.excerpt}
           </p>
           
-          <div className="flex items-center gap-3 mt-5 text-white/[0.85] text-xs font-bold uppercase tracking-wider">
-            <span className="bg-white/10 px-3 py-1.5 rounded-full hover:bg-white/20 transition-colors">
+          <div className="flex items-center gap-2 sm:gap-3 mt-3 sm:mt-5 text-white/[0.85] text-[10px] sm:text-xs font-bold uppercase tracking-wider">
+            <span className="bg-white/10 px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-full hover:bg-white/20 transition-colors">
               Read Full Update
             </span>
             <span>•</span>
@@ -102,7 +104,7 @@ function ArticleHeroCard({ article }: { article: Article }) {
   const sourceLabel = "Fact Flow Live"
 
   return (
-    <Link href={`/article/${article._id}`} className="relative flex-shrink-0 w-[85vw] sm:w-[600px] lg:w-[800px] h-[400px] sm:h-[500px] rounded-2xl overflow-hidden group shadow-2xl cursor-pointer block">
+    <Link href={`/article/${article._id}`} className="relative flex-shrink-0 w-[90vw] sm:w-[600px] lg:w-[800px] h-[320px] sm:h-[500px] rounded-2xl overflow-hidden group shadow-2xl cursor-pointer block">
       <div className="absolute inset-0 bg-zinc-950" />
       
       <div className="absolute inset-0 overflow-hidden">
@@ -120,30 +122,31 @@ function ArticleHeroCard({ article }: { article: Article }) {
       <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent" />
       <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-transparent to-transparent opacity-50" />
       
-      <div className="absolute top-6 left-6 flex items-center gap-3">
-        <div className="flex items-center gap-2 bg-red-600/95 backdrop-blur-sm px-3 py-1.5 rounded-full border border-red-400/30 shadow-lg">
-          <span className="w-2 h-2 bg-white rounded-full animate-pulse shadow-[0_0_8px_white]" />
-          <span className="text-white text-xs font-black tracking-widest uppercase">
+      <div className="absolute top-4 left-4 sm:top-6 sm:left-6 flex items-center gap-3">
+        <div className="flex items-center gap-2 bg-red-600/95 backdrop-blur-sm px-2.5 py-1.5 sm:px-3 sm:py-1.5 rounded-full border border-red-400/30 shadow-lg">
+          <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-white rounded-full animate-pulse shadow-[0_0_8px_white]" />
+          <span className="text-white text-[10px] sm:text-xs font-black tracking-widest uppercase">
             LIVE UPDATE
           </span>
+          {article.isPremium && <PremiumBadge size="sm" />}
         </div>
       </div>
 
-      <div className="absolute top-6 right-6 flex items-center gap-2 bg-black/70 backdrop-blur-sm px-3 py-1.5 rounded-full border border-white/10 shadow-lg z-20">
-        <span className="text-white/90 text-xs font-bold tracking-wide uppercase">
+      <div className="absolute top-4 right-4 sm:top-6 sm:right-6 flex items-center gap-2 bg-black/70 backdrop-blur-sm px-2.5 py-1.5 sm:px-3 sm:py-1.5 rounded-full border border-white/10 shadow-lg z-20">
+        <span className="text-white/90 text-[10px] sm:text-xs font-bold tracking-wide uppercase">
           {sourceLabel}
         </span>
       </div>
 
-      <div className="absolute bottom-6 left-6 right-6 z-10">
-        <h2 className="text-white font-black text-2xl sm:text-3xl lg:text-4xl leading-tight line-clamp-3 group-hover:text-red-400 transition-colors drop-shadow-[0_2px_10px_rgba(0,0,0,0.8)]">
+      <div className="absolute bottom-4 left-4 right-4 sm:bottom-6 sm:left-6 sm:right-6 z-10">
+        <h2 className="text-white font-black text-lg sm:text-3xl lg:text-4xl leading-tight line-clamp-2 sm:line-clamp-3 group-hover:text-red-400 transition-colors drop-shadow-[0_2px_10px_rgba(0,0,0,0.8)]">
           {article.title}
         </h2>
-        <p className="text-white/80 mt-3 text-sm sm:text-base max-w-2xl line-clamp-2 drop-shadow-md font-medium">
+        <p className="text-white/80 mt-2 text-xs sm:text-base max-w-2xl line-clamp-1 sm:line-clamp-2 drop-shadow-md font-medium">
           {article.excerpt}
         </p>
-        <div className="flex items-center gap-3 mt-4 text-white/[0.85] text-xs font-bold uppercase tracking-wider">
-          <span className="bg-white/10 px-2 py-1 rounded backdrop-blur-sm">Read Full Story</span>
+        <div className="flex items-center gap-2 sm:gap-3 mt-3 text-white/[0.85] text-[10px] sm:text-xs font-bold uppercase tracking-wider">
+          <span className="bg-white/10 px-2 py-0.5 rounded backdrop-blur-sm">Read Full Story</span>
           <span>•</span>
           <span>
             {new Date(article.publishedAt).toLocaleString("en-IN", {
@@ -179,6 +182,7 @@ export function BreakingNewsHero() {
     const fetchData = async () => {
       try {
         const r = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/news?breaking=true&limit=20`)
+        if (!r.ok) throw new Error("Fetch failed")
         const data = await r.json()
 
         if (data.success && data.data?.length) {
@@ -207,14 +211,21 @@ export function BreakingNewsHero() {
     return () => clearInterval(interval)
   }, [])
 
-  // Smooth CSS-like auto scroll
+  // Smooth CSS-like auto scroll with visibility-aware pause
   useEffect(() => {
     const container = scrollRef.current
     if (!container || articles.length === 0) return
 
     let animationId: number
+    let isVisible = true
+
+    const observer = new IntersectionObserver(([entry]) => {
+      isVisible = entry.isIntersecting
+    }, { threshold: 0.1 })
+    observer.observe(container)
+
     const scroll = () => {
-      if (!isPausedRef.current && !isManualScrollingRef.current && container) {
+      if (isVisible && !isPausedRef.current && !isManualScrollingRef.current && container) {
         container.scrollLeft += 1.0
         if (container.scrollLeft >= (container.scrollWidth - container.clientWidth) / 2) {
           container.scrollLeft = 0
@@ -224,17 +235,21 @@ export function BreakingNewsHero() {
     }
     
     animationId = requestAnimationFrame(scroll)
-    return () => cancelAnimationFrame(animationId)
+    return () => {
+      cancelAnimationFrame(animationId)
+      observer.disconnect()
+    }
   }, [articles.length])
 
   const scrollBy = (dir: "left" | "right") => {
     const container = scrollRef.current
     if (container) {
       isManualScrollingRef.current = true
-      container.scrollBy({ left: dir === "right" ? 600 : -600, behavior: "smooth" })
+      const scrollAmount = Math.min(600, container.clientWidth * 0.8)
+      container.scrollBy({ left: dir === "right" ? scrollAmount : -scrollAmount, behavior: "smooth" })
       setTimeout(() => {
         isManualScrollingRef.current = false
-      }, 600) // allow 600ms for smooth scroll to finish
+      }, 600)
     }
   }
 
@@ -271,7 +286,7 @@ export function BreakingNewsHero() {
     <div className="relative w-full overflow-hidden bg-black py-4">
 
       <div 
-        className="w-full h-[450px] sm:h-[550px] flex items-center"
+        className="w-full h-[360px] sm:h-[550px] flex items-center"
         onMouseEnter={() => isPausedRef.current = true}
         onMouseLeave={() => isPausedRef.current = false}
         onTouchStart={() => isPausedRef.current = true}
@@ -279,7 +294,7 @@ export function BreakingNewsHero() {
       >
         <div 
           ref={scrollRef}
-          className="flex gap-4 sm:gap-6 px-4 sm:px-10 overflow-x-auto scrollbar-hide py-10 w-full"
+          className="flex gap-4 sm:gap-6 px-4 sm:px-10 overflow-x-auto scrollbar-hide py-4 sm:py-10 w-full"
           style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
         >
           {displayItems.map((item, idx) => (

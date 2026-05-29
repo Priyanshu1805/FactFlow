@@ -62,7 +62,10 @@ export default function PublicProfilePage() {
   const fetchProfileDetails = () => {
     const viewerParam = user?.uid ? `?viewerUid=${user.uid}` : ""
     fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/public/${username}${viewerParam}`)
-      .then(res => res.json())
+      .then(res => {
+        if (!res.ok) throw new Error("Fetch failed")
+        return res.json()
+      })
       .then(data => {
         if (data.success && data.user) {
           setProfile(data.user)
@@ -87,7 +90,10 @@ export default function PublicProfilePage() {
   // Load active stories
   useEffect(() => {
     fetch(`${process.env.NEXT_PUBLIC_API_URL}/stories`)
-      .then(res => res.json())
+      .then(res => {
+        if (!res.ok) throw new Error("Fetch failed")
+        return res.json()
+      })
       .then(data => {
         if (data.success && data.data) {
           setStories(data.data)
@@ -150,7 +156,10 @@ export default function PublicProfilePage() {
       setLoadingShorts(true)
       const queryAuthor = profile.username || profile.name
       fetch(`${process.env.NEXT_PUBLIC_API_URL}/reels?author=${encodeURIComponent(queryAuthor)}`)
-        .then(res => res.json())
+        .then(res => {
+          if (!res.ok) throw new Error("Fetch failed")
+          return res.json()
+        })
         .then(data => {
           if (data.success && data.data) {
             setUserShorts(data.data)
@@ -176,6 +185,7 @@ export default function PublicProfilePage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ firebaseUid: user.uid, targetUsername: profile.username })
       })
+      if (!res.ok) throw new Error("Fetch failed")
       const data = await res.json()
       if (data.success) {
         setIsFollowing(data.isFollowing)

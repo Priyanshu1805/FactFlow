@@ -1,13 +1,16 @@
 "use client"
+// Cache busting comment for Turbopack HMR
 
 import { useState, useRef, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { Menu, X, Search, TrendingUp, Radio, Users, Gamepad2, Laugh, Cpu, User, Settings, ShieldCheck, ChevronDown, MonitorPlay, Sparkles, Globe, MessageSquare } from "lucide-react"
+import { Menu, X, Search, TrendingUp, Radio, Users, Gamepad2, Laugh, Cpu, User, Settings, ShieldCheck, Sparkles, Globe } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useTheme } from "@/components/theme-provider"
 import { useAuthStore } from "@/store/auth-store"
 import { auth } from "@/lib/firebase"
+import { useSubscription } from "@/lib/use-subscription"
+import { PremiumBadge } from "@/components/frontend/premium-badge"
 
 const navLinks = [
   { name: "Live", href: "/live", icon: Radio },
@@ -21,27 +24,16 @@ const navLinks = [
   { name: "Social", href: "/social", icon: Globe },
 ]
 
-// All available features for the smart search
-const siteFeatures = [
-  { name: "Admin Dashboard", href: "/admin", icon: ShieldCheck, keywords: ["admin", "dashboard", "manage"] },
-  { name: "Settings", href: "/settings", icon: Settings, keywords: ["settings", "preferences", "config"] },
-  { name: "Reels", href: "/reels", icon: MonitorPlay, keywords: ["reels", "videos", "shorts"] },
-  { name: "Newspaper", href: "/newspaper", icon: TrendingUp, keywords: ["newspaper", "articles", "news"] },
-  { name: "Politics", href: "/politics", icon: Users, keywords: ["politics", "government"] },
-  { name: "Live News", href: "/live", icon: Radio, keywords: ["live", "breaking", "now"] },
-  { name: "Social Feed", href: "/social", icon: Globe, keywords: ["social", "feed", "stories", "posts", "community"] },
-  { name: "Memes", href: "/#memes", icon: Laugh, keywords: ["memes", "funny", "jokes"] },
-]
-
 export function Navbar() {
   const [isOpen, setIsOpen] = useState(false)
+  const [searchExpanded, setSearchExpanded] = useState(false)
   const [settingsOpen, setSettingsOpen] = useState(false)
-  const [profileOpen, setProfileOpen] = useState(false)
+  const settingsRef = useRef<HTMLDivElement>(null)
   const { theme } = useTheme()
   const router = useRouter()
-  const settingsRef = useRef<HTMLDivElement>(null)
-  const profileRef = useRef<HTMLDivElement>(null)
+  const searchInputRef = useRef<HTMLInputElement>(null)
   const { user, isAuthenticated } = useAuthStore()
+  const { subscription } = useSubscription()
   const [hasActiveStory, setHasActiveStory] = useState(false)
   const [hasUnreadSocial, setHasUnreadSocial] = useState(false)
   const [unreadDMCount, setUnreadDMCount] = useState(0)
@@ -50,9 +42,22 @@ export function Navbar() {
   const isDark = theme !== "light"
 
   useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (settingsRef.current && !settingsRef.current.contains(event.target as Node)) {
+        setSettingsOpen(false)
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside)
+    return () => document.removeEventListener("mousedown", handleClickOutside)
+  }, [])
+
+  useEffect(() => {
     if (!isAuthenticated || !user) return
     fetch(`${process.env.NEXT_PUBLIC_API_URL}/stories`)
-      .then(res => res.json())
+      .then(res => {
+        if (!res.ok) throw new Error("Fetch failed")
+        return res.json()
+      })
       .then(data => {
         if (data.success && data.data) {
           const userStory = data.data.find((g: any) => g.user.username === (user as any).username || (user.displayName && g.user.name === user.displayName))
@@ -67,7 +72,10 @@ export function Navbar() {
     const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api"
     const checkNotifications = () => {
       fetch(`${API_URL}/notifications/unread-count?firebaseUid=${user.uid}`)
-        .then(res => res.json())
+        .then(res => {
+          if (!res.ok) throw new Error("Fetch failed")
+          return res.json()
+        })
         .then(data => {
           if (data.success) {
             setHasUnreadSocial(data.unreadCount > 0)
@@ -110,7 +118,10 @@ export function Navbar() {
     const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api"
     const checkDMs = () => {
       fetch(`${API_URL}/chats?firebaseUid=${user.uid}`)
-        .then(res => res.json())
+        .then(res => {
+          if (!res.ok) throw new Error("Fetch failed")
+          return res.json()
+        })
         .then(data => {
           if (data.success && data.chats) {
             const count = data.chats.filter((chat: any) => {
@@ -137,7 +148,7 @@ export function Navbar() {
     }
   }, [isAuthenticated, user])
 
-  // Handle anchor link clicks to work reliably even if clicked multiple times
+  // Handle anchor link clicks
   const handleNavClick = (e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
     if (href === "/social") markSocialRead()
     if (href.startsWith("/#")) {
@@ -153,20 +164,6 @@ export function Navbar() {
     }
   }
 
-  // Close settings dropdown if clicked outside
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (settingsRef.current && !settingsRef.current.contains(event.target as Node)) {
-        setSettingsOpen(false)
-      }
-      if (profileRef.current && !profileRef.current.contains(event.target as Node)) {
-        setProfileOpen(false)
-      }
-    }
-    document.addEventListener("mousedown", handleClickOutside)
-    return () => document.removeEventListener("mousedown", handleClickOutside)
-  }, [])
-
   const openFuturisticSearch = () => {
     window.dispatchEvent(new CustomEvent("open-futuristic-search"))
   }
@@ -175,115 +172,63 @@ export function Navbar() {
     <motion.nav
       initial={{ y: -100 }}
       animate={{ y: 0 }}
-      className={`fixed top-0 left-0 right-0 z-50 backdrop-blur-xl border-b transition-colors ${
+      className={`fixed top-0 left-0 right-0 z-50 backdrop-blur-md border-b transition-colors font-sans duration-200 ${
         theme === "glass"
-          ? "bg-white/5 border-white/10 shadow-lg shadow-white/5"
+          ? "bg-white/5 border-white/10 shadow-lg shadow-white/5 text-white"
           : isDark
-          ? "bg-black/90 border-white/10 shadow-lg shadow-black/20"
-          : "bg-white/95 border-gray-200 shadow-sm"
+          ? "bg-black/90 border-white/10 shadow-lg shadow-black/20 text-white"
+          : "bg-white/95 border-gray-200 shadow-sm text-gray-900"
       }`}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
-          {/* Logo */}
-          <Link href="/" className="flex items-center shrink-0 relative py-1">
+          {/* Left Side: Logo */}
+          <Link href="/" className="flex items-center shrink-0 py-1">
             <div className="flex items-center gap-3 cursor-pointer group">
-              {/* Logo Vector Container with Premium border */}
-              <div className="relative p-[1px] bg-gradient-to-tr from-red-500/30 via-purple-500/30 to-blue-500/30 rounded-xl shadow-sm">
-                
-                {/* Vector SVG Emblem */}
-                <div className="relative z-10 w-9 h-9 rounded-[10px] overflow-hidden bg-black flex items-center justify-center border border-white/10">
-                  <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full select-none">
-                    {/* Symmetrical exact F.F design */}
-                    <text 
-                      x="30" 
-                      y="74" 
-                      fontFamily="Georgia, 'Times New Roman', serif" 
-                      fontWeight="bold" 
-                      fontSize="68" 
-                      fill="#FFFFFF"
-                      textAnchor="middle"
-                    >
-                      F
-                    </text>
-                    
-                    {/* Red Dot */}
-                    <circle 
-                      cx="50" 
-                      cy="74" 
-                      r="6" 
-                      fill="#a8152e"
-                    />
-                    
-                    <text 
-                      x="70" 
-                      y="74" 
-                      fontFamily="Georgia, 'Times New Roman', serif" 
-                      fontWeight="bold" 
-                      fontSize="68" 
-                      fill="#FFFFFF"
-                      textAnchor="middle"
-                    >
-                      F
-                    </text>
-                  </svg>
-                </div>
+              {/* Crimson Square Badge with White "FF" */}
+              <div className="w-9 h-9 rounded-lg bg-red-800 flex items-center justify-center shadow-md shadow-red-900/20 font-black text-white text-base tracking-tighter">
+                FF
               </div>
 
-              {/* Elegant Professional Brand Name */}
-              <div className="relative flex flex-col justify-center">
-                <div className="flex items-center">
-                  <span className={`font-black text-2xl tracking-tighter ${isDark ? "text-white" : "text-gray-900"}`} style={{ letterSpacing: "-0.05em" }}>
-                    FACT
-                  </span>
-                  
-                  <span className="font-black text-2xl tracking-tighter text-red-500 flex" style={{ letterSpacing: "-0.05em" }}>
-                    FLOW
-                  </span>
-                </div>
-              </div>
+              {/* Bold Modern Sans-Serif Logo Text */}
+              <span className={`font-black text-xl tracking-tight ${isDark ? "text-white" : "text-gray-900"}`}>
+                FACTFLOW
+              </span>
             </div>
           </Link>
 
-          {/* Desktop Nav */}
-          <div className="hidden lg:flex items-center gap-1">
+          {/* Center Side: Navigation Links (hidden on mobile) */}
+          <div className="hidden lg:flex items-center gap-1.5">
             {navLinks.map((link) => (
               <Link
                 key={link.name}
                 href={link.href}
                 onClick={(e) => handleNavClick(e, link.href)}
-                className={`relative group flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-semibold transition-all ${
-                  isDark
-                    ? "text-white/[0.85] hover:text-white hover:bg-white/10"
-                    : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
-                }`}
+                className={`relative group flex items-center gap-1.5 px-3 py-2 text-sm font-bold transition-colors duration-300 ${isDark ? "text-gray-300 hover:text-white" : "text-gray-600 hover:text-red-500"}`}
               >
-                <link.icon className="w-4 h-4 opacity-70 group-hover:opacity-100 transition-opacity" />
+                <link.icon className="w-4 h-4 opacity-75 group-hover:opacity-100 transition-opacity" />
                 {link.name}
                 {link.name === "Live" && (
                   <span className="w-1.5 h-1.5 bg-red-500 rounded-full animate-pulse shadow-[0_0_8px_rgba(239,68,68,0.8)]" />
                 )}
-                {link.name === "Newspaper" && trendingCount > 0 && (
+                {link.name === "Trending" && trendingCount > 0 && (
                   <span className="absolute -top-1 -right-1 min-w-[16px] h-[16px] px-1 flex items-center justify-center bg-orange-500 text-white text-[9px] font-bold rounded-full shadow-sm animate-pulse">
                     {trendingCount > 99 ? "99+" : trendingCount}
                   </span>
                 )}
-                {link.name === "Social" && hasUnreadSocial && (
-                  <span className="w-1.5 h-1.5 bg-red-500 rounded-full animate-pulse shadow-[0_0_6px_rgba(239,68,68,0.8)]" />
-                )}
-                {/* Hover Underline Effect */}
-                <span className="absolute -bottom-1 left-3 right-3 h-0.5 bg-red-500 scale-x-0 group-hover:scale-x-100 transition-transform origin-left rounded-full" />
+                {/* Sliding underline effect */}
+                <span className="absolute -bottom-1 left-3 right-3 h-0.5 bg-gradient-to-r from-red-650 to-red-500 bg-red-600 scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left rounded-full" />
               </Link>
             ))}
           </div>
 
-          {/* Right Side Actions */}
+            {/* Right Side: Search & Login & Hamburger */}
           <div className="flex items-center gap-2 sm:gap-3">
             
             {/* AI Search Trigger */}
             <button
               onClick={openFuturisticSearch}
-              className={`flex items-center justify-center p-2 rounded-full transition-all duration-300 group ${
+              className={`flex items-center justify-center p-2.5 sm:p-2 rounded-full transition-all duration-300 group ${
                 isDark 
                   ? "bg-white/5 border border-white/10 hover:bg-white/10 hover:border-purple-500/30" 
                   : "bg-gray-100 border border-transparent hover:bg-gray-200 hover:border-purple-300"
@@ -294,23 +239,17 @@ export function Navbar() {
               <Sparkles className={`w-5 h-5 hidden group-hover:block ${isDark ? "text-purple-400" : "text-purple-600"} animate-pulse`} />
             </button>
 
-            {/* Smart Notification Bell — Real backend integration */}
-            {/* Removed from global Navbar as per request, now only available in Socials */}
-
             {/* Settings & Admin Dropdown */}
-            <div className="relative" ref={settingsRef}>
+            <div className="relative hidden sm:block" ref={settingsRef}>
               <button
                 onClick={() => setSettingsOpen(!settingsOpen)}
-                className={`flex items-center gap-1 p-2 rounded-full transition-colors ${
-                  isDark 
-                    ? (settingsOpen ? "bg-white/10 text-white" : "text-white/[0.85] hover:text-white hover:bg-white/10")
-                    : (settingsOpen ? "bg-gray-200 text-gray-900" : "text-gray-600 hover:bg-gray-100")
+                className={`p-2 rounded-full transition-colors ${
+                  isDark ? "hover:bg-white/10 text-gray-300 hover:text-white" : "hover:bg-gray-100 text-gray-600 hover:text-gray-900"
                 }`}
               >
                 <Settings className="w-5 h-5" />
-                <ChevronDown className={`w-3 h-3 transition-transform ${settingsOpen ? "rotate-180" : ""}`} />
               </button>
-
+              
               <AnimatePresence>
                 {settingsOpen && (
                   <motion.div
@@ -319,30 +258,15 @@ export function Navbar() {
                     exit={{ opacity: 0, y: 10, scale: 0.95 }}
                     transition={{ duration: 0.15 }}
                     className={`absolute right-0 mt-2 w-48 rounded-xl border shadow-xl overflow-hidden ${
-                      isDark ? "bg-black/95 border-white/10 backdrop-blur-xl" : "bg-white border-gray-200"
+                      isDark ? "bg-[#1E293B] border-white/10 text-white" : "bg-white border-gray-100 text-gray-900"
                     }`}
                   >
                     <div className="p-1">
-                      <Link 
-                        href="/settings"
-                        onClick={() => setSettingsOpen(false)}
-                        className={`flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
-                          isDark ? "text-white/80 hover:bg-white/10 hover:text-white" : "text-gray-700 hover:bg-gray-100"
-                        }`}
-                      >
-                        <Settings className="w-4 h-4" />
-                        Preferences
+                      <Link href="/settings" className={`flex items-center gap-2 px-3 py-2 text-sm rounded-lg ${isDark ? "hover:bg-white/10" : "hover:bg-gray-50"}`}>
+                        <Settings className="w-4 h-4" /> Preferences
                       </Link>
-                      <div className={`my-1 border-t ${isDark ? "border-white/10" : "border-gray-100"}`} />
-                      <Link 
-                        href="/admin"
-                        onClick={() => setSettingsOpen(false)}
-                        className={`flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
-                          isDark ? "text-red-400 hover:bg-red-500/10 hover:text-red-300" : "text-red-600 hover:bg-red-50"
-                        }`}
-                      >
-                        <ShieldCheck className="w-4 h-4" />
-                        Admin Dashboard
+                      <Link href="/admin" className={`flex items-center gap-2 px-3 py-2 text-sm rounded-lg ${isDark ? "hover:bg-white/10" : "hover:bg-gray-50"}`}>
+                        <ShieldCheck className="w-4 h-4" /> Admin Dashboard
                       </Link>
                     </div>
                   </motion.div>
@@ -350,44 +274,25 @@ export function Navbar() {
               </AnimatePresence>
             </div>
 
-            {/* Auth Button / Profile Dropdown (Replaced with Link) */}
-            {isAuthenticated ? (
-              <div className="relative">
-                <Link
-                  href={`/u/${(user as any)?.username || user?.uid}`}
-                  className={`flex items-center justify-center w-9 h-9 rounded-full transition-transform hover:scale-105 ${
-                    hasActiveStory 
-                      ? "bg-gradient-to-tr from-yellow-400 via-red-500 to-fuchsia-600 p-[1.5px]" 
-                      : `overflow-hidden border-2 ${isDark ? "border-white/20 hover:border-white/40" : "border-gray-200 hover:border-gray-300"}`
-                  }`}
-                >
-                  <div className={`w-full h-full rounded-full flex items-center justify-center overflow-hidden bg-black ${hasActiveStory ? 'border border-black' : ''}`}>
-                    {user?.photoURL ? (
-                      <img src={user.photoURL} alt="Profile" className="w-full h-full object-cover" />
-                    ) : (
-                      <User className={`w-5 h-5 ${isDark ? "text-white/[0.85]" : "text-gray-600"}`} />
-                    )}
-                  </div>
-                </Link>
-              </div>
-            ) : (
+            {/* Login Button */}
+            {!isAuthenticated && (
               <Link
                 href="/login"
-                className="btn hidden sm:block"
+                className="bg-gradient-to-r from-red-600 to-orange-500 text-white px-3 py-1.5 sm:px-4 sm:py-2 rounded-full text-xs sm:text-sm font-bold shadow-md shadow-red-900/20 hover:brightness-110 transition-all active:scale-95 text-center whitespace-nowrap"
               >
-                <span>
-                  <User className="w-4 h-4" />
-                  Login
-                </span>
+                Login
               </Link>
             )}
 
-            {/* Mobile Menu Toggle */}
+            {/* Hamburger Mobile Menu Toggle */}
             <button
               onClick={() => setIsOpen(!isOpen)}
               className={`lg:hidden p-2 rounded-lg transition-colors ${
-                isDark ? "text-white hover:bg-white/10" : "text-gray-900 hover:bg-gray-100"
+                isDark 
+                  ? "text-gray-300 hover:text-white hover:bg-white/10" 
+                  : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
               }`}
+              aria-label="Toggle Menu"
             >
               {isOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
             </button>
@@ -395,89 +300,164 @@ export function Navbar() {
         </div>
       </div>
 
-      {/* Mobile Menu */}
+      {/* Mobile Sliding Sidebar Drawer & Backdrop */}
       <AnimatePresence>
         {isOpen && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "auto" }}
-            exit={{ opacity: 0, height: 0 }}
-            className={`lg:hidden border-t overflow-y-auto max-h-[80vh] ${theme === "glass" ? "border-white/10 bg-white/5 backdrop-blur-3xl" : isDark ? "border-white/10 bg-black/95 backdrop-blur-xl" : "border-gray-200 bg-white"}`}
-          >
-            <div className="px-4 py-4 space-y-1">
-              {navLinks.map((link) => (
-                <Link
-                  key={link.name}
-                  href={link.href}
-                  onClick={(e) => {
-                    handleNavClick(e, link.href)
-                    setIsOpen(false)
-                  }}
-                  className={`flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-colors ${
-                    isDark ? "text-white/80 hover:bg-white/10 hover:text-white" : "text-gray-700 hover:bg-gray-100"
-                  }`}
-                >
-                  <link.icon className="w-5 h-5 opacity-70" />
-                  {link.name}
-                  {link.name === "Live" && <span className="w-2 h-2 bg-red-500 rounded-full animate-pulse ml-auto" />}
-                  {link.name === "Social" && hasUnreadSocial && <span className="w-2 h-2 bg-red-500 rounded-full animate-pulse ml-auto shadow-[0_0_6px_rgba(239,68,68,0.8)]" />}
-                </Link>
-              ))}
-              <div className={`pt-4 pb-2 mt-4 border-t ${isDark ? "border-white/10" : "border-gray-100"}`}>
-                <div className={`px-4 mb-2 text-xs font-bold uppercase tracking-wider ${isDark ? "text-white/[0.85]" : "text-gray-500"}`}>
-                  Account & Settings
+          <>
+            {/* Backdrop Overlay */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 0.5 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setIsOpen(false)}
+              className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm lg:hidden"
+            />
+
+            {/* Sidebar Slide-in Drawer */}
+            <motion.div
+              initial={{ x: "100%" }}
+              animate={{ x: 0 }}
+              exit={{ x: "100%" }}
+              transition={{ type: "spring", damping: 25, stiffness: 220 }}
+              className="fixed inset-y-0 right-0 w-80 z-50 bg-[#0F172A] border-l border-white/10 shadow-2xl p-6 flex flex-col justify-between lg:hidden text-white"
+            >
+              <div>
+                {/* Header */}
+                <div className="flex items-center justify-between pb-6 border-b border-white/10">
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-lg bg-red-800 flex items-center justify-center font-black text-white text-sm">
+                      FF
+                    </div>
+                    <span className="font-extrabold text-lg text-white">FACTFLOW</span>
+                  </div>
+                  <button
+                    onClick={() => setIsOpen(false)}
+                    className="p-1.5 rounded-full hover:bg-white/10 text-gray-300 hover:text-white transition-colors"
+                  >
+                    <X className="w-6 h-6" />
+                  </button>
                 </div>
-                <Link
-                  href="/settings"
-                  onClick={() => setIsOpen(false)}
-                  className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-colors ${
-                    isDark ? "text-white/80 hover:bg-white/10" : "text-gray-700 hover:bg-gray-100"
-                  }`}
-                >
-                  <Settings className="w-5 h-5 opacity-70" />
-                  Preferences
-                </Link>
-                <Link
-                  href="/admin"
-                  onClick={() => setIsOpen(false)}
-                  className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-colors ${
-                    isDark ? "text-red-400 hover:bg-red-500/10 hover:text-red-300" : "text-red-600 hover:bg-red-50"
-                  }`}
-                >
-                  <ShieldCheck className="w-5 h-5 opacity-70" />
-                  Admin Dashboard
-                </Link>
-                
-                {!user ? (
-                  <div className={`mt-6 p-5 rounded-2xl border relative overflow-hidden group ${
-                    isDark ? "bg-gradient-to-br from-blue-500/10 to-purple-500/10 border-blue-500/20" : "bg-gradient-to-br from-blue-50 to-purple-50 border-blue-100"
-                  }`}>
-                    {/* Background decoration */}
-                    <div className="absolute top-0 right-0 -mr-8 -mt-8 w-32 h-32 bg-blue-500/20 rounded-full blur-3xl opacity-50" />
-                    <div className="absolute bottom-0 left-0 -ml-8 -mb-8 w-32 h-32 bg-purple-500/20 rounded-full blur-3xl opacity-50" />
-                    
-                    <div className="relative z-10 flex flex-col items-center text-center space-y-3">
-                      <div className="w-12 h-12 bg-gradient-to-br from-blue-600 to-purple-600 rounded-full flex items-center justify-center shadow-lg mb-1">
-                        <User className="w-6 h-6 text-white" />
+
+                {/* Profile Section inside Drawer */}
+                {isAuthenticated && user ? (
+                  <div className="mt-6 p-4 rounded-xl bg-white/5 border border-white/10">
+                    <div className="flex items-center gap-3">
+                      <div className={`shrink-0 w-11 h-11 rounded-full flex items-center justify-center p-[2px] ${hasActiveStory ? "bg-gradient-to-tr from-yellow-400 via-red-500 to-fuchsia-600" : "bg-white/10"}`}>
+                        <div className="w-full h-full rounded-full overflow-hidden bg-black flex items-center justify-center">
+                          {user.photoURL ? (
+                            <img src={user.photoURL} alt="Profile" className="w-full h-full object-cover" />
+                          ) : (
+                            <User className="w-5 h-5 text-white/70" />
+                          )}
+                        </div>
                       </div>
-                      <div>
-                        <h4 className={`text-base font-bold ${isDark ? "text-white" : "text-gray-900"}`}>Join FactFlow Community</h4>
-                        <p className={`text-xs mt-1 px-2 ${isDark ? "text-white/[0.85]" : "text-gray-600"}`}>Unlock premium features and personalized news feed.</p>
+                      <div className="min-w-0 flex-1">
+                        <h4 className="text-sm font-bold truncate text-white">{user.displayName || "FactFlow User"}</h4>
+                        <p className="text-xs text-gray-400 truncate">@{ (user as any).username || "user" }</p>
                       </div>
+                    </div>
+                    <div className="mt-3 pt-3 border-t border-white/5 flex justify-between items-center">
                       <Link
-                        href="/login"
+                        href={`/u/${(user as any)?.username || user?.uid}`}
                         onClick={() => setIsOpen(false)}
-                        className="btn w-full mt-2"
+                        className="text-xs text-red-400 font-bold hover:underline"
                       >
-                        <span>
-                          <Sparkles className="w-4 h-4" />
-                          Get Started Now
-                        </span>
+                        View Profile
                       </Link>
+                      {subscription.tier !== "free" ? (
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-yellow-500/20 text-yellow-400 border border-yellow-500/30">
+                          {subscription.tier === "premium" ? "Premium" : "Pro"}
+                        </span>
+                      ) : (
+                        <Link
+                          href="/subscription"
+                          onClick={() => setIsOpen(false)}
+                          className="text-[10px] font-black bg-gradient-to-r from-red-500 to-amber-500 text-white px-2.5 py-0.5 rounded-lg"
+                        >
+                          Upgrade
+                        </Link>
+                      )}
                     </div>
                   </div>
                 ) : (
-                  <button 
+                  /* Login Trigger inside Drawer */
+                  <div className="mt-6 p-4 rounded-xl bg-gradient-to-br from-red-950/40 to-orange-950/40 border border-red-500/20 text-center">
+                    <h4 className="text-sm font-bold text-white font-sans">Unlock Full Access</h4>
+                    <p className="text-[11px] text-gray-400 mt-1">Join the FactFlow community today.</p>
+                    <Link
+                      href="/login"
+                      onClick={() => setIsOpen(false)}
+                      className="mt-3 block w-full py-2 bg-gradient-to-r from-red-600 to-orange-500 rounded-lg text-xs font-bold text-white hover:brightness-110 transition-all"
+                    >
+                      Login / Sign Up
+                    </Link>
+                  </div>
+                )}
+
+                {/* Primary Nav Links */}
+                <div className="mt-6 space-y-1">
+                  {navLinks.map((link) => (
+                    <Link
+                      key={link.name}
+                      href={link.href}
+                      onClick={(e) => {
+                        handleNavClick(e, link.href)
+                        setIsOpen(false)
+                      }}
+                      className="flex items-center gap-3.5 px-4 py-3 rounded-xl text-sm font-bold text-gray-300 hover:text-white hover:bg-white/5 transition-colors"
+                    >
+                      <link.icon className="w-5 h-5 opacity-70" />
+                      {link.name}
+                      {link.name === "Live" && (
+                        <span className="w-2 h-2 bg-red-500 rounded-full animate-pulse ml-auto" />
+                      )}
+                    </Link>
+                  ))}
+                  
+                  {/* Secondary App Links */}
+                  <div className="pt-4 mt-4 border-t border-white/10 space-y-1">
+                    <span className="px-4 text-[10px] font-bold text-gray-500 uppercase tracking-wider block mb-2">App Menu</span>
+                    
+                    <Link
+                      href="/social"
+                      onClick={() => {
+                        markSocialRead()
+                        setIsOpen(false)
+                      }}
+                      className="flex items-center gap-3.5 px-4 py-2.5 rounded-xl text-xs font-medium text-gray-400 hover:text-white hover:bg-white/5 transition-colors"
+                    >
+                      <Globe className="w-4 h-4 opacity-70" />
+                      Social Feed
+                      {hasUnreadSocial && (
+                        <span className="w-1.5 h-1.5 bg-red-500 rounded-full animate-pulse ml-auto" />
+                      )}
+                    </Link>
+
+                    <Link
+                      href="/settings"
+                      onClick={() => setIsOpen(false)}
+                      className="flex items-center gap-3.5 px-4 py-2.5 rounded-xl text-xs font-medium text-gray-400 hover:text-white hover:bg-white/5 transition-colors"
+                    >
+                      <Settings className="w-4 h-4 opacity-70" />
+                      Preferences
+                    </Link>
+
+                    <Link
+                      href="/admin"
+                      onClick={() => setIsOpen(false)}
+                      className="flex items-center gap-3.5 px-4 py-2.5 rounded-xl text-xs font-medium text-gray-400 hover:text-white hover:bg-white/5 transition-colors"
+                    >
+                      <ShieldCheck className="w-4 h-4 opacity-70" />
+                      Admin Dashboard
+                    </Link>
+                  </div>
+                </div>
+              </div>
+
+              {/* Drawer Footer / Sign Out */}
+              {isAuthenticated && (
+                <div className="pt-4 border-t border-white/10">
+                  <button
                     onClick={async () => {
                       setIsOpen(false);
                       try {
@@ -489,16 +469,14 @@ export function Navbar() {
                         console.error("Sign out error", e);
                       }
                     }}
-                    className={`mt-6 w-full flex items-center justify-center gap-2 py-3.5 rounded-xl font-bold transition-all border ${
-                      isDark ? "bg-red-500/10 text-red-400 border-red-500/20 hover:bg-red-500/20" : "bg-red-50 text-red-600 border-red-200 hover:bg-red-100"
-                    }`}
+                    className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-red-500/10 text-red-400 border border-red-500/20 font-bold text-xs hover:bg-red-500/20 transition-colors"
                   >
                     Sign Out
                   </button>
-                )}
-              </div>
-            </div>
-          </motion.div>
+                </div>
+              )}
+            </motion.div>
+          </>
         )}
       </AnimatePresence>
     </motion.nav>

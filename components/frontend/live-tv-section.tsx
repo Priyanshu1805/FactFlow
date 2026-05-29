@@ -2,19 +2,36 @@
 
 import { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { Play, Maximize, Radio, Activity, Bookmark } from "lucide-react"
+import { Play, Maximize, Radio, Bookmark } from "lucide-react"
 import { useAuthStore } from "@/store/auth-store"
 import { getSavedItems, saveItem, unsaveItem } from "@/lib/api/saved"
 import { toast } from "sonner"
 
-const CHANNELS = [
+interface Channel {
+  id: string
+  name: string
+  ytId: string
+  isChannel?: boolean
+  short: string
+  color: string
+}
+
+const CHANNELS: Channel[] = [
   // Indian News
-  { id: "aajtak", name: "Aaj Tak", ytId: "V389bOHEBL4", short: "AT", color: "bg-red-600" },
-  { id: "ndtv", name: "NDTV India", ytId: "M0Sct-bawSQ", short: "ND", color: "bg-blue-600" },
+  { id: "aajtak", name: "Aaj Tak", ytId: "UCt4t-jeY85JegMlZ-E5UWtA", isChannel: true, short: "AT", color: "bg-red-600" },
+  { id: "ndtv", name: "NDTV India", ytId: "UC9CYT9gSNLevX5ey2_6CK0Q", isChannel: true, short: "ND", color: "bg-blue-600" },
+  { id: "loksatta", name: "Loksatta Live", ytId: "UCQ1591pS2_5N52Vb6w_L66A", isChannel: true, short: "LS", color: "bg-red-500" },
+  { id: "ani", name: "ANI News", ytId: "UCtFQDgA8J8_iiwc5-KoAQlg", isChannel: true, short: "ANI", color: "bg-blue-600" },
+  { id: "timesnownavbharat", name: "Times Now Navbharat", ytId: "UCwBT56Y3BvQyO4gS6H459wA", isChannel: true, short: "TNN", color: "bg-orange-600" },
   { id: "republic", name: "Republic Bharat", ytId: "6qbpkpYqLQk", short: "RB", color: "bg-orange-600" },
   { id: "indiatoday", name: "India Today", ytId: "0IXniqWlmQc", short: "IT", color: "bg-red-700" },
   { id: "cnbc", name: "CNBC TV18", ytId: "NkBlsN71VTo", short: "CN", color: "bg-blue-800" },
   { id: "ddnews", name: "DD News", ytId: "qD6GkaU2lD0", short: "DD", color: "bg-indigo-600" },
+  { id: "zeenews", name: "Zee News", ytId: "UCi_gLPf_MqA7W3RQm2CJ6gg", isChannel: true, short: "ZN", color: "bg-yellow-600" },
+  { id: "abpnews", name: "ABP News", ytId: "UC2G1G_s-1tFyMYo6mL-IGmA", isChannel: true, short: "ABP", color: "bg-red-700" },
+  { id: "news18", name: "News18 India", ytId: "UCj3o7K1ceCrA9QeO2PBRrvw", isChannel: true, short: "N18", color: "bg-blue-800" },
+  { id: "indiatv", name: "India TV", ytId: "UCq4IseHboBwX4R1xFVmpR7A", isChannel: true, short: "ITV", color: "bg-green-700" },
+  { id: "tv9bharatvarsh", name: "TV9 Bharatvarsh", ytId: "UCxOv2PlCRRHFlXiJ8G1qjWQ", isChannel: true, short: "TV9", color: "bg-orange-600" },
   // Global News
   { id: "aljazeera", name: "Al Jazeera", ytId: "gCNeDWCI0vo", short: "AJ", color: "bg-yellow-600" },
   { id: "skynews", name: "Sky News", ytId: "3ix8C2VqCY0", short: "SN", color: "bg-blue-700" },
@@ -27,8 +44,8 @@ const CHANNELS = [
 ]
 
 export function LiveTvSection() {
-  const [activeChannel, setActiveChannel] = useState(CHANNELS[0])
-  const [isLoading, setIsLoading] = useState(true)
+  const [activeChannel, setActiveChannel] = useState<Channel>(CHANNELS[0])
+  const [isLoading, setIsLoading] = useState(false)
   const [isSaved, setIsSaved] = useState(false)
   const { user } = useAuthStore()
 
@@ -43,7 +60,7 @@ export function LiveTvSection() {
     }
   }, [activeChannel.id, user?.uid])
 
-  const handleChannelChange = (channel: typeof CHANNELS[0]) => {
+  const handleChannelChange = (channel: Channel) => {
     if (activeChannel.id === channel.id) return
     setIsLoading(true)
     setActiveChannel(channel)
@@ -111,9 +128,13 @@ export function LiveTvSection() {
 
             {/* YouTube iframe */}
             <iframe
-              key={activeChannel.ytId}
+              key={activeChannel.id}
               className="absolute inset-0 w-full h-full border-none z-10"
-              src={`https://www.youtube.com/embed/${activeChannel.ytId}?autoplay=1&mute=1&playsinline=1`}
+              src={
+                activeChannel.isChannel
+                  ? `https://www.youtube.com/embed/live_stream?channel=${activeChannel.ytId}&autoplay=1&mute=1&playsinline=1`
+                  : `https://www.youtube.com/embed/${activeChannel.ytId}?autoplay=1&mute=1&playsinline=1`
+              }
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
               allowFullScreen
               onLoad={() => setIsLoading(false)}

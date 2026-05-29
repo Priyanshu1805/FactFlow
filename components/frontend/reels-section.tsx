@@ -17,7 +17,10 @@ export function ReelsSection() {
 
   useEffect(() => {
     fetch(`${process.env.NEXT_PUBLIC_API_URL}/reels?limit=10`)
-      .then((res) => res.json())
+      .then((res) => {
+        if (!res.ok) throw new Error("Fetch failed")
+        return res.json()
+      })
       .then((data) => {
         if (data.success && data.data) {
           const formatted = data.data.map((item: any) => ({

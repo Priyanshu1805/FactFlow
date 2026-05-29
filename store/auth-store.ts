@@ -14,6 +14,8 @@ export interface User {
   bio?: string
   theme?: string
   favoriteTopics?: string[]
+  subscriptionTier?: string
+  subscriptionValidUntil?: string
 }
 
 interface AuthState {

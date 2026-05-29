@@ -64,6 +64,7 @@ export function UploadFlowModal({ isOpen, onClose, type, isDark }: UploadFlowMod
         method: "POST",
         body: formData
       })
+      if (!uploadRes.ok) throw new Error("Fetch failed")
       const uploadData = await uploadRes.json()
       
       if (!uploadData.success) throw new Error(uploadData.error || "Upload failed")

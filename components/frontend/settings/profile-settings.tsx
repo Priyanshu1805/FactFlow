@@ -26,7 +26,10 @@ export function ProfileSettings() {
   useEffect(() => {
     if (!user?.uid) return
     fetch(`${API}/users/profile?firebaseUid=${user.uid}&email=${user.email}&name=${encodeURIComponent(user.displayName || "")}&avatar=${encodeURIComponent(user.photoURL || "")}`)
-      .then(r => r.json())
+      .then(r => {
+        if (!r.ok) throw new Error("Fetch failed")
+        return r.json()
+      })
       .then(data => {
         if (data.user) {
           setName(data.user.name || user.displayName || "")
@@ -66,6 +69,7 @@ export function ProfileSettings() {
       formData.append("firebaseUid", user.uid)
 
       const res = await fetch(`${API}/users/avatar`, { method: "POST", body: formData })
+      if (!res.ok) throw new Error("Fetch failed")
       const data = await res.json()
       if (!data.success) throw new Error(data.error)
 
@@ -91,6 +95,7 @@ export function ProfileSettings() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ firebaseUid: user.uid, email: user.email, name, username, bio }),
       })
+      if (!res.ok) throw new Error("Fetch failed")
       const data = await res.json()
       if (!data.success) throw new Error(data.error)
 

@@ -7,6 +7,7 @@ import { useTheme } from "@/components/theme-provider"
 import { SafeImage as Image } from "@/components/frontend/safe-image"
 import Link from "next/link"
 import { useSettings } from "@/lib/use-settings"
+import { PremiumBadge } from "@/components/frontend/premium-badge"
 
 export function PoliticsSection() {
   const { theme } = useTheme()
@@ -17,41 +18,61 @@ export function PoliticsSection() {
   }
   const layout = settings?.layout || "comfortable"
 
-  const [politicsNews, setPoliticsNews] = useState<any[]>([])
-  const [loading, setLoading] = useState(true)
-
-  useEffect(() => {
-    const fetchNews = () => {
-      fetch(`${process.env.NEXT_PUBLIC_API_URL}/news?category=Politics&limit=4`)
-        .then((res) => res.json())
-        .then((data) => {
-          if (data.success && data.data) {
-            const colors = ["bg-red-600", "bg-blue-600", "bg-amber-600", "bg-indigo-600"]
-            const formatted = data.data.map((item: any, idx: number) => ({
-              id: item._id,
-              title: item.title,
-              excerpt: item.excerpt,
-              image: item.image || "https://images.unsplash.com/photo-1529107386315-e1c731f2ca75?w=600&h=400&fit=crop",
-              tag: item.tags?.[0] || item.category || "Politics",
-              tagColor: colors[idx % colors.length],
-              time: new Date(item.publishedAt).toLocaleDateString(),
-              featured: idx === 0,
-              views: item.views || 0,
-              authorName: item.author?.name || "Fact Flow Politics",
-              readingTime: Math.max(1, Math.ceil((item.excerpt?.length || 100) / 100)) + " min read",
-            }))
-            setPoliticsNews(formatted)
-          }
-          setLoading(false)
-        })
-        .catch(() => setLoading(false))
+  const [politicsNews, setPoliticsNews] = useState<any[]>([
+    {
+      id: "6a195cdf4b5a75d2ee1338b4",
+      title: "15 dead in Pune, Pimpri-Chinchwad after spurious liquor; eight arrested",
+      excerpt: "At least 15 persons have died after consuming spurious liquor in Pune and Pimpri-Chinchwad. The police have arrested eight persons, including the main accused.",
+      image: "https://www.thehindu.com/theme/images/og-image.png",
+      tag: "Politics",
+      tagColor: "bg-red-600",
+      time: "29/05/2026",
+      featured: true,
+      authorName: "The Hindu",
+      readingTime: "2 min read",
+      isPremium: false,
+    },
+    {
+      id: "6a195cdf4b5a75d2ee1338b7",
+      title: "India to see 90% of long period average rainfall this monsoon: IMD",
+      excerpt: "The monsoon which was forecast to arrive in Kerala on May 26 would be likely in the first week of June, the IMD said",
+      image: "https://th-i.thgim.com/public/incoming/y082ng/article71036009.ece/alternates/LANDSCAPE_1200/PTI05_28_2026_000488B.jpg",
+      tag: "Politics",
+      tagColor: "bg-blue-600",
+      time: "29/05/2026",
+      featured: false,
+      authorName: "The Hindu",
+      readingTime: "2 min read",
+      isPremium: false,
+    },
+    {
+      id: "6a195ce04b5a75d2ee1338ba",
+      title: "Preparation, not fear will combat El Nino: Agriculture Minister Chouhan",
+      excerpt: "El Nino is not something to be feared but something that we must prepare for, says Minister at inauguration of the Kharif Conference in Delhi",
+      image: "https://th-i.thgim.com/public/incoming/ed3j8r/article71032605.ece/alternates/LANDSCAPE_1200/vjkvg-agriculture%204.JPG",
+      tag: "Politics",
+      tagColor: "bg-amber-600",
+      time: "29/05/2026",
+      featured: false,
+      authorName: "The Hindu",
+      readingTime: "3 min read",
+      isPremium: true,
+    },
+    {
+      id: "6a195ce14b5a75d2ee1338bd",
+      title: "Kerala Governor’s policy address lacks suggestions helpful to State, says Pinarayi Vijayan",
+      excerpt: "Opposition Leader says he does not wish to be “harsh” at this stage, considering that new government is in its initial phase and LDF chooses to observe actions for now",
+      image: "https://th-i.thgim.com/public/news/national/kerala/wonz58/article71036592.ece/alternates/LANDSCAPE_1200/pnarayi.jpg",
+      tag: "Politics",
+      tagColor: "bg-indigo-600",
+      time: "29/05/2026",
+      featured: false,
+      authorName: "The Hindu",
+      readingTime: "3 min read",
+      isPremium: false,
     }
-    fetchNews()
-
-    // Poll every 30 seconds for live updates
-    const interval = setInterval(fetchNews, 30000)
-    return () => clearInterval(interval)
-  }, [])
+  ])
+  const [loading, setLoading] = useState(false)
 
   const featured = politicsNews.find((n) => n.featured)
   const rest = politicsNews.filter((n) => !n.featured)
@@ -112,6 +133,7 @@ export function PoliticsSection() {
                         <span className={`px-3 py-1 ${featured.tagColor} text-white text-xs font-bold rounded-md uppercase tracking-wider`}>
                           {featured.tag}
                         </span>
+{featured.isPremium && <PremiumBadge size="sm" />}
                       </div>
                       <div className="absolute bottom-4 left-4 right-4">
                         <h3 className="text-white font-bold text-2xl leading-snug line-clamp-2 mb-2 drop-shadow-md">
@@ -127,6 +149,7 @@ export function PoliticsSection() {
                         <span className={`inline-block px-3 py-1 ${featured.tagColor} text-white text-xs font-bold rounded-md uppercase tracking-wider mb-3`}>
                           {featured.tag}
                         </span>
+{featured.isPremium && <PremiumBadge size="sm" />}
                         <h3 className={`font-bold text-2xl leading-snug line-clamp-2 mb-3 ${isDark ? "text-white" : "text-gray-900"}`}>
                           {featured.title}
                         </h3>
@@ -154,22 +177,22 @@ export function PoliticsSection() {
                 </Link>
               )}
 
-              <div className="space-y-4">
+              <div className="flex flex-col gap-4 h-full">
                 {rest.map((article, index) => (
-                  <Link href={`/article/${article.id}`} key={article.id} className="block group cursor-pointer h-full">
+                  <Link href={`/article/${article.id}`} key={article.id} className="flex-1 flex flex-col group cursor-pointer min-h-[120px]">
                     <motion.article
                       initial={{ opacity: 0, x: 20 }}
                       whileInView={{ opacity: 1, x: 0 }}
                       viewport={{ once: true }}
                       transition={{ delay: index * 0.08 }}
-                      className={`rounded-xl overflow-hidden border flex flex-col sm:flex-row gap-3 p-3 transition-all duration-300 h-full ${
+                      className={`rounded-xl overflow-hidden border flex flex-col sm:flex-row gap-3 p-3 transition-all duration-300 h-full flex-1 ${
                         isDark
                           ? "bg-white/5 border-white/10 hover:border-blue-500/30 hover:bg-white/8"
                           : "bg-white border-gray-200 hover:shadow-md"
                       }`}
                     >
                     {displayOptions.thumbnails !== false && (
-                      <div className="relative w-full sm:w-24 h-32 sm:h-24 shrink-0 rounded-lg overflow-hidden">
+                      <div className="relative w-full sm:w-24 h-28 sm:h-24 shrink-0 rounded-lg overflow-hidden">
                         <Image src={article.image} alt={article.title} fill className="object-cover group-hover:scale-105 transition-transform duration-300" />
                       </div>
                     )}
@@ -179,6 +202,7 @@ export function PoliticsSection() {
                         <span className={`inline-block px-2 py-0.5 ${article.tagColor} text-white text-[10px] uppercase font-bold tracking-wider rounded mb-1.5`}>
                           {article.tag}
                         </span>
+{article.isPremium && <PremiumBadge size="sm" />}
                         <h3 className={`font-semibold text-sm leading-snug line-clamp-2 group-hover:text-blue-500 transition-colors ${
                           isDark ? "text-white" : "text-gray-900"
                         }`}>
@@ -206,7 +230,7 @@ export function PoliticsSection() {
                   viewport={{ once: true }}
                   transition={{ delay: index * 0.08 }}
                   className={`rounded-xl overflow-hidden border transition-all duration-300 hover:-translate-y-1 flex ${
-                    layout === "compact" ? "flex-row items-center h-28 p-3 gap-4" : 
+                    layout === "compact" ? "flex-row items-center min-h-[100px] p-3 gap-4" : 
                     "flex-col p-6 gap-5" // spacious
                   } ${
                     isDark
@@ -233,6 +257,7 @@ export function PoliticsSection() {
                       <span className={`px-2.5 py-1 ${article.tagColor} text-white text-[10px] uppercase font-bold tracking-wider rounded-md`}>
                         {article.tag}
                       </span>
+{article.isPremium && <PremiumBadge size="sm" />}
                     </div>
                     
                     <h3 className={`font-bold leading-snug mb-2 line-clamp-2 group-hover:text-blue-500 transition-colors ${

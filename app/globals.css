@@ -391,12 +391,24 @@
   border-radius: 20px;
   display: flex;
   flex-direction: row;
-  flex-wrap: nowrap; /* Straight parallel line */
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
+  gap: 12px;
   transition: all 0.3s ease;
-  overflow-x: auto; /* Prevent squishing on small screens */
+  overflow-x: auto;
+}
+
+@media (max-width: 640px) {
+  .neu-radiogroup {
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 12px 16px;
+  }
+  .neu-wrapper {
+    min-width: 80px;
+    flex: 1 1 auto;
+  }
 }
 
 /* Hide scrollbar for smooth horizontal look */
@@ -736,8 +748,8 @@
 
 /* --- Parchment Background --- */
 .newspaper-parchment {
-  background-color: #f4f1ea;
-  color: #1a1a1a;
+  background-color: #ffffff !important;
+  color: #111111 !important;
 }
 
 .newspaper-parchment-dark {
@@ -756,10 +768,10 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 1rem;
-  font-size: 0.75rem;
-  letter-spacing: 0.3em;
-  color: #4a3f2f;
+  gap: 0.5rem;
+  font-size: 0.8rem;
+  letter-spacing: 0.2em;
+  color: #111111;
   user-select: none;
 }
 
@@ -768,13 +780,7 @@
   content: '';
   flex: 1;
   height: 1px;
-  background: linear-gradient(
-    90deg,
-    transparent,
-    #4a3f2f 20%,
-    #4a3f2f 80%,
-    transparent
-  );
+  background-color: #e5e5e5;
 }
 
 .newspaper-ornament-dark {
@@ -794,11 +800,9 @@
 /* --- Triple Rule Divider --- */
 .newspaper-triple-rule {
   border: none;
-  height: 6px;
-  background:
-    linear-gradient(to right, transparent, #1a1a1a 10%, #1a1a1a 90%, transparent) top / 100% 1px no-repeat,
-    linear-gradient(to right, transparent, #1a1a1a 10%, #1a1a1a 90%, transparent) center / 100% 2px no-repeat,
-    linear-gradient(to right, transparent, #1a1a1a 10%, #1a1a1a 90%, transparent) bottom / 100% 1px no-repeat;
+  height: 3px;
+  border-top: 1px solid #111111;
+  border-bottom: 2px solid #111111;
   background-color: transparent;
 }
 
@@ -820,7 +824,13 @@
   margin-right: 0.6rem;
   margin-top: 0.15rem;
   color: #1a1a1a;
-  text-shadow: 1px 1px 0 rgba(0,0,0,0.1);
+  text-shadow: 1px 1px 0 rgba(0,0,0,0.15);
+}
+
+@media (max-width: 640px) {
+  .newspaper-dropcap::first-letter {
+    font-size: 3rem;
+  }
 }
 
 .newspaper-dropcap-dark::first-letter {
@@ -830,11 +840,9 @@
 
 /* --- Vintage Image Frame --- */
 .newspaper-image-frame {
-  border: 3px solid #1a1a1a;
-  box-shadow:
-    inset 0 0 0 1px rgba(255,255,255,0.3),
-    inset 0 0 0 4px rgba(0,0,0,0.05),
-    0 4px 12px rgba(0,0,0,0.15);
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
 }
 
 .newspaper-image-frame-dark {
@@ -847,7 +855,7 @@
 
 /* --- Column Rule --- */
 .newspaper-column-rule {
-  border-right: 1px solid #1a1a1a;
+  border-right: 1px solid #e5e5e5;
 }
 
 .newspaper-column-rule-dark {
@@ -887,25 +895,20 @@
 
 /* --- Section Label (LATE BULLETIN etc.) --- */
 .newspaper-label {
-  font-family: 'Playfair Display', Georgia, serif;
-  font-size: 0.625rem;
+  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  font-size: 0.65rem;
   font-weight: 700;
-  letter-spacing: 0.25em;
+  letter-spacing: 0.05em;
   text-transform: uppercase;
-  border-top: 2px solid currentColor;
-  border-bottom: 1px solid currentColor;
+  border-top: 1px solid #111111;
+  border-bottom: 1px solid #111111;
   padding: 0.25rem 0;
+  color: #111111;
 }
 
 /* --- Subtle Aged Paper Texture Overlay --- */
 .newspaper-texture::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  opacity: 0.03;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='4' height='4'%3E%3Crect width='4' height='4' fill='%23000' fill-opacity='0.4'/%3E%3Crect x='0' y='0' width='1' height='1' fill='%23fff' fill-opacity='0.2'/%3E%3Crect x='2' y='2' width='1' height='1' fill='%23fff' fill-opacity='0.15'/%3E%3C/svg%3E");
-  pointer-events: none;
-  z-index: 0;
+  display: none;
 }
 
 /* --- Flourish Animation --- */
@@ -922,4 +925,21 @@
 
 .newspaper-animate-in {
   animation: newspaper-fade-in 0.6s ease-out forwards;
+}
+
+/* Bottom white space aur scroll bounce hatane ke liye */
+html, body {
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+    min-height: 100dvh !important; /* Dynamic viewport height takki mobile browser me gap na dikhe */
+    overscroll-behavior-y: none !important; /* Scroll bounce/elastic effect ko band karne ke liye */
+    background-color: #0b0b0c !important; /* Yahan apni app ka dark background color code daal den */
+}
+
+/* Agar koi root container stretch nahi ho raha ho */
+#root, #__next {
+    min-height: 100% !important;
+    display: flex !important;
+    flex-direction: column !important;
 }

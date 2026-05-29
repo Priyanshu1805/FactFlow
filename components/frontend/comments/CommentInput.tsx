@@ -61,6 +61,7 @@ export function CommentInput({ articleId, parentId, onCommentAdded, placeholder 
     setIsSearchingMentions(true)
     try {
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/search-mentions?q=${query}`)
+      if (!res.ok) throw new Error("Fetch failed")
       const data = await res.json()
       if (data.success) {
         setMentionSuggestions(data.users)
@@ -99,6 +100,7 @@ export function CommentInput({ articleId, parentId, onCommentAdded, placeholder 
           parentId
         }),
       })
+      if (!res.ok) throw new Error("Fetch failed")
       const data = await res.json()
       if (data.success) {
         setText("")
