@@ -452,7 +452,6 @@ export function Navbar() {
                     </Link>
                   </div>
                 </div>
-              </div>
 
               {/* Drawer Footer / Sign Out */}
               {isAuthenticated && (
