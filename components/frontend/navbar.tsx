@@ -169,6 +169,7 @@ export function Navbar() {
   }
 
   return (
+    <>
     <motion.nav
       initial={{ y: -100 }}
       animate={{ y: 0 }}
@@ -299,6 +300,7 @@ export function Navbar() {
           </div>
         </div>
       </div>
+    </motion.nav>
 
       {/* Mobile Sliding Sidebar Drawer & Backdrop */}
       <AnimatePresence>
@@ -478,6 +480,6 @@ export function Navbar() {
           </>
         )}
       </AnimatePresence>
-    </motion.nav>
+    </>
   )
 }
