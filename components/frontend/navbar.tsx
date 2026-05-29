@@ -287,14 +287,14 @@ export function Navbar() {
             {/* Hamburger Mobile Menu Toggle */}
             <button
               onClick={() => setIsOpen(!isOpen)}
-              className={`lg:hidden p-2 rounded-lg transition-colors ${
+              className={`lg:hidden p-2 rounded-lg font-bold transition-all ${
                 isDark 
-                  ? "text-gray-300 hover:text-white hover:bg-white/10" 
-                  : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+                  ? "text-white bg-white/10 hover:bg-white/20 border border-white/20 shadow-sm" 
+                  : "text-gray-900 bg-gray-100 hover:bg-gray-200 border border-gray-300 shadow-sm"
               }`}
               aria-label="Toggle Menu"
             >
-              {isOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+              {isOpen ? <X className="w-6 h-6 stroke-[2.5]" /> : <Menu className="w-6 h-6 stroke-[2.5]" />}
             </button>
           </div>
         </div>
@@ -416,7 +416,7 @@ export function Navbar() {
                   
                   {/* Secondary App Links */}
                   <div className="pt-4 mt-4 border-t border-white/10 space-y-1">
-                    <span className="px-4 text-[10px] font-bold text-gray-500 uppercase tracking-wider block mb-2">App Menu</span>
+                    <span className="px-4 text-[10px] font-bold text-gray-500 uppercase tracking-wider block mb-2">More Options</span>
                     
                     <Link
                       href="/social"
@@ -424,9 +424,9 @@ export function Navbar() {
                         markSocialRead()
                         setIsOpen(false)
                       }}
-                      className="flex items-center gap-3.5 px-4 py-2.5 rounded-xl text-xs font-medium text-gray-400 hover:text-white hover:bg-white/5 transition-colors"
+                      className="flex items-center gap-3.5 px-4 py-3 rounded-xl text-sm font-bold text-gray-300 hover:text-white hover:bg-white/5 transition-colors"
                     >
-                      <Globe className="w-4 h-4 opacity-70" />
+                      <Globe className="w-5 h-5 opacity-70" />
                       Social Feed
                       {hasUnreadSocial && (
                         <span className="w-1.5 h-1.5 bg-red-500 rounded-full animate-pulse ml-auto" />
@@ -436,18 +436,18 @@ export function Navbar() {
                     <Link
                       href="/settings"
                       onClick={() => setIsOpen(false)}
-                      className="flex items-center gap-3.5 px-4 py-2.5 rounded-xl text-xs font-medium text-gray-400 hover:text-white hover:bg-white/5 transition-colors"
+                      className="flex items-center gap-3.5 px-4 py-3 rounded-xl text-sm font-bold text-gray-300 hover:text-white hover:bg-white/5 transition-colors"
                     >
-                      <Settings className="w-4 h-4 opacity-70" />
-                      Preferences
+                      <Settings className="w-5 h-5 opacity-70" />
+                      Settings
                     </Link>
 
                     <Link
                       href="/admin"
                       onClick={() => setIsOpen(false)}
-                      className="flex items-center gap-3.5 px-4 py-2.5 rounded-xl text-xs font-medium text-gray-400 hover:text-white hover:bg-white/5 transition-colors"
+                      className="flex items-center gap-3.5 px-4 py-3 rounded-xl text-sm font-bold text-gray-300 hover:text-white hover:bg-white/5 transition-colors"
                     >
-                      <ShieldCheck className="w-4 h-4 opacity-70" />
+                      <ShieldCheck className="w-5 h-5 opacity-70" />
                       Admin Dashboard
                     </Link>
                   </div>
