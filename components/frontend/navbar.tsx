@@ -319,9 +319,9 @@ export function Navbar() {
               animate={{ x: 0 }}
               exit={{ x: "100%" }}
               transition={{ type: "spring", damping: 25, stiffness: 220 }}
-              className="fixed inset-y-0 right-0 w-80 z-50 bg-[#0F172A] border-l border-white/10 shadow-2xl p-6 flex flex-col justify-between lg:hidden text-white"
+              className="fixed inset-y-0 right-0 w-full sm:w-80 z-50 bg-slate-950 border-l border-white/10 shadow-2xl p-6 flex flex-col overflow-y-auto lg:hidden text-white"
             >
-              <div>
+              <div className="flex-1">
                 {/* Header */}
                 <div className="flex items-center justify-between pb-6 border-b border-white/10">
                   <div className="flex items-center gap-2">
