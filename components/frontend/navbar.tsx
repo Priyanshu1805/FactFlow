@@ -294,7 +294,7 @@ export function Navbar() {
               }`}
               aria-label="Toggle Menu"
             >
-              {isOpen ? <X className="w-6 h-6 stroke-[2.5]" /> : <Menu className="w-6 h-6 stroke-[2.5]" />}
+              {isOpen ? <X className="w-6 h-6" strokeWidth={2.5} /> : <Menu className="w-6 h-6" strokeWidth={2.5} />}
             </button>
           </div>
         </div>
