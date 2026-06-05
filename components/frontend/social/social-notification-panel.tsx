@@ -19,72 +19,26 @@ export function SocialNotificationPanel({
 }) {
   const [filter, setFilter] = useState<"all" | "likes" | "comments" | "follows" | "mentions">("all")
 
-  // Grouping logic for likes/reactions
-  const groupedNotifications = useMemo(() => {
-    const grouped: any[] = []
-    const likeGroups = new Map<string, any>() // key: postId or articleId
-
-    notifications.forEach((n) => {
-      // Only group likes and reactions that have a target ID
-      const targetId = n.postId?._id || n.articleId?._id || n.postId || n.articleId
-      if ((n.type === "like" || n.type === "reaction") && targetId) {
-        const key = targetId.toString()
-        if (likeGroups.has(key)) {
-          const group = likeGroups.get(key)
-          group.senders.push(n.senderId)
-          group.count += 1
-          group.isRead = group.isRead && n.isRead
-          group.ids.push(n._id)
-        } else {
-          const newGroup = {
-            _id: `group_${key}`,
-            isGroup: true,
-            type: "like_group",
-            targetId,
-            targetItem: n.postId || n.articleId, // to get thumbnail if populated
-            senders: [n.senderId],
-            count: 1,
-            isRead: n.isRead,
-            createdAt: n.createdAt,
-            ids: [n._id]
-          }
-          likeGroups.set(key, newGroup)
-          grouped.push(newGroup)
-        }
-      } else {
-        grouped.push(n)
-      }
-    })
-
-    return grouped.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-  }, [notifications])
-
   const filteredNotifications = useMemo(() => {
-    return groupedNotifications.filter(n => {
+    return notifications.filter(n => {
       if (filter === "all") return true
-      if (filter === "likes" && (n.type === "like" || n.type === "reaction" || n.type === "like_group")) return true
+      if (filter === "likes" && (n.type === "like" || n.type === "reaction")) return true
       if (filter === "comments" && (n.type === "comment" || n.type === "reply")) return true
       if (filter === "follows" && n.type === "follow") return true
       if (filter === "mentions" && n.type === "mention") return true
       return false
     })
-  }, [groupedNotifications, filter])
+  }, [notifications, filter])
 
   const handleNotificationClick = (n: any) => {
     if (!n.isRead) {
-      if (n.isGroup) {
-        n.ids.forEach((id: string) => onMarkRead(id))
-      } else {
-        onMarkRead(n._id)
-      }
+      onMarkRead(n._id)
     }
-    // Navigate logic could go here based on n.link or n.postId
   }
 
   const renderIcon = (type: string) => {
     switch (type) {
-      case "like":
-      case "like_group": return <div className="p-2 bg-pink-500/10 rounded-full text-pink-500"><Heart className="w-4 h-4 fill-current" /></div>
+      case "like": return <div className="p-2 bg-pink-500/10 rounded-full text-pink-500"><Heart className="w-4 h-4 fill-current" /></div>
       case "reaction": return <div className="p-2 bg-yellow-500/10 rounded-full text-yellow-500"><Heart className="w-4 h-4 fill-current" /></div>
       case "comment":
       case "reply": return <div className="p-2 bg-blue-500/10 rounded-full text-blue-500"><MessageCircle className="w-4 h-4 fill-current" /></div>
@@ -96,42 +50,32 @@ export function SocialNotificationPanel({
   }
 
   const renderContent = (n: any) => {
-    if (n.isGroup) {
-      const latestSender = n.senders[0]
-      return (
-        <>
-          <p className="text-sm">
-            <span className="font-bold mr-1">{latestSender?.name || "Someone"}</span>
-            and {n.count - 1} others liked your post.
-          </p>
-        </>
-      )
-    }
-
+    const isGrouped = n.senderIds && n.senderIds.length > 1;
     const senderName = n.senderId?.name || n.senderId?.username || "Someone"
+    const othersText = isGrouped ? ` and ${n.senderIds.length - 1} ${n.senderIds.length - 1 === 1 ? 'other' : 'others'}` : "";
     
     switch (n.type) {
       case "like":
-        return <p className="text-sm"><span className="font-bold mr-1">{senderName}</span>liked your post.</p>
+        return <p className="text-sm"><span className="font-bold mr-1">{senderName}</span>{othersText} liked your post.</p>
       case "reaction":
-        return <p className="text-sm"><span className="font-bold mr-1">{senderName}</span>reacted {n.message || "🔥"} to your story/reel.</p>
+        return <p className="text-sm"><span className="font-bold mr-1">{senderName}</span>{othersText} reacted {n.message || "🔥"} to your content.</p>
       case "comment":
       case "reply":
         return (
           <div>
-            <p className="text-sm"><span className="font-bold mr-1">{senderName}</span>commented:</p>
+            <p className="text-sm"><span className="font-bold mr-1">{senderName}</span>{othersText} commented:</p>
             <p className={`text-xs mt-0.5 line-clamp-1 ${isDark ? "text-white/60" : "text-gray-500"}`}>"{n.message || "View comment"}"</p>
           </div>
         )
       case "mention":
         return (
           <div>
-            <p className="text-sm"><span className="font-bold mr-1">{senderName}</span>mentioned you in a comment.</p>
+            <p className="text-sm"><span className="font-bold mr-1">{senderName}</span>{othersText} mentioned you in a comment.</p>
             <p className={`text-xs mt-0.5 line-clamp-1 italic ${isDark ? "text-white/60" : "text-gray-500"}`}>"{n.message}"</p>
           </div>
         )
       case "follow":
-        return <p className="text-sm"><span className="font-bold mr-1">{senderName}</span>started following you.</p>
+        return <p className="text-sm"><span className="font-bold mr-1">{senderName}</span>{othersText} started following you.</p>
       case "system":
         return (
           <div className="bg-gray-500/10 p-2 rounded-lg mt-1">
@@ -140,7 +84,7 @@ export function SocialNotificationPanel({
           </div>
         )
       default:
-        return <p className="text-sm"><span className="font-bold mr-1">{senderName}</span>interacted with your content.</p>
+        return <p className="text-sm"><span className="font-bold mr-1">{senderName}</span>{othersText} interacted with your content.</p>
     }
   }
 
@@ -213,11 +157,11 @@ export function SocialNotificationPanel({
                           </div>
                         ) : (
                           <div className="w-11 h-11 rounded-full overflow-hidden bg-zinc-800">
-                            {(n.isGroup ? n.senders[0]?.avatar : n.senderId?.avatar) ? (
-                              <img src={n.isGroup ? n.senders[0]?.avatar : n.senderId?.avatar} className="w-full h-full object-cover" />
+                            {n.senderId?.avatar ? (
+                              <img src={n.senderId?.avatar} className="w-full h-full object-cover" />
                             ) : (
                               <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-indigo-500 to-purple-600 text-white font-bold text-lg">
-                                {(n.isGroup ? n.senders[0]?.name : n.senderId?.name)?.charAt(0).toUpperCase() || "?"}
+                                {n.senderId?.name?.charAt(0).toUpperCase() || "?"}
                               </div>
                             )}
                           </div>

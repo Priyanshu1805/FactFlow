@@ -6,7 +6,7 @@ import { Play, Heart, Share2, ArrowRight, Eye } from "lucide-react"
 import { useTheme } from "@/components/theme-provider"
 import Image from "next/image"
 import Link from "next/link"
-import { io } from "socket.io-client"
+import { useSocket } from "@/hooks/use-socket"
 
 export function ReelsSection() {
   const { theme } = useTheme()
@@ -40,23 +40,7 @@ export function ReelsSection() {
       .catch(() => setLoading(false))
   }, [])
 
-  const [socket, setSocket] = useState<any>(null)
-
-  useEffect(() => {
-    const socketUrl = process.env.NEXT_PUBLIC_SOCKET_URL && process.env.NEXT_PUBLIC_SOCKET_URL !== "/"
-      ? process.env.NEXT_PUBLIC_SOCKET_URL
-      : "http://localhost:5000"
-      
-    const newSocket = io(socketUrl, {
-      path: "/socket.io",
-      transports: ["websocket", "polling"]
-    })
-    setSocket(newSocket)
-    
-    return () => {
-      newSocket.disconnect()
-    }
-  }, [])
+  const { socket } = useSocket()
 
   useEffect(() => {
     if (!socket) return
@@ -71,7 +55,7 @@ export function ReelsSection() {
         tag: item.tags?.[0] || "Reel",
         videoUrl: item.videoUrl,
       }
-      setReels(prev => [formatted, ...prev].slice(0, 10))
+      setReels(prev => [formatted, ...prev].slice(0, 100))
     })
     return () => {
       socket.off("new_reel")

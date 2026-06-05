@@ -17,6 +17,7 @@ import dynamic from "next/dynamic"
 import { PremiumBadge } from "@/components/frontend/premium-badge"
 import { PaywallOverlay } from "@/components/frontend/paywall-overlay"
 import { useSubscription } from "@/lib/use-subscription"
+import { AISummaryButton } from "@/components/frontend/article/ai-summary-button"
 
 const ReactPlayer = dynamic(() => import("react-player"), { ssr: false }) as any
 
@@ -285,11 +286,13 @@ export default function ArticlePage() {
             {article.title}
           </h1>
 
-          <p className={`text-lg md:text-xl font-medium leading-relaxed mb-6 border-l-4 pl-4 ${
+          <p className={`text-lg md:text-xl font-medium leading-relaxed mb-4 border-l-4 pl-4 ${
             isDark ? "text-white/[0.85] border-red-500" : "text-gray-700 border-red-500"
           }`}>
             {article.excerpt}
           </p>
+
+          <AISummaryButton articleText={article.content} />
 
           <div className="flex flex-col gap-3 my-6 pb-2">
             <div className={`flex flex-wrap items-center gap-2 text-sm font-medium ${isDark ? "text-gray-300" : "text-gray-600"}`}>

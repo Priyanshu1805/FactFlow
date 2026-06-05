@@ -1,8 +1,9 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useMemo } from "react"
+import { useRssStore } from "@/lib/rss/rssStore"
 import { motion } from "framer-motion"
-import { Cpu, ArrowRight, Clock, Eye, User } from "lucide-react"
+import { Cpu, ArrowRight, Clock, User, Sparkles } from "lucide-react"
 import { useTheme } from "@/components/theme-provider"
 import { SafeImage as Image } from "@/components/frontend/safe-image"
 import Link from "next/link"
@@ -13,293 +14,261 @@ export function TechSection() {
   const { theme } = useTheme()
   const isDark = theme !== "light"
   const { settings } = useSettings()
-  const displayOptions = settings?.displayOptions || {
+  const displayOptions = (settings?.displayOptions as any) || {
     thumbnails: true, readingTime: true, authorName: true, reduceAnimations: false
   }
   const layout = settings?.layout || "comfortable"
-  const [aiNews, setAiNews] = useState<any[]>([
-    {
-      id: "6a195cee4b5a75d2ee13390e",
-      title: "After thousands of views, Meta and Google act on account depicting child labour",
-      excerpt: "Meta and Google pulled down the account that featured a young girl making bricks, with one video garnering over 3 million views on X and over 10 million on Instagram",
-      image: "https://th-i.thgim.com/public/incoming/i1k8cm/article71036536.ece/alternates/LANDSCAPE_1200/2025-12-17T145657Z_598779967_RC2DIIAWX0SF_RTRMADP_3_TECH-AI-GOOGLE-META.JPG",
-      tag: "Tech",
-      tagColor: "bg-red-500",
-      time: "29/05/2026",
-      featured: true,
-      authorName: "The Hindu",
-      readingTime: "3 min read",
-      isPremium: false,
-    },
-    {
-      id: "6a195cfc4b5a75d2ee133957",
-      title: "Apple’s leaked Siri overhaul shows its biggest AI challenge to ChatGPT yet",
-      excerpt: "Apple’s leaked Siri overhaul shows its biggest AI challenge to ChatGPT yet",
-      image: "https://images.indianexpress.com/2026/05/apple-iphone-15-5.jpg.avif",
-      tag: "Tech",
-      tagColor: "bg-blue-500",
-      time: "29/05/2026",
-      featured: false,
-      authorName: "Indian Express",
-      readingTime: "1 min read",
-      isPremium: true,
-    },
-    {
-      id: "6a195cef4b5a75d2ee133911",
-      title: "California sues 23andMe, alleging it failed to protect user data in 2023 breach",
-      excerpt: "California’s attorney general is suing the genetic testing company formerly known as 23andMe",
-      image: "https://th-i.thgim.com/public/incoming/d8n5bz/article71035806.ece/alternates/LANDSCAPE_1200/2025-03-25T165748Z_22229706_RC2FKDA2MSZX_RTRMADP_3_23ANDME-BANKRUPTCY-PRIVACY.JPG",
-      tag: "Tech",
-      tagColor: "bg-green-500",
-      time: "29/05/2026",
-      featured: false,
-      authorName: "The Hindu",
-      readingTime: "2 min read",
-      isPremium: false,
-    },
-    {
-      id: "6a193d504a801ef828f1e386",
-      title: "CNN files lawsuit against Perplexity alleging unlawful content distribution",
-      excerpt: "CNN is asking for an unspecified amount of monetary damages and a court order blocking Perplexity from violating its intellectual property rights",
-      image: "https://th-i.thgim.com/public/incoming/9hyq05/article71035802.ece/alternates/LANDSCAPE_1200/2026-01-30T064152Z_1353172360_RC2LICAFU0KV_RTRMADP_3_MICROSOFT-PERPLEXITY-AI.JPG",
-      tag: "Tech",
-      tagColor: "bg-purple-500",
-      time: "29/05/2026",
-      featured: false,
-      authorName: "The Hindu",
-      readingTime: "2 min read",
-      isPremium: false,
+  const { items: rssItems, loading } = useRssStore()
+
+  const sectionNews = useMemo(() => {
+    const filtered = rssItems
+      .filter(item => item.category === "Technology" || item.category === "Science" || item.category === "Gaming")
+      .sort((a, b) => {
+        const aHas = a.image && a.image.trim() !== "" ? 1 : 0;
+        const bHas = b.image && b.image.trim() !== "" ? 1 : 0;
+        return bHas - aHas; // Real images go first
+      })
+      .slice(0, 20)
+    
+    // Category-specific fallback images (very related, no dummy abstract images)
+    const fallbacks = {
+      blue: [
+        "https://images.unsplash.com/photo-1529107386315-e1a2ed48a620?w=600&h=400&fit=crop",
+        "https://images.unsplash.com/photo-1541872703-74c5e44368f9?w=600&h=400&fit=crop",
+        "https://images.unsplash.com/photo-1526685816358-305be0981977?w=600&h=400&fit=crop"
+      ], // Politics
+      pink: [
+        "https://images.unsplash.com/photo-1511895426328-dc8714191300?w=600&h=400&fit=crop",
+        "https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=600&h=400&fit=crop",
+        "https://images.unsplash.com/photo-1499951360447-b19be8fe80f5?w=600&h=400&fit=crop"
+      ], // Lifestyle
+      orange: [
+        "https://images.unsplash.com/photo-1461896836934-ffe607ba8211?w=600&h=400&fit=crop",
+        "https://images.unsplash.com/photo-1579952363873-27f3bade9f55?w=600&h=400&fit=crop",
+        "https://images.unsplash.com/photo-1541534741688-6078c6bfb5c5?w=600&h=400&fit=crop"
+      ], // Sports
+      purple: [
+        "https://images.unsplash.com/photo-1518770660439-4636190af475?w=600&h=400&fit=crop",
+        "https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=600&h=400&fit=crop",
+        "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?w=600&h=400&fit=crop"
+      ], // Tech
+      yellow: [
+        "https://images.unsplash.com/photo-1545048702-79362596cf9b?w=600&h=400&fit=crop",
+        "https://images.unsplash.com/photo-1531259683007-016a7b628fc3?w=600&h=400&fit=crop",
+        "https://images.unsplash.com/photo-1582213782179-e0d53f98f2ca?w=600&h=400&fit=crop"
+      ], // Memes
+      green: [
+        "https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=600&h=400&fit=crop",
+        "https://images.unsplash.com/photo-1611162617474-5b21e879e113?w=600&h=400&fit=crop",
+        "https://images.unsplash.com/photo-1522542550221-31fd19575a2d?w=600&h=400&fit=crop"
+      ] // Trending
     }
-  ])
-  const [loading, setLoading] = useState(false)
+    const catImages = fallbacks["purple"] || fallbacks["green"]
 
-  const featured = aiNews.find((n) => n.featured)
-  const rest = aiNews.filter((n) => !n.featured)
+    if (filtered.length === 0) return []
+    return filtered.map((item, i) => {
+      let finalImage = item.image;
+      if (!finalImage || finalImage.trim() === "") {
+        finalImage = catImages[i % catImages.length];
+      }
 
-  if (aiNews.length === 0 && !loading) return null;
+      return {
+        id: item.id,
+        title: item.title,
+        excerpt: item.summary,
+        image: finalImage,
+      tag: item.category || "Updates",
+      tagColor: ["bg-purple-500", "bg-indigo-500", "bg-rose-500", "bg-emerald-500"][i % 4],
+      time: new Date(item.published).toLocaleDateString("en-US", { month: 'short', day: 'numeric' }),
+      featured: i === 0,
+      authorName: item.author || item.source || "Fact Flow",
+      isPremium: false,
+      };
+    })
+  }, [rssItems])
+
+  const featured = sectionNews.find((n) => n.featured) || sectionNews[0]
+  const rest = sectionNews.filter((n) => !n.featured).slice(0, 6)
+
+  if (sectionNews.length === 0 && !loading) return null;
 
   return (
-    <section id="tech" className={`py-16 px-4 ${
-      isDark ? "bg-gradient-to-b from-transparent via-purple-950/15 to-transparent" : "bg-gray-50/50"
+    <section id="tech" className={`py-12 px-4 relative overflow-hidden ${
+      isDark ? "bg-transparent" : "bg-gray-50/30"
     }`}>
-      <div className="max-w-7xl mx-auto">
+      {isDark && (
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full max-w-4xl bg-purple-900/10 blur-[120px] rounded-full pointer-events-none -z-10" />
+      )}
+
+      <div className="max-w-7xl mx-auto relative z-10">
+        
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          className="flex items-center justify-between mb-10"
+          className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-10"
         >
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-purple-500/15 rounded-lg">
-              <Cpu className="w-5 h-5 text-purple-400" />
+          <div className="flex items-center gap-4">
+            <div className={`p-3 bg-purple-500/15 rounded-2xl backdrop-blur-xl border border-purple-500/20 shadow-[0_0_20px_rgba(var(--purple),0.2)]`}>
+              <Cpu className={`w-7 h-7 text-purple-500`} />
             </div>
             <div>
-              <h2 className={`text-2xl font-bold ${isDark ? "text-white" : "text-gray-900"}`}>
-                Tech News
+              <h2 className={`text-3xl md:text-4xl font-black tracking-tight ${isDark ? "text-white" : "text-gray-900"}`}>
+                Tech & Innovation
               </h2>
-              <p className={`text-sm ${isDark ? "text-white/[0.85]" : "text-gray-500"}`}>
-                Latest in AI, tech, and innovation
+              <p className={`mt-1 text-sm md:text-base font-medium ${isDark ? "text-white/60" : "text-gray-500"}`}>
+                Latest in AI, tech, and science
               </p>
             </div>
           </div>
-          <Link href="#breaking-updates" className="flex items-center gap-1.5 text-red-500 text-sm font-semibold hover:text-red-400 transition-colors">
-            Live Updates <ArrowRight className="w-4 h-4" />
+          <Link href="#breaking-updates" className={`group flex items-center gap-2 px-4 py-2 rounded-full ${isDark ? "bg-white/5 hover:bg-white/10 text-white/80" : "bg-black/5 hover:bg-black/10 text-black/80"} transition-all backdrop-blur-md text-sm font-bold`}>
+            Explore More 
+            <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
           </Link>
         </motion.div>
 
-        <div className={`grid gap-6 transition-all duration-300 ${
-          layout === "compact" ? "grid-cols-1 md:grid-cols-2 lg:grid-cols-3" : 
-          layout === "spacious" ? "grid-cols-1 max-w-4xl mx-auto" : 
-          "grid-cols-1 lg:grid-cols-3"
+        <div className={`grid transition-all duration-500 ${
+          layout === "compact" ? "grid-cols-1 lg:grid-cols-6 gap-4" : 
+          layout === "spacious" ? "grid-cols-1 max-w-4xl mx-auto gap-10" : 
+          "grid-cols-1 lg:grid-cols-4 gap-6 xl:gap-8"
         }`}>
-          {layout === "comfortable" ? (
-            <>
-              {featured && (
-                <Link href={`/article/${featured.id}`} className="lg:col-span-2 group cursor-pointer block">
-                  <motion.article
-                    initial={{ opacity: 0, y: 30 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true }}
-                    className={`rounded-2xl overflow-hidden border ${
-                      isDark ? "bg-white/[0.04] border-white/10 hover:border-purple-500/40" : "bg-white border-gray-200 shadow-sm hover:shadow-xl"
-                    } transition-all duration-500 h-full flex flex-col`}
-                  >
-                  {displayOptions.thumbnails !== false && (
-                    <div className="relative aspect-[16/9] overflow-hidden shrink-0">
-                      <Image src={featured.image} alt={featured.title} fill className="object-cover group-hover:scale-105 transition-transform duration-700" />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
-                      <div className="absolute top-4 left-4 flex items-center gap-2">
-                        <span className={`px-3 py-1 ${featured.tagColor} text-white text-xs font-bold rounded-lg uppercase tracking-wider shadow-lg`}>
-                          {featured.tag}
-                        </span>
-{featured.isPremium && <PremiumBadge size="sm" />}
-                      </div>
-                      <div className="absolute bottom-4 left-4 right-4">
-                        <h3 className="text-white font-bold text-2xl md:text-3xl leading-tight line-clamp-2 drop-shadow-xl">
-                          {featured.title}
-                        </h3>
-                      </div>
-                    </div>
-                  )}
-                  
-                  <div className="p-5 flex-1 flex flex-col">
-                    {displayOptions.thumbnails === false && (
-                      <>
-                        <span className={`inline-block px-3 py-1 ${featured.tagColor} text-white text-xs font-bold rounded-lg uppercase tracking-wider mb-3 w-max shadow-lg`}>
-                          {featured.tag}
-                        </span>
-{featured.isPremium && <PremiumBadge size="sm" />}
-                        <h3 className={`font-bold text-2xl leading-tight line-clamp-2 mb-3 ${isDark ? "text-white" : "text-gray-900"}`}>
-                          {featured.title}
-                        </h3>
-                      </>
-                    )}
+          
+          {featured && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              whileInView={{ opacity: 1, scale: 1 }}
+              viewport={{ once: true }}
+              className={`${
+                layout === "compact" ? "lg:col-span-3 h-[400px]" : 
+                layout === "spacious" ? "col-span-1 h-[600px]" : 
+                "lg:col-span-2 h-[450px] md:h-[550px]"
+              }`}
+            >
+              <Link href={`/article/${featured.id}`} className={`group relative block w-full h-full rounded-[2rem] overflow-hidden border ${isDark ? "border-white/10 hover:border-white/30" : "border-gray-200"} hover:shadow-[0_0_30px_-5px_rgba(168,85,247,0.3)] transition-all duration-700`}>
+                
+                {displayOptions.thumbnails !== false && (
+                  <>
+                    <Image src={featured.image} alt={featured.title} fill className="object-cover transition-transform duration-1000 group-hover:scale-110" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent opacity-90 group-hover:opacity-70 transition-opacity duration-700" />
+                    <div className="absolute inset-0 bg-black/20 mix-blend-overlay" />
+                  </>
+                )}
+
+                <div className="absolute inset-0 p-6 md:p-8 flex flex-col justify-between">
+                  <div className="flex justify-between items-start">
+                    <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl backdrop-blur-md bg-white/10 border border-white/20 text-white text-xs font-bold uppercase tracking-widest shadow-xl`}>
+                      <Sparkles className="w-3 h-3" />
+                      {featured.tag}
+                    </span>
+                    {featured.isPremium && <PremiumBadge size="md" />}
+                  </div>
+
+                  <div className="transform transition-transform duration-500 group-hover:-translate-y-2">
+                    <h3 className={`text-white font-black leading-tight mb-4 drop-shadow-2xl line-clamp-3 ${
+                      layout === "compact" ? "text-2xl md:text-3xl" : 
+                      layout === "spacious" ? "text-4xl md:text-5xl" : 
+                      "text-2xl md:text-4xl"
+                    }`}>
+                      {featured.title}
+                    </h3>
                     
-                    <p className={`text-base leading-relaxed mb-4 line-clamp-3 ${isDark ? "text-white/70" : "text-gray-600"}`}>
+                    <p className={`text-white/70 leading-relaxed mb-5 font-medium max-w-xl ${
+                      layout === "compact" ? "text-xs md:text-sm line-clamp-2" : 
+                      layout === "spacious" ? "text-lg line-clamp-4" : 
+                      "text-sm md:text-base line-clamp-2"
+                    }`}>
                       {featured.excerpt}
                     </p>
-                    
-                    <div className="mt-auto space-y-3">
-                      <div className={`flex items-center gap-4 text-xs ${isDark ? "text-white/50" : "text-gray-400"}`}>
-                        {(displayOptions as any).authorName !== false && featured.authorName && (
-                          <span className="flex items-center gap-1.5">
-                            <span className="w-5 h-5 rounded-full bg-purple-500/20 flex items-center justify-center">
-                              <User className="w-3 h-3 text-purple-400" />
-                            </span>
-                            {featured.authorName}
-                          </span>
-                        )}
-                        <span className="flex items-center gap-1">
+
+                    <div className="flex items-center gap-4 text-white/60 text-xs md:text-sm font-semibold">
+                      {displayOptions.authorName !== false && featured.authorName && (
+                        <div className="flex items-center gap-2">
+                          <div className={`w-6 h-6 rounded-full bg-purple-500/15 flex items-center justify-center backdrop-blur-md`}>
+                            <User className={`w-3.5 h-3.5 text-purple-500`} />
+                          </div>
+                          {featured.authorName}
+                        </div>
+                      )}
+                      {displayOptions.readingTime !== false && (
+                        <div className="flex items-center gap-1.5">
                           <Clock className="w-3.5 h-3.5" />
                           {featured.time}
-                        </span>
-                      </div>
-                      
-                      <div className={`pt-3 border-t ${isDark ? "border-white/10" : "border-gray-100"}`}>
-                        <span className={`inline-flex items-center gap-1.5 text-sm font-semibold ${
-                          isDark ? "text-purple-400" : "text-purple-600"
-                        } group-hover:gap-3 transition-all duration-300`}>
-                          Read article <ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" />
-                        </span>
-                      </div>
+                        </div>
+                      )}
                     </div>
                   </div>
-                  </motion.article>
-                </Link>
-              )}
+                </div>
+              </Link>
+            </motion.div>
+          )}
 
-              <div className="flex flex-col gap-4">
-                {rest.map((article, index) => (
-                  <Link href={`/article/${article.id}`} key={article.id} className="group cursor-pointer">
-                    <motion.article
-                      initial={{ opacity: 0, x: 20 }}
-                      whileInView={{ opacity: 1, x: 0 }}
-                      viewport={{ once: true }}
-                      transition={{ delay: index * 0.1 }}
-                      className={`rounded-2xl overflow-hidden border flex flex-row gap-4 p-4 transition-all duration-300 ${
-                        isDark
-                          ? "bg-white/[0.04] border-white/10 hover:border-purple-500/40 hover:bg-white/[0.07]"
-                          : "bg-white border-gray-200 hover:shadow-lg hover:border-purple-200"
-                      }`}
-                    >
-                    {displayOptions.thumbnails !== false && (
-                      <div className="relative w-24 sm:w-28 h-24 sm:h-28 shrink-0 rounded-xl overflow-hidden">
-                        <Image src={article.image} alt={article.title} fill className="object-cover group-hover:scale-110 transition-transform duration-500" />
-                      </div>
-                    )}
-                    <div className="flex-1 min-w-0 flex flex-col justify-center gap-1.5">
-                      <div className="flex items-center gap-2">
-                        <span className={`inline-block px-2 py-0.5 ${article.tagColor} text-white text-[10px] uppercase font-bold tracking-wider rounded-md`}>
+          <div className={`grid ${
+            layout === "compact" ? "lg:col-span-3 grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3" : 
+            layout === "spacious" ? "col-span-1 grid-cols-1 gap-8" : 
+            "lg:col-span-2 grid-cols-1 sm:grid-cols-2 gap-4 xl:gap-6"
+          }`}>
+            {rest.map((article, idx) => (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: idx * 0.1 }}
+                key={article.id}
+                className="h-full"
+              >
+                <Link href={`/article/${article.id}`} className={`group block h-full rounded-[1.5rem] overflow-hidden border ${isDark ? "bg-white/[0.02] border-white/[0.05] hover:bg-white/[0.06] hover:border-white/20" : "bg-white border-gray-100 hover:shadow-xl hover:border-gray-300"} transition-all duration-500 hover:-translate-y-1 ${
+                  layout === "spacious" ? "flex flex-col md:flex-row" : "flex flex-col"
+                }`}>
+                  
+                  {displayOptions.thumbnails !== false && (
+                    <div className={`relative overflow-hidden ${
+                      layout === "spacious" ? "w-full md:w-1/3 md:h-full min-h-[200px]" : 
+                      layout === "compact" ? "w-full h-32" : 
+                      "w-full h-40"
+                    }`}>
+                      <Image src={article.image} alt={article.title} fill className="object-cover transition-transform duration-700 group-hover:scale-110" />
+                      <div className="absolute top-3 left-3">
+                        <span className={`inline-block px-2.5 py-1 ${article.tagColor} text-white text-[9px] font-black uppercase tracking-widest rounded-lg shadow-lg`}>
                           {article.tag}
                         </span>
-{article.isPremium && <PremiumBadge size="sm" />}
                       </div>
-                      <h3 className={`font-semibold text-sm leading-snug line-clamp-2 group-hover:text-purple-400 transition-colors ${
-                        isDark ? "text-white" : "text-gray-900"
-                      }`}>
-                        {article.title}
-                      </h3>
-                      <div className={`flex items-center gap-3 text-[11px] ${isDark ? "text-white/50" : "text-gray-400"}`}>
-                        <span className="flex items-center gap-1"><Clock className="w-3 h-3"/> {article.time}</span>
-                      </div>
-                    </div>
-                    </motion.article>
-                  </Link>
-                ))}
-              </div>
-            </>
-          ) : (
-            aiNews.map((article, index) => (
-              <Link href={`/article/${article.id}`} key={article.id} className="block group cursor-pointer">
-                <motion.article
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: index * 0.08 }}
-                  className={`rounded-xl overflow-hidden border transition-all duration-300 hover:-translate-y-1 flex ${
-                    layout === "compact" ? "flex-row items-center min-h-[100px] p-3 gap-4" : 
-                    "flex-col p-6 gap-5" // spacious
-                  } ${
-                    isDark
-                      ? "bg-white/5 border-white/10 hover:border-purple-500/30 hover:bg-white/8"
-                      : "bg-white border-gray-200 hover:border-purple-300 shadow-sm hover:shadow-md"
-                  }`}
-                >
-                  {displayOptions.thumbnails !== false && (
-                    <div className={`relative overflow-hidden shrink-0 ${
-                      layout === "compact" ? "w-20 h-20 rounded-md" : 
-                      "w-full h-72 rounded-lg" // spacious
-                    }`}>
-                      <Image
-                        src={article.image}
-                        alt={article.title}
-                        fill
-                        className="object-cover group-hover:scale-105 transition-transform duration-500"
-                      />
                     </div>
                   )}
-                  
-                  <div className={`flex flex-col flex-1 ${layout === "spacious" ? "p-2" : ""}`}>
-                    <div className="flex items-center gap-2 mb-3">
-                      <span className={`px-2.5 py-1 ${article.tagColor} text-white text-[10px] uppercase font-bold tracking-wider rounded-md`}>
-                        {article.tag}
-                      </span>
-{article.isPremium && <PremiumBadge size="sm" />}
-                    </div>
-                    
-                    <h3 className={`font-bold leading-snug mb-2 line-clamp-2 group-hover:text-purple-400 transition-colors ${
-                      layout === "compact" ? "text-sm" : "text-2xl mt-2"
-                    } ${
-                      isDark ? "text-white" : "text-gray-900"
+
+                  <div className={`p-5 flex flex-col flex-1 ${layout === "spacious" ? "justify-center p-8" : ""}`}>
+                    <h3 className={`font-bold leading-snug mb-4 transition-colors duration-300 ${isDark ? "text-white/90 group-hover:text-white" : "text-gray-900 group-hover:text-black"} ${
+                      layout === "compact" ? "text-sm line-clamp-2" : 
+                      layout === "spacious" ? "text-xl md:text-2xl line-clamp-3" : 
+                      "text-base line-clamp-3"
                     }`}>
                       {article.title}
                     </h3>
                     
                     {layout === "spacious" && (
-                      <p className={`text-sm leading-relaxed mb-4 line-clamp-3 ${isDark ? "text-white/70" : "text-gray-500"}`}>
+                      <p className={`mb-6 line-clamp-3 ${isDark ? "text-white/60" : "text-gray-500"}`}>
                         {article.excerpt}
                       </p>
                     )}
-                    
-                    <div className="mt-auto">
-                      <div className={`flex items-center flex-wrap gap-x-4 gap-y-2 text-xs ${layout === "spacious" ? "mb-4" : ""} ${isDark ? "text-white/60" : "text-gray-400"}`}>
-                        <div className="flex items-center gap-1">
+
+                    <div className="mt-auto flex items-center justify-between">
+                      {displayOptions.readingTime !== false && (
+                        <div className={`flex items-center gap-1.5 font-medium ${
+                          layout === "compact" ? "text-[10px]" : "text-xs"
+                        } ${isDark ? "text-white/40" : "text-gray-400"}`}>
                           <Clock className="w-3.5 h-3.5" />
                           {article.time}
                         </div>
-                      </div>
-                      
-                      {layout === "spacious" && (
-                        <div className={`pt-4 border-t ${isDark ? "border-white/10 text-purple-400" : "border-gray-100 text-purple-600"} font-semibold text-sm flex items-center gap-1 group-hover:gap-2 transition-all`}>
-                          Read full news <ArrowRight className="w-4 h-4" />
-                        </div>
                       )}
+                      <div className={`w-8 h-8 rounded-full flex items-center justify-center border ${isDark ? "border-white/10 bg-white/5 text-white/50 group-hover:bg-white/20 group-hover:text-white" : "border-gray-200 bg-gray-50 text-gray-400 group-hover:bg-gray-200 group-hover:text-gray-900"} transition-all duration-300`}>
+                        <ArrowRight className="w-4 h-4 -rotate-45 group-hover:rotate-0 transition-transform duration-300" />
+                      </div>
                     </div>
                   </div>
-                </motion.article>
-              </Link>
-            ))
-          )}
+                </Link>
+              </motion.div>
+            ))}
+          </div>
+
         </div>
       </div>
     </section>

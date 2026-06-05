@@ -88,7 +88,6 @@ export function MobileBottomNav() {
 
   const navItems = [
     { name: "Home", href: "/social", icon: Home },
-    { name: "Shorts", href: "/reels", icon: PlaySquare },
     { name: "Search", href: "/social?tab=search", icon: Search },
     { name: "Profile", href: user ? `/u/${(user as any)?.username || user?.uid}` : "/login", icon: User },
   ]

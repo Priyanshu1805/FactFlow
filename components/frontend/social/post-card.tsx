@@ -12,6 +12,8 @@ import { EditPostModal } from "./edit-post-modal"
 import { SharePostModal } from "./share-post-modal"
 import { PostCommentsSheet } from "./post-comments-sheet"
 import { io } from "socket.io-client"
+import { useVideoSettings } from "@/hooks/useVideoSettings"
+import { useNetworkStatus } from "@/hooks/useNetworkStatus"
 
 interface PostCardProps {
   post: any
@@ -21,8 +23,16 @@ interface PostCardProps {
 
 export function PostCard({ post, isDark, socket }: PostCardProps) {
   const { user } = useAuthStore()
+  const settings = useVideoSettings()
+  const { isWifi } = useNetworkStatus()
   const [currentSlide, setCurrentSlide] = useState(0)
   const [isMuted, setIsMuted] = useState(true)
+
+  useEffect(() => {
+    if (settings) {
+      setIsMuted(settings.muteByDefault)
+    }
+  }, [settings?.muteByDefault])
   const [likesCount, setLikesCount] = useState(post.likes?.length || 0)
   const [isLiked, setIsLiked] = useState(post.likes?.includes(user?.uid) || false) // Temporary logic, actually user._id is in likes but we have firebaseUid on client. It's safer to rely on API response, but for optimism we guess.
   const [savesCount, setSavesCount] = useState(post.savesCount || 0)
@@ -181,11 +191,13 @@ export function PostCard({ post, isDark, socket }: PostCardProps) {
             <video 
               src={post.media[currentSlide].url} 
               className="w-full h-full object-cover"
-              autoPlay 
+              autoPlay={settings ? (settings.autoPlayVideos && (!settings.autoPlayOnWifiOnly || isWifi)) : true} 
               loop 
               muted={isMuted} 
               playsInline 
-            />
+            >
+              {settings?.showSubtitles && <track kind="captions" src="/captions.vtt" default />}
+            </video>
           ) : (
             <img 
               src={post.media[currentSlide]?.url} 

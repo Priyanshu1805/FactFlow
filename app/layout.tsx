@@ -10,15 +10,38 @@ import { DynamicClients } from "@/components/dynamic-clients"
 import { ClientShell } from "@/components/client-shell"
 
 export const metadata: Metadata = {
-  title: "Fact Flow — Your Daily News Pulse",
+  metadataBase: new URL("https://factflow.news"),
+  title: {
+    default: "Fact Flow — Your Daily News Pulse",
+    template: "%s | Fact Flow"
+  },
   description: "Fast. Accurate. Entertaining. Breaking news, trending stories, and viral reels — all in one place.",
-  keywords: ["news", "breaking news", "trending", "reels", "sports", "entertainment"],
+  keywords: ["news", "breaking news", "trending", "reels", "sports", "entertainment", "journalism", "live updates"],
   openGraph: {
     title: "Fact Flow",
     description: "Your Daily Pulse Of Global News",
+    url: "https://factflow.news",
+    siteName: "Fact Flow",
+    images: [
+      {
+        url: "/og-image.jpg", // Make sure this exists in public folder
+        width: 1200,
+        height: 630,
+        alt: "Fact Flow - Daily News Pulse"
+      }
+    ],
+    locale: "en_US",
     type: "website",
   },
+  twitter: {
+    card: "summary_large_image",
+    title: "Fact Flow — Your Daily News Pulse",
+    description: "Fast. Accurate. Entertaining. Breaking news, trending stories, and viral reels — all in one place.",
+    creator: "@FactFlowNews",
+  },
 }
+
+import { SocketProvider } from "@/components/providers/socket-provider"
 
 export default function RootLayout({
   children,
@@ -45,19 +68,21 @@ export default function RootLayout({
       </head>
       <body>
         <AuthProvider>
-          <ThemeProvider>
-            <ClientShell>
-              <Toaster position="bottom-right" />
-              <DynamicClients />
-              <TwoFactorGuard>
-                <AccountStatusGuard>
-                  <div className="flex flex-col min-h-screen">
-                    {children}
-                  </div>
-                </AccountStatusGuard>
-              </TwoFactorGuard>
-            </ClientShell>
-          </ThemeProvider>
+          <SocketProvider>
+            <ThemeProvider>
+              <ClientShell>
+                <Toaster position="bottom-right" />
+                <DynamicClients />
+                <TwoFactorGuard>
+                  <AccountStatusGuard>
+                    <div className="flex flex-col min-h-screen">
+                      {children}
+                    </div>
+                  </AccountStatusGuard>
+                </TwoFactorGuard>
+              </ClientShell>
+            </ThemeProvider>
+          </SocketProvider>
         </AuthProvider>
       </body>
     </html>

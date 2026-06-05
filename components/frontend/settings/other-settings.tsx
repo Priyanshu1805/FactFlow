@@ -24,80 +24,120 @@ function Section({ title, icon: Icon, children }: { title: string; icon: any; ch
 }
 
 // ─── Language Settings ────────────────────────────────────────
+import { useLanguageStore, type LangCode, type RegionCode } from "@/lib/i18n/languageStore"
+
+const LANG_OPTIONS: { code: LangCode; native: string; english: string; flag: string }[] = [
+  { code: "english", native: "English", english: "English", flag: "🇬🇧" },
+  { code: "hindi", native: "हिन्दी", english: "Hindi", flag: "🇮🇳" },
+  { code: "marathi", native: "मराठी", english: "Marathi", flag: "🇮🇳" },
+  { code: "tamil", native: "தமிழ்", english: "Tamil", flag: "🇮🇳" },
+  { code: "telugu", native: "తెలుగు", english: "Telugu", flag: "🇮🇳" },
+  { code: "bengali", native: "বাংলা", english: "Bengali", flag: "🇮🇳" },
+  { code: "gujarati", native: "ગુજરાતી", english: "Gujarati", flag: "🇮🇳" },
+  { code: "punjabi", native: "ਪੰਜਾਬੀ", english: "Punjabi", flag: "🇮🇳" },
+]
+
+const REGION_OPTIONS: { value: RegionCode; label: string; flag: string }[] = [
+  { value: "india", label: "India", flag: "🇮🇳" },
+  { value: "us", label: "USA", flag: "🇺🇸" },
+  { value: "uk", label: "UK", flag: "🇬🇧" },
+  { value: "global", label: "Global", flag: "🌍" },
+]
+
 export function LanguageSettings() {
-  const regions = ["India", "USA", "UK", "Australia", "Canada", "UAE"]
-  const languages = ["English", "Hindi", "Marathi", "Tamil", "Telugu", "Bengali", "Gujarati", "Punjabi"]
-  const [selectedLang, setSelectedLang] = useState("English")
-  const [selectedRegion, setSelectedRegion] = useState("India")
+  const { lang, region, setLang, setRegion } = useLanguageStore()
 
   return (
     <div className="space-y-8">
       <div>
         <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-1">Language & Region</h2>
-        <p className="text-gray-600 dark:text-white/[0.85] text-sm">Choose your preferred language and region for news</p>
+        <p className="text-gray-600 dark:text-white/60 text-sm">Choose your preferred language and region for news</p>
       </div>
 
-      <div className="space-y-3">
-        <h3 className="text-gray-900 dark:text-white font-semibold text-sm flex items-center gap-2 px-2">
-          <Globe className="w-4 h-4 text-red-400" />
-          Interface Language
-        </h3>
-        <div className="neu-radiogroup">
-          {languages.map((lang) => (
-            <div key={lang} className="neu-wrapper">
-              <input
-                className="neu-state"
-                type="radio"
-                name="iface-lang"
-                id={`iface-lang-${lang}`}
-                value={lang}
-                checked={selectedLang === lang}
-                onChange={() => setSelectedLang(lang)}
-              />
-              <label className="neu-label" htmlFor={`iface-lang-${lang}`}>
-                <div className="neu-indicator"></div>
-                <span className="neu-text">{lang}</span>
-              </label>
-            </div>
-          ))}
+      {/* Interface Language */}
+      <Section title="Interface Language" icon={Globe}>
+        <p className="text-gray-500 dark:text-white/50 text-xs mb-3">
+          This changes the interface and news content language
+        </p>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+          {LANG_OPTIONS.map((l) => {
+            const isSelected = lang === l.code
+            return (
+              <button
+                key={l.code}
+                type="button"
+                onClick={() => setLang(l.code)}
+                className={`relative flex items-center gap-2.5 px-3 py-3 rounded-xl border text-sm font-medium transition-all duration-200 ${
+                  isSelected
+                    ? "bg-red-500 border-red-500 text-white shadow-lg shadow-red-500/20"
+                    : "bg-gray-50 dark:bg-white/5 border-gray-200 dark:border-white/10 text-gray-700 dark:text-gray-300 hover:border-gray-400 dark:hover:border-white/25 hover:bg-gray-100 dark:hover:bg-white/8"
+                }`}
+              >
+                <span className="text-base">{l.flag}</span>
+                <div className="flex flex-col items-start min-w-0">
+                  <span className="font-semibold truncate leading-tight">{l.native}</span>
+                  {l.code !== "english" && (
+                    <span className={`text-[10px] leading-tight ${isSelected ? "text-white/70" : "text-gray-400 dark:text-white/40"}`}>
+                      {l.english}
+                    </span>
+                  )}
+                </div>
+                {isSelected && (
+                  <svg className="w-3.5 h-3.5 shrink-0 ml-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                  </svg>
+                )}
+              </button>
+            )
+          })}
         </div>
-      </div>
+        {lang !== "english" && (
+          <div className="mt-3 flex items-center gap-2 px-3 py-2 bg-green-500/10 border border-green-500/20 rounded-lg text-green-600 dark:text-green-400 text-xs">
+            <span>✓</span>
+            <span>News content will also update to {LANG_OPTIONS.find(l => l.code === lang)?.english || lang}</span>
+          </div>
+        )}
+      </Section>
 
-      <div className="space-y-3">
-        <h3 className="text-gray-900 dark:text-white font-semibold text-sm flex items-center gap-2 px-2">
-          <Globe className="w-4 h-4 text-red-400" />
-          News Region
-        </h3>
-        <p className="text-gray-600 dark:text-white/[0.85] text-xs px-2">Get news relevant to your region</p>
-        <div className="neu-radiogroup">
-          {regions.map((r) => (
-            <div key={r} className="neu-wrapper">
-              <input
-                className="neu-state"
-                type="radio"
-                name="region"
-                id={`region-${r}`}
-                value={r}
-                checked={selectedRegion === r}
-                onChange={() => setSelectedRegion(r)}
-              />
-              <label className="neu-label" htmlFor={`region-${r}`}>
-                <div className="neu-indicator"></div>
-                <span className="neu-text">{r}</span>
-              </label>
-            </div>
-          ))}
+      {/* News Region */}
+      <Section title="News Region" icon={Globe}>
+        <p className="text-gray-500 dark:text-white/50 text-xs mb-3">Get news relevant to your region</p>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+          {REGION_OPTIONS.map((r) => {
+            const isSelected = region === r.value
+            return (
+              <button
+                key={r.value}
+                type="button"
+                onClick={() => setRegion(r.value)}
+                className={`flex items-center gap-2.5 px-3 py-3 rounded-xl border text-sm font-medium transition-all duration-200 ${
+                  isSelected
+                    ? "bg-red-500 border-red-500 text-white shadow-lg shadow-red-500/20"
+                    : "bg-gray-50 dark:bg-white/5 border-gray-200 dark:border-white/10 text-gray-700 dark:text-gray-300 hover:border-gray-400 dark:hover:border-white/25 hover:bg-gray-100 dark:hover:bg-white/8"
+                }`}
+              >
+                <span className="text-lg">{r.flag}</span>
+                <span>{r.label}</span>
+                {isSelected && (
+                  <svg className="w-3.5 h-3.5 shrink-0 ml-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                  </svg>
+                )}
+              </button>
+            )
+          })}
         </div>
-      </div>
+      </Section>
 
+      {/* Date & Time Format */}
       <Section title="Date & Time Format" icon={Globe}>
         {[
           { label: "Date format", options: ["DD/MM/YYYY", "MM/DD/YYYY", "YYYY-MM-DD"] },
           { label: "Time format", options: ["12-hour (AM/PM)", "24-hour"] },
         ].map((item) => (
           <div key={item.label}>
-            <label className="text-gray-600 dark:text-white/[0.85] text-xs mb-1.5 block">{item.label}</label>
-            <select className="w-full px-3 py-2.5 bg-white/8 border border-gray-200 dark:border-white/15 rounded-lg text-gray-900 dark:text-white text-sm focus:outline-none focus:border-red-500">
+            <label className="text-gray-600 dark:text-white/60 text-xs mb-1.5 block">{item.label}</label>
+            <select className="w-full px-3 py-2.5 bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/15 rounded-lg text-gray-900 dark:text-white text-sm focus:outline-none focus:border-red-500 transition-colors">
               {item.options.map((o) => <option key={o}>{o}</option>)}
             </select>
           </div>

@@ -6,6 +6,8 @@ import { Play, Maximize, Radio, Bookmark } from "lucide-react"
 import { useAuthStore } from "@/store/auth-store"
 import { getSavedItems, saveItem, unsaveItem } from "@/lib/api/saved"
 import { toast } from "sonner"
+import { useVideoSettings } from "@/hooks/useVideoSettings"
+import { useNetworkStatus } from "@/hooks/useNetworkStatus"
 
 interface Channel {
   id: string
@@ -48,6 +50,8 @@ export function LiveTvSection() {
   const [isLoading, setIsLoading] = useState(false)
   const [isSaved, setIsSaved] = useState(false)
   const { user } = useAuthStore()
+  const settings = useVideoSettings()
+  const { isWifi } = useNetworkStatus()
 
   // Fetch saved state when active channel changes
   useEffect(() => {
@@ -132,8 +136,8 @@ export function LiveTvSection() {
               className="absolute inset-0 w-full h-full border-none z-10"
               src={
                 activeChannel.isChannel
-                  ? `https://www.youtube.com/embed/live_stream?channel=${activeChannel.ytId}&autoplay=1&mute=1&playsinline=1`
-                  : `https://www.youtube.com/embed/${activeChannel.ytId}?autoplay=1&mute=1&playsinline=1`
+                  ? `https://www.youtube.com/embed/live_stream?channel=${activeChannel.ytId}&autoplay=${settings?.autoPlayVideos && (!settings.autoPlayOnWifiOnly || isWifi) ? 1 : 0}&mute=${settings?.muteByDefault ? 1 : 0}&playsinline=1`
+                  : `https://www.youtube.com/embed/${activeChannel.ytId}?autoplay=${settings?.autoPlayVideos && (!settings.autoPlayOnWifiOnly || isWifi) ? 1 : 0}&mute=${settings?.muteByDefault ? 1 : 0}&playsinline=1`
               }
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
               allowFullScreen

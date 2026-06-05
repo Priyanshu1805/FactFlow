@@ -3,7 +3,8 @@
 
 import { useState, useRef, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { Menu, X, Search, TrendingUp, Radio, Users, Gamepad2, Laugh, Cpu, User, Settings, ShieldCheck, Sparkles, Globe } from "lucide-react"
+import { Menu, X, Search, TrendingUp, Radio, Users, Gamepad2, Laugh, Cpu, User, Settings, ShieldCheck, Sparkles, Globe, Bookmark, Bell, Clapperboard } from "lucide-react"
+
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useTheme } from "@/components/theme-provider"
@@ -11,6 +12,7 @@ import { useAuthStore } from "@/store/auth-store"
 import { auth } from "@/lib/firebase"
 import { useSubscription } from "@/lib/use-subscription"
 import { PremiumBadge } from "@/components/frontend/premium-badge"
+import { NotificationBell } from "@/components/frontend/notification-bell"
 
 const navLinks = [
   { name: "Live", href: "/live", icon: Radio },
@@ -22,6 +24,7 @@ const navLinks = [
   { name: "Tech", href: "/#tech", icon: Cpu },
   { name: "Memes", href: "/#memes", icon: Laugh },
   { name: "Social", href: "/social", icon: Globe },
+  { name: "Saved", href: "/saved", icon: Bookmark },
 ]
 
 export function Navbar() {
@@ -29,6 +32,10 @@ export function Navbar() {
   const [searchExpanded, setSearchExpanded] = useState(false)
   const [settingsOpen, setSettingsOpen] = useState(false)
   const settingsRef = useRef<HTMLDivElement>(null)
+
+  const [profileOpen, setProfileOpen] = useState(false)
+  const profileRef = useRef<HTMLDivElement>(null)
+
   const { theme } = useTheme()
   const router = useRouter()
   const searchInputRef = useRef<HTMLInputElement>(null)
@@ -41,11 +48,20 @@ export function Navbar() {
 
   const isDark = theme !== "light"
 
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (settingsRef.current && !settingsRef.current.contains(event.target as Node)) {
         setSettingsOpen(false)
       }
+      if (profileRef.current && !profileRef.current.contains(event.target as Node)) {
+          setProfileOpen(false)
+        }
     }
     document.addEventListener("mousedown", handleClickOutside)
     return () => document.removeEventListener("mousedown", handleClickOutside)
@@ -92,11 +108,15 @@ export function Navbar() {
       setHasUnreadSocial(false)
       setTrendingCount(0)
     }
+    const handleNewNotif = () => setHasUnreadSocial(true)
+
     window.addEventListener("social_notifications_read", handleRead)
+    window.addEventListener("global_new_notification", handleNewNotif)
 
     return () => {
       clearInterval(interval)
       window.removeEventListener("social_notifications_read", handleRead)
+      window.removeEventListener("global_new_notification", handleNewNotif)
     }
   }, [isAuthenticated, user])
 
@@ -263,7 +283,7 @@ export function Navbar() {
                     }`}
                   >
                     <div className="p-1">
-                      <Link href="/settings" className={`flex items-center gap-2 px-3 py-2 text-sm rounded-lg ${isDark ? "hover:bg-white/10" : "hover:bg-gray-50"}`}>
+                                            <Link href="/settings" className={`flex items-center gap-2 px-3 py-2 text-sm rounded-lg ${isDark ? "hover:bg-white/10" : "hover:bg-gray-50"}`}>
                         <Settings className="w-4 h-4" /> Preferences
                       </Link>
                       <Link href="/admin" className={`flex items-center gap-2 px-3 py-2 text-sm rounded-lg ${isDark ? "hover:bg-white/10" : "hover:bg-gray-50"}`}>
@@ -275,8 +295,85 @@ export function Navbar() {
               </AnimatePresence>
             </div>
 
-            {/* Login Button */}
-            {!isAuthenticated && (
+           {/* Auth Buttons / Icons */}
+            {!mounted ? (
+              <div className="w-16 h-8 rounded-full animate-pulse bg-gray-200 dark:bg-white/10"></div>
+            ) : isAuthenticated ? (
+              <div className="flex items-center gap-1 sm:gap-2">
+                {/* Notification Dropdown */}
+                <NotificationBell />
+
+                {/* Profile Dropdown */}
+                <div className="relative" ref={profileRef}>
+                  <button
+                    onClick={() => setProfileOpen(!profileOpen)}
+                    className={`p-2 rounded-full transition-colors ${
+                      isDark ? "hover:bg-white/10 text-gray-300 hover:text-white" : "hover:bg-gray-100 text-gray-600 hover:text-gray-900"
+                    }`}
+                    title="Profile"
+                  >
+                    {user?.photoURL ? (
+                      <img src={user.photoURL} alt="Profile" className="w-6 h-6 rounded-full object-cover border border-white/20" />
+                    ) : (
+                      <User className="w-5 h-5" />
+                    )}
+                  </button>
+                  <AnimatePresence>
+                    {profileOpen && (
+                      <motion.div
+                        initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                        transition={{ duration: 0.15 }}
+                        className={`absolute right-0 mt-2 w-48 rounded-xl border shadow-xl overflow-hidden z-50 ${
+                          isDark ? "bg-[#1E293B] border-white/10 text-white" : "bg-white border-gray-100 text-gray-900"
+                        }`}
+                      >
+                        <div className="p-3 border-b border-white/5">
+                          <p className="text-sm font-medium truncate">{user?.displayName || "User"}</p>
+                          <p className={`text-xs truncate ${isDark ? "text-gray-400" : "text-gray-500"}`}>{user?.email}</p>
+                        </div>
+                        <div className="p-1">
+                          <Link 
+                            href={`/u/${(user as any)?.username || user?.uid}`}
+                            onClick={() => setProfileOpen(false)}
+                            className={`flex items-center gap-2 px-3 py-2 text-sm rounded-lg ${isDark ? "hover:bg-white/10" : "hover:bg-gray-50"}`}
+                          >
+                            <User className="w-4 h-4" /> View Profile
+                          </Link>
+                          <Link 
+                            href="/settings" 
+                            onClick={() => setProfileOpen(false)}
+                            className={`flex items-center gap-2 px-3 py-2 text-sm rounded-lg ${isDark ? "hover:bg-white/10" : "hover:bg-gray-50"}`}
+                          >
+                            <Settings className="w-4 h-4" /> Settings
+                          </Link>
+                        </div>
+                        <div className="p-1 border-t border-white/5">
+                          <button
+                            onClick={async () => {
+                              setProfileOpen(false);
+                              try {
+                                const { signOut } = await import("firebase/auth");
+                                const { auth } = await import("@/lib/firebase");
+                                await signOut(auth);
+                                useAuthStore.getState().logout();
+                                window.location.href = "/";
+                              } catch (e) {
+                                console.error("Sign out error", e);
+                              }
+                            }}
+                            className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-400 hover:bg-red-500/10 rounded-lg transition-colors"
+                          >
+                            <span className="font-semibold">Sign Out</span>
+                          </button>
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+              </div>
+            ) : (
               <Link
                 href="/login"
                 className="bg-gradient-to-r from-red-600 to-orange-500 text-white px-3 py-1.5 sm:px-4 sm:py-2 rounded-full text-xs sm:text-sm font-bold shadow-md shadow-red-900/20 hover:brightness-110 transition-all active:scale-95 text-center whitespace-nowrap"
@@ -284,6 +381,7 @@ export function Navbar() {
                 Login
               </Link>
             )}
+
 
             {/* Hamburger Mobile Menu Toggle */}
             <button

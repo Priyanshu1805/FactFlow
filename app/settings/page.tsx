@@ -16,8 +16,8 @@ import {
   LanguageSettings,
   ContentSettings,
   AccessibilitySettings,
-  AudioSettings,
 } from "@/components/frontend/settings/other-settings"
+import { AudioVideoSettings } from "@/components/frontend/settings/audio-video-settings"
 
 const PANELS: Record<string, React.ComponentType> = {
   profile:       ProfileSettings,
@@ -30,7 +30,7 @@ const PANELS: Record<string, React.ComponentType> = {
   privacy:       PrivacySettings,
   accessibility: AccessibilitySettings,
   content:       ContentSettings,
-  audio:         AudioSettings,
+  audio:         AudioVideoSettings,
 }
 
 function SettingsContent() {

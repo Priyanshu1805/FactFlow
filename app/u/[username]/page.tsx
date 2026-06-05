@@ -6,14 +6,14 @@ import Link from "next/link"
 import { useTheme } from "@/components/theme-provider"
 import { useAuthStore } from "@/store/auth-store"
 import { Navbar } from "@/components/frontend/navbar"
-import { MessageSquare, Grid, Bookmark, Play, Trash2, Plus, CheckCircle, Users, Eye, Sparkles, Globe, Rss, ChevronLeft } from "lucide-react"
+import { MessageSquare, Grid, Bookmark, Play, Trash2, Plus, CheckCircle, Users, Eye, Sparkles, Globe, Rss, ChevronLeft, Calendar } from "lucide-react"
 import { getSavedItems, unsaveItem } from "@/lib/api/saved"
 import { toast } from "sonner"
 import { CreateMenuSheet } from "@/components/frontend/create-menu-sheet"
 import { UploadFlowModal } from "@/components/frontend/upload-flow-modal"
 import { EditProfileModal } from "@/components/frontend/settings/edit-profile-modal"
 import { StoryViewer } from "@/components/frontend/stories/story-viewer"
-import { io, Socket } from "socket.io-client"
+import { useSocket } from "@/hooks/use-socket"
 import { PostCard } from "@/components/frontend/social/post-card"
 
 export default function PublicProfilePage() {
@@ -54,7 +54,7 @@ export default function PublicProfilePage() {
   const [fetchingSaved, setFetchingSaved] = useState(false)
 
   // Socket state
-  const socketRef = useRef<Socket | null>(null)
+  const { socket } = useSocket()
 
   const isOwnProfile = user?.username === username || user?.uid === username
 
@@ -104,12 +104,9 @@ export default function PublicProfilePage() {
 
   // Socket.io Real-time follow / profile update integration
   useEffect(() => {
-    const socketUrl = process.env.NEXT_PUBLIC_SOCKET_URL && process.env.NEXT_PUBLIC_SOCKET_URL !== "/"
-      ? process.env.NEXT_PUBLIC_SOCKET_URL
-      : "http://localhost:5000"
-    socketRef.current = io(socketUrl)
+    if (!socket) return
 
-    socketRef.current.on("follower_update", (payload: { userId: string; followersCount: number; followingCount: number }) => {
+    const handleFollowerUpdate = (payload: { userId: string; followersCount: number; followingCount: number }) => {
       if (profile && profile._id === payload.userId) {
         setStats((prev: any) => ({
           ...prev,
@@ -117,26 +114,34 @@ export default function PublicProfilePage() {
           following: payload.followingCount
         }))
       }
-    })
+    }
 
-    socketRef.current.on("new_post", (post: any) => {
+    const handleNewPost = (post: any) => {
       if (post.author?.username === profile?.username) {
         setPosts((prev) => [post, ...prev])
       }
-    })
+    }
 
-    socketRef.current.on("post_deleted", (data: any) => {
+    const handlePostDeleted = (data: any) => {
       setPosts((prev) => prev.filter(p => p._id !== data.postId))
-    })
+    }
 
-    socketRef.current.on("post_updated", (updatedPost: any) => {
+    const handlePostUpdated = (updatedPost: any) => {
       setPosts((prev) => prev.map(p => p._id === updatedPost._id ? { ...p, ...updatedPost } : p))
-    })
+    }
+
+    socket.on("follower_update", handleFollowerUpdate)
+    socket.on("new_post", handleNewPost)
+    socket.on("post_deleted", handlePostDeleted)
+    socket.on("post_updated", handlePostUpdated)
 
     return () => {
-      socketRef.current?.disconnect()
+      socket.off("follower_update", handleFollowerUpdate)
+      socket.off("new_post", handleNewPost)
+      socket.off("post_deleted", handlePostDeleted)
+      socket.off("post_updated", handlePostUpdated)
     }
-  }, [profile])
+  }, [profile, socket])
 
   // Fetch saved data when switching to Saved tab
   useEffect(() => {
@@ -263,12 +268,13 @@ export default function PublicProfilePage() {
             <div className={`relative rounded-3xl overflow-hidden border ${isDark ? "bg-white/[0.02] border-white/10" : "bg-gray-50 border-gray-200"} shadow-2xl backdrop-blur-md`}>
               
               {/* Cover Banner */}
-              <div className="w-full h-44 sm:h-56 md:h-64 lg:h-72 relative overflow-hidden bg-gradient-to-r from-red-900/40 via-purple-950/40 to-blue-900/40 border-b border-white/5">
+              <div className="w-full h-44 sm:h-56 md:h-72 lg:h-80 relative overflow-hidden bg-gradient-to-r from-red-900/40 via-purple-950/40 to-blue-900/40 border-b border-white/5 group">
                 {profile.coverImage ? (
-                  <img src={profile.coverImage} alt="Cover" className="w-full h-full object-cover opacity-80" />
+                  <img src={profile.coverImage} alt="Cover" className="w-full h-full object-cover opacity-90 transition-transform duration-700 group-hover:scale-105" />
                 ) : (
                   <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-red-600/10 via-transparent to-transparent animate-pulse" />
                 )}
+                <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0a] via-transparent to-transparent opacity-80" />
                 {/* Futuristic Grid Effect on banner */}
                 <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI4IiBoZWlnaHQ9IjgiPgo8cmVjdCB3aWR0aD0iOCIgaGVpZ2h0PSI4IiBmaWxsPSJ3aGl0ZSIgZmlsbC1vcGFjaXR5PSIwLjAzIi8+Cjwvc3ZnPg==')] mix-blend-overlay opacity-30" />
               </div>
@@ -357,25 +363,30 @@ export default function PublicProfilePage() {
                   </div>
 
                   {/* Follow stats bar */}
-                  <div className={`flex items-center justify-center md:justify-start gap-6 text-sm font-medium border-y py-3 ${isDark ? "border-white/5" : "border-gray-200"}`}>
-                    <div className="flex items-center gap-1.5">
-                      <span className={`font-bold text-base ${isDark ? "text-white" : "text-gray-900"}`}>{stats.posts || 0}</span>
-                      <span className={`${isDark ? "text-white/60" : "text-gray-500"} text-xs`}>posts</span>
+                  <div className={`flex flex-wrap items-center justify-center md:justify-start gap-6 text-sm font-medium p-4 rounded-2xl ${isDark ? "bg-white/5 border border-white/10" : "bg-gray-100 border border-gray-200"}`}>
+                    <div className="flex flex-col items-center">
+                      <span className={`font-black text-xl ${isDark ? "text-white" : "text-gray-900"}`}>{stats.posts || 0}</span>
+                      <span className={`${isDark ? "text-white/50" : "text-gray-500"} text-[10px] uppercase tracking-wider font-bold`}>posts</span>
                     </div>
-                    <div className="flex items-center gap-1.5">
-                      <span className={`font-bold text-base ${isDark ? "text-white" : "text-gray-900"}`}>{stats.followers || 0}</span>
-                      <span className={`${isDark ? "text-white/60" : "text-gray-500"} text-xs`}>followers</span>
+                    <div className={`w-px h-8 ${isDark ? "bg-white/10" : "bg-gray-300"}`} />
+                    <div className="flex flex-col items-center">
+                      <span className={`font-black text-xl ${isDark ? "text-white" : "text-gray-900"}`}>{stats.followers || 0}</span>
+                      <span className={`${isDark ? "text-white/50" : "text-gray-500"} text-[10px] uppercase tracking-wider font-bold`}>followers</span>
                     </div>
-                    <div className="flex items-center gap-1.5">
-                      <span className={`font-bold text-base ${isDark ? "text-white" : "text-gray-900"}`}>{stats.following || 0}</span>
-                      <span className={`${isDark ? "text-white/60" : "text-gray-500"} text-xs`}>following</span>
+                    <div className={`w-px h-8 ${isDark ? "bg-white/10" : "bg-gray-300"}`} />
+                    <div className="flex flex-col items-center">
+                      <span className={`font-black text-xl ${isDark ? "text-white" : "text-gray-900"}`}>{stats.following || 0}</span>
+                      <span className={`${isDark ? "text-white/50" : "text-gray-500"} text-[10px] uppercase tracking-wider font-bold`}>following</span>
                     </div>
                   </div>
 
                   {/* Bio Description */}
-                  <p className="text-sm opacity-80 leading-relaxed max-w-xl whitespace-pre-wrap">
+                  <p className="text-[15px] opacity-80 leading-relaxed max-w-xl whitespace-pre-wrap font-medium">
                     {profile.bio || "This user hasn't added a bio yet."}
                   </p>
+                  <div className={`flex items-center justify-center md:justify-start gap-1.5 text-xs font-semibold ${isDark ? "text-white/40" : "text-gray-400"} pt-2`}>
+                    <Calendar className="w-3.5 h-3.5" /> Joined {profile.createdAt ? new Date(profile.createdAt).toLocaleDateString("en-US", { month: "long", year: "numeric" }) : "recently"}
+                  </div>
                 </div>
               </div>
             </div>
@@ -497,13 +508,19 @@ export default function PublicProfilePage() {
                           <div 
                             key={post._id} 
                             onClick={() => router.push(`/article/${post._id}`)} 
-                            className={`group relative cursor-pointer rounded-2xl overflow-hidden p-4 transition-all ${isDark ? "bg-white/5 border border-white/10" : "bg-white border border-gray-200 shadow-sm"}`}
+                            className={`group flex flex-col relative cursor-pointer rounded-2xl overflow-hidden p-0 transition-all hover:-translate-y-1 hover:shadow-2xl ${isDark ? "bg-[#111] hover:bg-[#1a1a1a] border border-white/5" : "bg-white hover:bg-gray-50 border border-gray-100 shadow-lg"}`}
                           >
-                            <img src={post.image} alt={post.title} className="w-full h-36 object-cover rounded-xl mb-3" />
-                            <h3 className="text-sm font-bold line-clamp-2">{post.title}</h3>
+                            <div className="relative w-full aspect-video overflow-hidden bg-black">
+                              <img src={post.image} alt={post.title} className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity group-hover:scale-105 duration-700" />
+                              <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                            </div>
+                            <div className="p-5 flex-1 flex flex-col justify-between">
+                              <h3 className="text-[15px] font-black line-clamp-2 leading-snug tracking-tight mb-2 group-hover:text-red-500 transition-colors">{post.title}</h3>
+                              <p className={`text-xs font-semibold uppercase tracking-wider ${isDark ? "text-white/40" : "text-gray-500"}`}>{post.category || "News"}</p>
+                            </div>
                             <button 
                               onClick={(e) => handleUnsave(post._id, "post", e)} 
-                              className="absolute top-6 right-6 p-2 bg-black/70 hover:bg-red-500 rounded-full text-white shadow-lg transition-colors"
+                              className="absolute top-3 right-3 p-2 bg-black/40 backdrop-blur-md border border-white/10 hover:bg-red-500 rounded-full text-white shadow-lg transition-colors opacity-0 group-hover:opacity-100 translate-y-2 group-hover:translate-y-0"
                             >
                               <Trash2 className="w-4 h-4" />
                             </button>

@@ -3,7 +3,7 @@
 import { useEffect, useState, useRef, useCallback } from "react"
 import { PostCard } from "./post-card"
 import { Loader2 } from "lucide-react"
-import { io } from "socket.io-client"
+import { useSocket } from "@/hooks/use-socket"
 
 interface SocialFeedProps {
   isDark: boolean
@@ -14,7 +14,7 @@ export function SocialFeed({ isDark }: SocialFeedProps) {
   const [loading, setLoading] = useState(true)
   const [page, setPage] = useState(1)
   const [hasMore, setHasMore] = useState(true)
-  const [socket, setSocket] = useState<any>(null)
+  const { socket } = useSocket()
   
   const observerRef = useRef<IntersectionObserver | null>(null)
   const lastPostElementRef = useCallback((node: HTMLDivElement | null) => {
@@ -31,34 +31,22 @@ export function SocialFeed({ isDark }: SocialFeedProps) {
   }, [loading, hasMore])
 
   useEffect(() => {
-    // Connect to socket
-    const socketUrl = process.env.NEXT_PUBLIC_SOCKET_URL && process.env.NEXT_PUBLIC_SOCKET_URL !== "/"
-      ? process.env.NEXT_PUBLIC_SOCKET_URL
-      : "http://localhost:5000"
-      
-    const newSocket = io(socketUrl, {
-      path: "/socket.io",
-      transports: ["websocket", "polling"]
-    })
-    
-    setSocket(newSocket)
+    if (!socket) return
 
-    newSocket.on("new_post", (post: any) => {
-      setPosts((prev) => [post, ...prev])
-    })
-    
-    newSocket.on("post_deleted", (data: any) => {
-      setPosts((prev) => prev.filter(p => p._id !== data.postId))
-    })
+    const handleNewPost = (post: any) => setPosts((prev) => [post, ...prev])
+    const handlePostDeleted = (data: any) => setPosts((prev) => prev.filter(p => p._id !== data.postId))
+    const handlePostUpdated = (updatedPost: any) => setPosts((prev) => prev.map(p => p._id === updatedPost._id ? { ...p, caption: updatedPost.caption, hashtags: updatedPost.hashtags } : p))
 
-    newSocket.on("post_updated", (updatedPost: any) => {
-      setPosts((prev) => prev.map(p => p._id === updatedPost._id ? { ...p, caption: updatedPost.caption, hashtags: updatedPost.hashtags } : p))
-    })
+    socket.on("new_post", handleNewPost)
+    socket.on("post_deleted", handlePostDeleted)
+    socket.on("post_updated", handlePostUpdated)
 
     return () => {
-      newSocket.disconnect()
+      socket.off("new_post", handleNewPost)
+      socket.off("post_deleted", handlePostDeleted)
+      socket.off("post_updated", handlePostUpdated)
     }
-  }, [])
+  }, [socket])
 
   useEffect(() => {
     const fetchPosts = async () => {

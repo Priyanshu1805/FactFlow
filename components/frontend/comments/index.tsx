@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { io, Socket } from "socket.io-client"
+import { useSocket } from "@/hooks/use-socket"
 import { CommentInput } from "./CommentInput"
 import { CommentThread } from "./CommentThread"
 import { MessageSquare, Share2 } from "lucide-react"
@@ -10,41 +10,36 @@ import { motion, AnimatePresence } from "framer-motion"
 export function CommentsSection({ articleId }: { articleId: string }) {
   const [comments, setComments] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
-  const [socket, setSocket] = useState<Socket | null>(null)
+  const { socket } = useSocket()
   const [shareToast, setShareToast] = useState(false)
 
   useEffect(() => {
     fetchComments()
+  }, [articleId])
 
-    // Setup Socket.IO
-    const newSocket = io(process.env.NEXT_PUBLIC_API_URL?.replace("/api", "") || "http://localhost:5000")
-    setSocket(newSocket)
+  useEffect(() => {
+    if (!socket) return
 
-    newSocket.on("connect", () => {
-      newSocket.emit("join_article", articleId)
-    })
+    socket.emit("join_article", articleId)
 
-    newSocket.on("new_comment", (comment: any) => {
-      setComments(prev => [comment, ...prev])
-    })
+    const handleNewComment = (comment: any) => setComments(prev => [comment, ...prev])
+    const handleReactionUpdate = ({ commentId, reactions }: any) => setComments(prev => prev.map(c => c._id === commentId ? { ...c, reactions } : c))
+    const handleCommentUpdated = ({ commentId, isHidden }: any) => setComments(prev => prev.map(c => c._id === commentId ? { ...c, isHidden } : c))
+    const handleCommentDeleted = ({ commentId }: any) => setComments(prev => prev.map(c => c._id === commentId ? { ...c, isDeleted: true } : c))
 
-    newSocket.on("reaction_update", ({ commentId, reactions }: any) => {
-      setComments(prev => prev.map(c => c._id === commentId ? { ...c, reactions } : c))
-    })
-
-    newSocket.on("comment_updated", ({ commentId, isHidden }: any) => {
-      setComments(prev => prev.map(c => c._id === commentId ? { ...c, isHidden } : c))
-    })
-
-    newSocket.on("comment_deleted", ({ commentId }: any) => {
-      setComments(prev => prev.map(c => c._id === commentId ? { ...c, isDeleted: true } : c))
-    })
+    socket.on("new_comment", handleNewComment)
+    socket.on("reaction_update", handleReactionUpdate)
+    socket.on("comment_updated", handleCommentUpdated)
+    socket.on("comment_deleted", handleCommentDeleted)
 
     return () => {
-      newSocket.emit("leave_article", articleId)
-      newSocket.disconnect()
+      socket.emit("leave_article", articleId)
+      socket.off("new_comment", handleNewComment)
+      socket.off("reaction_update", handleReactionUpdate)
+      socket.off("comment_updated", handleCommentUpdated)
+      socket.off("comment_deleted", handleCommentDeleted)
     }
-  }, [articleId])
+  }, [articleId, socket])
 
   const fetchComments = async () => {
     try {

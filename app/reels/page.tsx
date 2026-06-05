@@ -5,7 +5,7 @@ import { ArrowLeft, Plus } from "lucide-react"
 import Link from "next/link"
 import { ReelPlayer } from "@/components/frontend/reel-player"
 import { UploadReelModal } from "@/components/frontend/upload-reel-modal"
-import { io } from "socket.io-client"
+import { useSocket } from "@/hooks/use-socket"
 
 export default function ReelsPage() {
   const [reels, setReels] = useState<any[]>([])
@@ -29,23 +29,7 @@ export default function ReelsPage() {
       .catch(() => setLoading(false))
   }, [])
 
-  const [socket, setSocket] = useState<any>(null)
-
-  useEffect(() => {
-    const socketUrl = process.env.NEXT_PUBLIC_SOCKET_URL && process.env.NEXT_PUBLIC_SOCKET_URL !== "/"
-      ? process.env.NEXT_PUBLIC_SOCKET_URL
-      : "http://localhost:5000"
-      
-    const newSocket = io(socketUrl, {
-      path: "/socket.io",
-      transports: ["websocket", "polling"]
-    })
-    setSocket(newSocket)
-    
-    return () => {
-      newSocket.disconnect()
-    }
-  }, [])
+  const { socket } = useSocket()
 
   useEffect(() => {
     if (!socket) return

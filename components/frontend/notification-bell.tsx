@@ -11,6 +11,7 @@ import Link from "next/link"
 import { useAuthStore } from "@/store/auth-store"
 import { useTheme } from "@/components/theme-provider"
 import { toast } from "sonner"
+import { useSocket } from "@/hooks/use-socket"
 
 const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api"
 
@@ -72,7 +73,8 @@ export function NotificationBell() {
   const [notifications, setNotifications] = useState<Notification[]>([])
   const [unreadCount, setUnreadCount] = useState(0)
   const [loading, setLoading] = useState(false)
-  const [filter, setFilter] = useState<"all" | "unread">("all")
+  const [filter, setFilter] = useState<"all" | "news">("all")
+  const [expanded, setExpanded] = useState(false)
   const panelRef = useRef<HTMLDivElement>(null)
 
   // ── Close on outside click ──────────────────────────────────
@@ -104,6 +106,7 @@ export function NotificationBell() {
     return () => clearInterval(iv)
   }, [fetchCount])
 
+
   // ── Listen for social read event ─────────────────────────────
   useEffect(() => {
     const handler = () => fetchCount()
@@ -133,6 +136,66 @@ export function NotificationBell() {
   useEffect(() => {
     if (open) fetchNotifications()
   }, [open, fetchNotifications])
+
+  const { socket } = useSocket()
+
+  // ── Listen for Real-time Notifications via Socket.IO ─────────
+  useEffect(() => {
+    if (!isAuthenticated || !user || !socket) return
+
+    const handleNewNotif = (notif: Notification) => {
+      setNotifications(prev => {
+        const isDuplicate = prev.some(n => n._id === notif._id);
+        if (isDuplicate) return prev;
+        return [notif, ...prev];
+      });
+      setUnreadCount(prev => prev + 1);
+      toast("New notification received!");
+      window.dispatchEvent(new CustomEvent("global_new_notification"));
+    }
+
+    const handleNewArticle = (article?: any) => {
+      fetchCount()
+      if (open) fetchNotifications()
+      if (article && article.title) {
+        toast(`📰 New Article: ${article.title}`)
+      } else {
+        toast("📰 New article published!")
+      }
+    }
+
+    const handleBreakingNews = (article?: any) => {
+      fetchCount()
+      if (open) fetchNotifications()
+      if (article && article.title) {
+        toast(`🚨 BREAKING: ${article.title}`, { style: { backgroundColor: '#ef4444', color: 'white' } })
+      } else {
+        toast("🚨 BREAKING NEWS!", { style: { backgroundColor: '#ef4444', color: 'white' } })
+      }
+    }
+
+    const handleTrendingStory = (trend?: any) => {
+      fetchCount()
+      if (open) fetchNotifications()
+      if (trend && trend.topic) {
+        toast(`📈 Trending: ${trend.topic}`)
+      } else {
+        toast("📈 New trending story!")
+      }
+    }
+
+    socket.on("new_notification", handleNewNotif)
+    socket.on("new_article", handleNewArticle)
+    socket.on("breaking_news", handleBreakingNews)
+    socket.on("trending_story", handleTrendingStory)
+
+    return () => {
+      socket.off("new_notification", handleNewNotif)
+      socket.off("new_article", handleNewArticle)
+      socket.off("breaking_news", handleBreakingNews)
+      socket.off("trending_story", handleTrendingStory)
+    }
+  }, [user, isAuthenticated, open, fetchCount, fetchNotifications, socket])
 
   // ── Mark single notification as read ─────────────────────────
   const markRead = async (id: string) => {
@@ -164,8 +227,9 @@ export function NotificationBell() {
     await fetch(`${API}/notifications/${id}`, { method: "DELETE" }).catch(() => {})
   }
 
-  const displayed = (filter === "unread"
-    ? notifications.filter(n => !n.isRead)
+  const NEWS_TYPES = ["breaking_news", "new_article", "trending_story", "personalized_update", "daily_digest", "location_alert", "recommendation"]
+  const displayed = (filter === "news"
+    ? notifications.filter(n => NEWS_TYPES.includes(n.type))
     : notifications).sort((a, b) => {
       // Auto-push breaking news to top if unread
       if (a.type === "breaking_news" && !a.isRead && (b.type !== "breaking_news" || b.isRead)) return -1
@@ -242,7 +306,7 @@ export function NotificationBell() {
         }`}
         title="Notifications"
       >
-        <Bell className={`w-5 h-5 transition-transform ${open ? "scale-110" : ""}`} />
+        <Bell className={`w-[26px] h-[26px] transition-transform ${open ? "scale-110" : ""}`} />
         <AnimatePresence>
           {unreadCount > 0 && (
             <motion.span
@@ -250,7 +314,7 @@ export function NotificationBell() {
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
               exit={{ scale: 0 }}
-              className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 px-1 bg-red-500 text-white text-[9px] font-black rounded-full flex items-center justify-center shadow-[0_0_8px_rgba(239,68,68,0.7)] border border-black"
+              className={`absolute top-0.5 right-0.5 min-w-[20px] h-[20px] px-1 bg-[#ff3040] text-white text-[11px] font-bold rounded-full flex items-center justify-center border-[2.5px] ${isDark ? "border-[#111111]" : "border-white"}`}
             >
               {unreadCount > 99 ? "99+" : unreadCount}
             </motion.span>
@@ -271,7 +335,7 @@ export function NotificationBell() {
                 ? "bg-[#111111] border-white/10 shadow-black/60"
                 : "bg-white border-gray-200 shadow-gray-300/40"
             }`}
-            style={{ maxHeight: "520px" }}
+            style={{ maxHeight: expanded ? "80vh" : "520px" }}
           >
             {/* Header */}
             <div className={`px-4 py-3 flex items-center justify-between border-b ${
@@ -325,23 +389,23 @@ export function NotificationBell() {
             <div className={`flex text-[11px] font-bold border-b ${
               isDark ? "border-white/8 bg-black/20" : "border-gray-100 bg-gray-50/60"
             }`}>
-              {(["all", "unread"] as const).map(tab => (
+              {(["all", "news"] as const).map(tab => (
                 <button
                   key={tab}
                   onClick={() => setFilter(tab)}
                   className={`flex-1 py-2 capitalize transition-all border-b-2 ${
                     filter === tab
-                      ? "border-blue-500 text-blue-500"
+                      ? "border-[#ff3040] text-[#ff3040]"
                       : `border-transparent ${isDark ? "text-gray-500 hover:text-gray-300" : "text-gray-400 hover:text-gray-600"}`
                   }`}
                 >
-                  {tab === "unread" && unreadCount > 0 ? `Unread (${unreadCount})` : tab.charAt(0).toUpperCase() + tab.slice(1)}
+                  {tab === "news" ? "Latest News" : "All Updates"}
                 </button>
               ))}
             </div>
 
             {/* Notification List */}
-            <div className="overflow-y-auto" style={{ maxHeight: "360px" }}>
+            <div className={`overflow-y-auto ${expanded ? 'h-[60vh]' : 'max-h-[360px]'}`}>
               {loading ? (
                 <div className="flex items-center justify-center py-12">
                   <Loader2 className="w-5 h-5 animate-spin text-blue-500" />
@@ -354,7 +418,7 @@ export function NotificationBell() {
                     <Bell className="w-5 h-5 text-gray-400" />
                   </div>
                   <p className="text-sm font-semibold text-gray-400">
-                    {filter === "unread" ? "No unread notifications" : "All caught up!"}
+                    All caught up!
                   </p>
                   <p className="text-[11px] text-gray-500 mt-1">
                     We'll notify you when something happens
@@ -474,13 +538,12 @@ export function NotificationBell() {
                 isDark ? "border-white/8 bg-black/20" : "border-gray-100 bg-gray-50"
               }`}>
                 <p className="text-[10px] text-gray-500">{notifications.length} total notifications</p>
-                <Link
-                  href="/social?tab=notifications"
-                  onClick={() => setOpen(false)}
+                <button
+                  onClick={() => setExpanded(!expanded)}
                   className="text-[10px] font-bold text-blue-500 hover:text-blue-400 flex items-center gap-0.5"
                 >
-                  See all <ChevronRight className="w-3 h-3" />
-                </Link>
+                  {expanded ? "Show less" : "See all"} <ChevronRight className={`w-3 h-3 transition-transform ${expanded ? "rotate-90" : ""}`} />
+                </button>
               </div>
             )}
           </motion.div>

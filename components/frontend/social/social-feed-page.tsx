@@ -8,7 +8,7 @@ import { SocialInbox } from "@/components/frontend/social/social-inbox"
 import { PostCard } from "@/components/frontend/social/post-card"
 import { 
   Play, Heart, Eye, ArrowRight, MessageSquare, 
-  Plus, Bell, ChevronLeft, Search, Loader2, UserPlus, MessageCircle, X, Sparkles, Globe
+  Plus, Bell, ChevronLeft, Search, Loader2, UserPlus, MessageCircle, X, Sparkles, Globe, Clapperboard
 } from "lucide-react"
 import { useTheme } from "@/components/theme-provider"
 import { useSearchParams, useRouter } from "next/navigation"
@@ -19,7 +19,7 @@ import { CreateMenuSheet } from "@/components/frontend/create-menu-sheet"
 import { UploadFlowModal } from "@/components/frontend/upload-flow-modal"
 import { SocialNotificationPanel } from "@/components/frontend/social/social-notification-panel"
 import { toast } from "sonner"
-import { io } from "socket.io-client"
+import { useSocket } from "@/hooks/use-socket"
 
 const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api"
 
@@ -28,23 +28,7 @@ function ReelsScroller() {
   const isDark = theme !== "light"
   const [reels, setReels] = useState<any[]>([])
 
-  const [socket, setSocket] = useState<any>(null)
-
-  useEffect(() => {
-    const socketUrl = process.env.NEXT_PUBLIC_SOCKET_URL && process.env.NEXT_PUBLIC_SOCKET_URL !== "/"
-      ? process.env.NEXT_PUBLIC_SOCKET_URL
-      : "http://localhost:5000"
-      
-    const newSocket = io(socketUrl, {
-      path: "/socket.io",
-      transports: ["websocket", "polling"]
-    })
-    setSocket(newSocket)
-    
-    return () => {
-      newSocket.disconnect()
-    }
-  }, [])
+  const { socket } = useSocket()
 
   useEffect(() => {
     fetch(`${API}/reels?limit=10`)
@@ -337,6 +321,11 @@ export function SocialFeedPage({ isDark, onStoryClick }: SocialFeedPageProps) {
 
   useEffect(() => {
     fetchNotifications() // fetch immediately to get the unread count for badge
+    
+    // Listen for real-time global notifications dispatched by the NotificationBell websocket
+    const handleRealtimeNotif = () => fetchNotifications()
+    window.addEventListener("global_new_notification", handleRealtimeNotif)
+    return () => window.removeEventListener("global_new_notification", handleRealtimeNotif)
   }, [user])
 
   useEffect(() => {
@@ -497,13 +486,22 @@ export function SocialFeedPage({ isDark, onStoryClick }: SocialFeedPageProps) {
         </h1>
 
         {/* Right Side: Message & Heart Icons */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1">
+          {/* Shorts Link */}
+          <Link
+            href="/reels"
+            className={`p-2 rounded-xl transition-all ${isDark ? "hover:bg-white/10 text-white" : "hover:bg-gray-100 text-black"}`}
+            title="Watch Shorts"
+          >
+            <Clapperboard className="w-6 h-6 hover:text-red-500 transition-colors" />
+          </Link>
+
           {/* Notifications Heart */}
           <button 
             onClick={() => setNotificationsOpen(true)}
             className={`relative p-2 rounded-xl transition-all ${isDark ? "hover:bg-white/10 text-white" : "hover:bg-gray-100 text-black"}`}
           >
-            <Heart className="w-6 h-6 hover:text-red-500 hover:fill-red-500 transition-colors" />
+            <Bell className="w-6 h-6 hover:text-red-500 hover:fill-red-500 transition-colors" />
             {unreadCount > 0 && (
               <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center shadow-[0_0_8px_rgba(239,68,68,0.8)] border border-black animate-pulse">
                 {unreadCount > 99 ? "99+" : unreadCount}

@@ -9,23 +9,15 @@ interface TickerArticle {
   title: string
 }
 
+import { useRssStore } from "@/lib/rss/rssStore"
+
 export function NewsTicker() {
   const { theme } = useTheme()
   const isDark = theme !== "light"
   const router = useRouter()
-  const [articles, setArticles] = useState<TickerArticle[]>([])
-  const containerRef = useRef<HTMLDivElement>(null)
-  const animRef = useRef<number | null>(null)
-  const posRef = useRef(0)
-
-  useEffect(() => {
-    fetch(`${process.env.NEXT_PUBLIC_API_URL}/news?limit=20`)
-      .then((r) => r.json())
-      .then((d) => {
-        if (d.success && d.data?.length) setArticles(d.data)
-      })
-      .catch(() => {})
-  }, [])
+  const { items } = useRssStore()
+  
+  const articles = items.length > 0 ? items.slice(0, 15).map(item => ({ _id: item.id, title: item.title, link: item.link })) : []
 
   return (
     <div

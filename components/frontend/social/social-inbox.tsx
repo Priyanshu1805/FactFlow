@@ -9,7 +9,7 @@ import {
   MoreVertical, Smile, Mic, MicOff, VideoOff, PhoneOff, Trash2, Trash, ShieldCheck, Volume2, VolumeX
 } from "lucide-react"
 import { useAuthStore } from "@/store/auth-store"
-import { io } from "socket.io-client"
+import { useSocket } from "@/hooks/use-socket"
 import { toast } from "sonner"
 import Link from "next/link"
 
@@ -186,7 +186,7 @@ export function SocialInbox({ isDark }: SocialInboxProps) {
   const [selectedChat, setSelectedChat] = useState<any>(null)
   const [messages, setMessages] = useState<any[]>([])
   const [inputText, setInputText] = useState("")
-  const [socket, setSocket] = useState<any>(null)
+  const { socket } = useSocket()
   
   // Folders / Sub-Tabs
   const [activeFolder, setActiveFolder] = useState<"primary" | "general" | "requests">("primary")
@@ -312,23 +312,9 @@ export function SocialInbox({ isDark }: SocialInboxProps) {
 
   // Setup sockets & signaling room registration
   useEffect(() => {
-    if (!user) return
+    if (!user || !socket) return
 
-    const newSocket = io(SOCKET_URL, {
-      path: "/socket.io",
-      transports: ["websocket", "polling"]
-    })
-
-    setSocket(newSocket)
-
-    const register = () => {
-      newSocket.emit("register_user", user.id || (user as any)._id)
-    }
-
-    newSocket.on("connect", register)
-    register() // fallback if already connected
-
-    newSocket.on("chat_list_update", (data: any) => {
+    socket.on("chat_list_update", (data: any) => {
       setChats(prev => {
         const updated = prev.map(c => {
           if (c._id === data.chatId) {
@@ -406,9 +392,15 @@ export function SocialInbox({ isDark }: SocialInboxProps) {
     })
 
     return () => {
-      newSocket.disconnect()
+      socket.off("chat_list_update")
+      socket.off("user_online")
+      socket.off("user_offline")
+      socket.off("incoming_call")
+      socket.off("call_answered")
+      socket.off("ice_candidate")
+      socket.off("call_ended")
     }
-  }, [user, endActiveCall])
+  }, [user, endActiveCall, socket])
 
   useEffect(() => {
     if (!socket || !selectedChat) return

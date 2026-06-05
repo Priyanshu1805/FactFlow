@@ -5,12 +5,16 @@ import { Heart, MessageCircle, Share2, MoreVertical, Music, Bookmark } from "luc
 import { useAuthStore } from "@/store/auth-store"
 import { getSavedItems, saveItem, unsaveItem } from "@/lib/api/saved"
 import { toast } from "sonner"
+import { useVideoSettings } from "@/hooks/useVideoSettings"
+import { useNetworkStatus } from "@/hooks/useNetworkStatus"
 
 export function ReelPlayer({ reel, isActive }: { reel: any; isActive: boolean }) {
   const [liked, setLiked] = useState(false)
   const [isSaved, setIsSaved] = useState(false)
   const videoRef = useRef<HTMLVideoElement>(null)
   const { user } = useAuthStore()
+  const settings = useVideoSettings()
+  const { isWifi } = useNetworkStatus()
 
   // Fetch saved state
   useEffect(() => {
@@ -66,7 +70,7 @@ export function ReelPlayer({ reel, isActive }: { reel: any; isActive: boolean })
       {reel.source === "youtube" ? (
         isActive ? (
           <iframe
-            src={`https://www.youtube.com/embed/${reel.youtubeId}?autoplay=1&mute=0&controls=0&modestbranding=1&rel=0&showinfo=0&loop=1&playlist=${reel.youtubeId}&enablejsapi=1`}
+            src={`https://www.youtube.com/embed/${reel.youtubeId}?autoplay=${settings?.autoPlayVideos && (!settings.autoPlayOnWifiOnly || isWifi) ? 1 : 0}&mute=${settings?.muteByDefault ? 1 : 0}&controls=0&modestbranding=1&rel=0&showinfo=0&loop=1&playlist=${reel.youtubeId}&enablejsapi=1&vq=${settings?.hdOnWifi && isWifi ? "hd1080" : settings?.videoQuality === "auto" ? "auto" : settings?.videoQuality === "360p" ? "small" : settings?.videoQuality === "720p" ? "hd720" : "hd1080"}`}
             className="absolute inset-0 w-full h-full scale-[1.3] pointer-events-none"
             allow="autoplay; encrypted-media"
             frameBorder="0"
@@ -82,7 +86,8 @@ export function ReelPlayer({ reel, isActive }: { reel: any; isActive: boolean })
           loop
           playsInline
           controls={false}
-          muted={false}
+          autoPlay={settings ? (settings.autoPlayVideos && (!settings.autoPlayOnWifiOnly || isWifi)) : true}
+          muted={settings ? settings.muteByDefault : false}
         />
       )}
 

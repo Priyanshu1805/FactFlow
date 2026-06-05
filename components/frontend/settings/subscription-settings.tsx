@@ -110,9 +110,7 @@ export function SubscriptionSettings() {
       return
     }
     try {
-      const res = await fetch(`${api}/api/subscription/me`, {
-        headers: { Authorization: `Bearer ${token}` },
-      })
+      const res = await fetch(`${api}/api/subscription/me?firebaseUid=${user.uid}`)
       if (!res.ok) throw new Error("Fetch failed")
       const data = await res.json()
       if (data.success && data.data) {
@@ -133,9 +131,7 @@ export function SubscriptionSettings() {
     if (!token) return
     setHistoryLoading(true)
     try {
-      const res = await fetch(`${api}/api/subscription/billing-history`, {
-        headers: { Authorization: `Bearer ${token}` },
-      })
+      const res = await fetch(`${api}/api/subscription/billing-history?firebaseUid=${user.uid}`)
       if (!res.ok) throw new Error("Fetch failed")
       const data = await res.json()
       if (data.success) {
@@ -169,11 +165,10 @@ export function SubscriptionSettings() {
     setSubscribing(planId)
     
     try {
-      const res = await fetch(`${api}/api/subscription/create-order`, {
+      const res = await fetch(`${api}/api/subscription/create-order?firebaseUid=${user.uid}`, {
         method: "POST",
         headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json"
         },
         body: JSON.stringify({ plan: planId, billingCycle: billing, coupon: "" }),
       })
@@ -190,11 +185,10 @@ export function SubscriptionSettings() {
         description: `${plan.name} Plan — ${billing}`,
         theme: { color: "#ef4444" },
         handler: async (response: any) => {
-          const verifyRes = await fetch(`${api}/api/subscription/verify-payment`, {
+          const verifyRes = await fetch(`${api}/api/subscription/verify-payment?firebaseUid=${user.uid}`, {
             method: "POST",
             headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json"
             },
             body: JSON.stringify({
               ...response,
@@ -229,11 +223,10 @@ export function SubscriptionSettings() {
   const handleCancel = async () => {
     setSubscribing("cancel")
     try {
-      const res = await fetch(`${api}/api/subscription/cancel`, {
+      const res = await fetch(`${api}/api/subscription/cancel?firebaseUid=${user.uid}`, {
         method: "POST",
         headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json"
         },
       })
       if (!res.ok) throw new Error("Fetch failed")

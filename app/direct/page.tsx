@@ -10,7 +10,7 @@ import {
 import { useAuthStore } from "@/store/auth-store"
 import { useTheme } from "@/components/theme-provider"
 import { Navbar } from "@/components/frontend/navbar"
-import { io } from "socket.io-client"
+import { useSocket } from "@/hooks/use-socket"
 import { toast } from "sonner"
 
 const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api"
@@ -27,7 +27,7 @@ export default function DirectInboxPage() {
   const [selectedChat, setSelectedChat] = useState<any>(null)
   const [messages, setMessages] = useState<any[]>([])
   const [inputText, setInputText] = useState("")
-  const [socket, setSocket] = useState<any>(null)
+  const { socket } = useSocket()
   
   // Modals & UI States
   const [searchOpen, setSearchOpen] = useState(false)
@@ -60,17 +60,9 @@ export default function DirectInboxPage() {
 
   // Connect socket.io
   useEffect(() => {
-    if (!user) return
+    if (!user || !socket) return
 
-    const newSocket = io(SOCKET_URL, {
-      path: "/socket.io",
-      transports: ["websocket", "polling"]
-    })
-
-    setSocket(newSocket)
-
-    // Listen to chat list updates
-    newSocket.on("chat_list_update", (data: any) => {
+    const handleChatListUpdate = (data: any) => {
       setChats(prev => {
         const updated = prev.map(c => {
           if (c._id === data.chatId) {
@@ -84,12 +76,14 @@ export default function DirectInboxPage() {
           return bTime - aTime
         })
       })
-    })
+    }
+    
+    socket.on("chat_list_update", handleChatListUpdate)
 
     return () => {
-      newSocket.disconnect()
+      socket.off("chat_list_update", handleChatListUpdate)
     }
-  }, [user])
+  }, [user, socket])
 
   // Listen to active chat room events
   useEffect(() => {

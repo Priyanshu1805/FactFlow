@@ -3,7 +3,8 @@
 import dynamic from "next/dynamic"
 import { useTheme } from "@/components/theme-provider"
 import Link from "next/link"
-import { Suspense } from "react"
+import { Suspense, useEffect, useState } from "react"
+import { useRssStore } from "@/lib/rss/rssStore"
 
 const Navbar = dynamic(() => import("@/components/frontend/navbar").then(m => ({ default: m.Navbar })), { ssr: false })
 const HeroContent = dynamic(() => import("@/components/frontend/hero-content").then(m => ({ default: m.HeroContent })), { ssr: false })
@@ -18,6 +19,7 @@ const LifestyleSection = dynamic(() => import("@/components/frontend/lifestyle-s
 const SportsSection = dynamic(() => import("@/components/frontend/sports-section").then(m => ({ default: m.SportsSection })), { ssr: false })
 const TechSection = dynamic(() => import("@/components/frontend/tech-section").then(m => ({ default: m.TechSection })), { ssr: false })
 const MemesSection = dynamic(() => import("@/components/frontend/memes-section").then(m => ({ default: m.MemesSection })), { ssr: false })
+const ReelsCarouselSection = dynamic(() => import("@/components/frontend/reels-carousel-section").then(m => ({ default: m.ReelsCarouselSection })), { ssr: false })
 
 function SectionLoader() {
   return <div className="w-full h-64 flex items-center justify-center"><div className="w-8 h-8 border-2 border-red-500 border-t-transparent rounded-full animate-spin" /></div>
@@ -29,6 +31,22 @@ function NavbarLoader() {
 
 export default function HomePage() {
   const { theme } = useTheme()
+  const [categories, setCategories] = useState<string[]>([])
+
+  useEffect(() => {
+    // Fetch RSS feeds on mount so the content updates
+    useRssStore.getState().fetchNews(true) // force=true ensures fresh fetch on page load
+    
+    // Check saved categories
+    const savedCats = localStorage.getItem("newsCategories")
+    if (savedCats) {
+      try {
+        setCategories(JSON.parse(savedCats))
+      } catch (e) {}
+    }
+  }, []) // Empty dependency array
+
+  const hasCat = (catId: string) => categories.length === 0 || categories.includes(catId)
 
   const bg =
     theme === "light"
@@ -56,7 +74,7 @@ export default function HomePage() {
         </Suspense>
       </section>
 
-      {/* Breaking News Section */}
+      {/* Breaking News / Live Updates Section */}
       <div id="breaking-updates" className="scroll-mt-20">
         <Suspense fallback={<SectionLoader />}>
           <BreakingNewsHero />
@@ -66,54 +84,49 @@ export default function HomePage() {
         </Suspense>
       </div>
 
-      <Suspense fallback={<SectionLoader />}>
-        <NewspaperSection />
-      </Suspense>
+      {hasCat("World News") && (
+        <Suspense fallback={<SectionLoader />}>
+          <NewspaperSection />
+        </Suspense>
+      )}
 
-      <Suspense fallback={<SectionLoader />}>
-        <PoliticsSection />
-      </Suspense>
+      {hasCat("Politics") && (
+        <Suspense fallback={<SectionLoader />}>
+          <PoliticsSection />
+        </Suspense>
+      )}
 
-      <Suspense fallback={<SectionLoader />}>
-        <TrendingSection />
-      </Suspense>
+      {(hasCat("World News") || hasCat("Crypto & Finance")) && (
+        <Suspense fallback={<SectionLoader />}>
+          <TrendingSection />
+        </Suspense>
+      )}
 
-      {/* News Shorts Redirect */}
-      <div className="max-w-7xl mx-auto px-4 py-12">
-        <Link href="/live#news-shorts" className="block relative overflow-hidden rounded-2xl group border border-red-500/20 bg-gradient-to-r from-red-950/40 to-black p-8 sm:p-12 shadow-2xl">
-          <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0IiBoZWlnaHQ9IjQiPgo8cmVjdCB3aWR0aD0iNCIgaGVpZ2h0PSI0IiBmaWxsPSJ3aGl0ZSIgZmlsbC1vcGFjaXR5PSIwLjA1Ii8+Cjwvc3ZnPg==')] opacity-20 mix-blend-overlay pointer-events-none" />
-          <div className="relative z-10 flex flex-col sm:flex-row items-center justify-between gap-6">
-            <div>
-              <h2 className="text-3xl sm:text-4xl font-black text-white mb-2 group-hover:text-red-400 transition-colors flex items-center gap-3">
-                <span className="w-3 h-3 bg-red-500 rounded-full animate-pulse shadow-[0_0_10px_red]" />
-                News Shorts
-              </h2>
-              <p className="text-white/[0.85] font-medium max-w-xl">
-                Quick updates and trending short videos have moved! Catch up on the latest rapid-fire news in our new dedicated Live section.
-              </p>
-            </div>
-            <div className="flex-shrink-0 bg-red-600 text-white font-bold py-4 px-10 rounded-full shadow-[0_0_20px_rgba(220,38,38,0.4)] transition-all group-hover:bg-red-500 group-hover:scale-105 group-hover:shadow-[0_0_30px_rgba(220,38,38,0.6)]">
-              Watch Shorts Now
-            </div>
-          </div>
-        </Link>
-      </div>
 
-      <Suspense fallback={<SectionLoader />}>
-        <LifestyleSection />
-      </Suspense>
 
-      <Suspense fallback={<SectionLoader />}>
-        <SportsSection />
-      </Suspense>
+      {(hasCat("Entertainment") || hasCat("Celebrities")) && (
+        <Suspense fallback={<SectionLoader />}>
+          <LifestyleSection />
+        </Suspense>
+      )}
 
-      <Suspense fallback={<SectionLoader />}>
-        <TechSection />
-      </Suspense>
+      {hasCat("Sports") && (
+        <Suspense fallback={<SectionLoader />}>
+          <SportsSection />
+        </Suspense>
+      )}
 
-      <Suspense fallback={<SectionLoader />}>
-        <MemesSection />
-      </Suspense>
+      {(hasCat("Technology") || hasCat("Science")) && (
+        <Suspense fallback={<SectionLoader />}>
+          <TechSection />
+        </Suspense>
+      )}
+
+      {hasCat("Memes & Viral") && (
+        <Suspense fallback={<SectionLoader />}>
+          <MemesSection />
+        </Suspense>
+      )}
 
       <Suspense fallback={null}>
         <Footer />
