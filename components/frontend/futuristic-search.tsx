@@ -4,13 +4,13 @@ import { useState, useEffect, useRef } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { Search, Mic, Camera, Plus, Send, X, Bot, ChevronDown, Loader2 } from "lucide-react"
 import { useRouter } from "next/navigation"
-import Image from "next/image"
+import { AccessibleImage as Image } from "@/components/frontend/accessible-image"
 import { useTheme } from "@/components/theme-provider"
 
 const AI_MODELS = [
   { id: "free-unlimited", name: "Pollinations AI (Free)" },
-  { id: "gpt-4o-mini", name: "GPT-4o (Needs OpenAI Key)" },
-  { id: "gemini-1.5-pro", name: "Gemini 1.5 (Needs Google Key)" }
+  { id: "gpt-4o-mini", name: "GPT-4o Mini" },
+  { id: "gemini-1.5-pro", name: "Gemini 1.5 Pro" }
 ]
 
 export function FuturisticSearch() {

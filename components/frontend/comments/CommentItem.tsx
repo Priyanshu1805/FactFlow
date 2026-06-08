@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { EyeOff, Trash2, ThumbsUp, MoreVertical } from "lucide-react"
+import { EyeOff, Trash2, ThumbsUp, MoreVertical, ShieldCheck } from "lucide-react"
 import { useAuthStore } from "@/store/auth-store"
 import { timeAgo } from "./utils"
 
@@ -17,6 +17,13 @@ export function CommentItem({ comment, onReplyClick, onHide, onDelete }: Comment
   const [showMenu, setShowMenu] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
   
+  const [factCheck, setFactCheck] = useState(comment.factCheck)
+  const [loadingFactCheck, setLoadingFactCheck] = useState(false)
+
+  useEffect(() => {
+    setFactCheck(comment.factCheck)
+  }, [comment.factCheck])
+
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
@@ -49,6 +56,26 @@ export function CommentItem({ comment, onReplyClick, onHide, onDelete }: Comment
       })
     } catch (e) {
       console.error(e)
+    }
+  }
+
+  const handleRequestFactCheck = async () => {
+    setLoadingFactCheck(true)
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/comments/${comment._id}/factcheck`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: user?._id || user?.id, firebaseUid: user?.uid })
+      })
+      if (!res.ok) throw new Error("Fact check failed")
+      const data = await res.json()
+      if (data.success && data.data) {
+        setFactCheck(data.data.factCheck)
+      }
+    } catch (err: any) {
+      console.error(err)
+    } finally {
+      setLoadingFactCheck(false)
     }
   }
 
@@ -86,6 +113,34 @@ export function CommentItem({ comment, onReplyClick, onHide, onDelete }: Comment
         <p className={`text-[0.95rem] leading-relaxed mb-2 whitespace-pre-wrap ${isHidden ? "italic text-gray-500" : "dark:text-white/[0.85] text-gray-800"}`}>
           {comment.text}
         </p>
+
+        {/* Render Fact Check Card if exists */}
+        {factCheck && (
+          <div className={`mt-3 p-3 mb-3 rounded-xl border flex gap-3 text-xs leading-relaxed ${
+            factCheck.rating === 'verified'
+              ? 'bg-green-500/5 border-green-500/20 text-green-800 dark:text-green-300'
+              : factCheck.rating === 'misinformation'
+              ? 'bg-red-500/5 border-red-500/20 text-red-800 dark:text-red-300'
+              : 'bg-zinc-500/5 border-zinc-500/20 text-zinc-800 dark:text-zinc-300'
+          }`}>
+            <div className="shrink-0 mt-0.5">
+              {factCheck.rating === 'verified' ? (
+                <span className="px-1.5 py-0.5 bg-green-500 text-white font-black text-[9px] uppercase tracking-wider rounded">Verified</span>
+              ) : factCheck.rating === 'misinformation' ? (
+                <span className="px-1.5 py-0.5 bg-red-500 text-white font-black text-[9px] uppercase tracking-wider rounded">Fake News</span>
+              ) : (
+                <span className="px-1.5 py-0.5 bg-zinc-500 text-white font-black text-[9px] uppercase tracking-wider rounded">Unverified</span>
+              )}
+            </div>
+            <div>
+              <p className="font-semibold text-gray-800 dark:text-white mb-0.5">AI Verdict Check:</p>
+              <p className="opacity-90">{factCheck.analysis}</p>
+              <p className="text-[10px] opacity-60 mt-1.5 font-bold">
+                Requested by: {factCheck.requestedBy}
+              </p>
+            </div>
+          </div>
+        )}
         
         {!isHidden && (
           <div className="flex gap-4 items-center mt-1">
@@ -101,6 +156,22 @@ export function CommentItem({ comment, onReplyClick, onHide, onDelete }: Comment
                 className="text-xs font-semibold text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white/[0.85] transition-colors px-2 py-1.5 rounded-full hover:bg-gray-100 dark:hover:bg-white/10"
               >
                 Reply
+              </button>
+            )}
+
+            {/* Fact Check Button */}
+            {user && (
+              <button 
+                onClick={handleRequestFactCheck}
+                disabled={loadingFactCheck}
+                className="text-xs font-semibold text-purple-600 hover:text-purple-900 dark:text-purple-400 dark:hover:text-purple-300 transition-colors px-2 py-1.5 rounded-full hover:bg-purple-100/50 dark:hover:bg-purple-900/10 flex items-center gap-1"
+              >
+                {loadingFactCheck ? (
+                  <span className="w-3 h-3 border border-purple-500 border-t-transparent rounded-full animate-spin inline-block" />
+                ) : (
+                  <ShieldCheck className="w-3.5 h-3.5" />
+                )}
+                Fact-Check
               </button>
             )}
 

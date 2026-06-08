@@ -330,8 +330,7 @@ export function SocialInbox({ isDark }: SocialInboxProps) {
       })
     })
 
-    // Online / Offline presence events
-    newSocket.on("user_online", (data: { userId: string }) => {
+    socket.on("user_online", (data: { userId: string }) => {
       // Check if this is the currently selected chat's peer
       setSelectedChat((prev: any) => {
         if (!prev) return prev
@@ -343,7 +342,7 @@ export function SocialInbox({ isDark }: SocialInboxProps) {
       })
     })
 
-    newSocket.on("user_offline", (data: { userId: string }) => {
+    socket.on("user_offline", (data: { userId: string }) => {
       setSelectedChat((prev: any) => {
         if (!prev) return prev
         const peer = prev.participants?.find((p: any) => 
@@ -355,7 +354,7 @@ export function SocialInbox({ isDark }: SocialInboxProps) {
     })
 
     // WebRTC Incoming Call Signaling
-    newSocket.on("incoming_call", (data: { fromUserId: string; offer: any; callerName: string; callType: "audio" | "video" }) => {
+    socket.on("incoming_call", (data: { fromUserId: string; offer: any; callerName: string; callType: "audio" | "video" }) => {
       setIncomingCallData(data)
       setCallType(data.callType)
       setCallState("ringing")
@@ -365,7 +364,7 @@ export function SocialInbox({ isDark }: SocialInboxProps) {
       })
     })
 
-    newSocket.on("call_answered", async (data: { answer: any }) => {
+    socket.on("call_answered", async (data: { answer: any }) => {
       setCallState("active")
       if (peerConnectionRef.current) {
         try {
@@ -376,7 +375,7 @@ export function SocialInbox({ isDark }: SocialInboxProps) {
       }
     })
 
-    newSocket.on("ice_candidate", async (data: { candidate: any }) => {
+    socket.on("ice_candidate", async (data: { candidate: any }) => {
       if (peerConnectionRef.current) {
         try {
           await peerConnectionRef.current.addIceCandidate(new RTCIceCandidate(data.candidate))
@@ -386,7 +385,7 @@ export function SocialInbox({ isDark }: SocialInboxProps) {
       }
     })
 
-    newSocket.on("call_ended", () => {
+    socket.on("call_ended", () => {
       endActiveCall(false)
       toast.info("Call ended by remote user")
     })
@@ -618,7 +617,7 @@ export function SocialInbox({ isDark }: SocialInboxProps) {
 
     if (isTyping) {
       setIsTyping(false)
-      socket.emit("stop_typing", { chatId: selectedChat._id, username: user.displayName || user.email })
+      socket?.emit("stop_typing", { chatId: selectedChat._id, username: user.displayName || user.email })
     }
 
     try {

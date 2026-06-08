@@ -1,4 +1,6 @@
 "use client"
+import { useAuthStore } from "@/store/auth-store";
+
 
 import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
@@ -13,7 +15,7 @@ export default function NewspaperPage() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    fetch(`${process.env.NEXT_PUBLIC_API_URL}/news?longform=true&limit=50`)
+    fetch(`${process.env.NEXT_PUBLIC_API_URL}/news?longform=true&limit=50&${useAuthStore.getState().user?.uid ? 'firebaseUid=' + useAuthStore.getState().user?.uid : ''}`)
       .then((res) => {
         if (!res.ok) throw new Error("Fetch failed")
         return res.json()

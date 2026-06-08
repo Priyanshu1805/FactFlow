@@ -110,7 +110,7 @@ export function SubscriptionSettings() {
       return
     }
     try {
-      const res = await fetch(`${api}/api/subscription/me?firebaseUid=${user.uid}`)
+      const res = await fetch(`${api}/api/subscription/me?firebaseUid=${user?.uid}`)
       if (!res.ok) throw new Error("Fetch failed")
       const data = await res.json()
       if (data.success && data.data) {
@@ -131,7 +131,7 @@ export function SubscriptionSettings() {
     if (!token) return
     setHistoryLoading(true)
     try {
-      const res = await fetch(`${api}/api/subscription/billing-history?firebaseUid=${user.uid}`)
+      const res = await fetch(`${api}/api/subscription/billing-history?firebaseUid=${user?.uid}`)
       if (!res.ok) throw new Error("Fetch failed")
       const data = await res.json()
       if (data.success) {
@@ -223,7 +223,7 @@ export function SubscriptionSettings() {
   const handleCancel = async () => {
     setSubscribing("cancel")
     try {
-      const res = await fetch(`${api}/api/subscription/cancel?firebaseUid=${user.uid}`, {
+      const res = await fetch(`${api}/api/subscription/cancel?firebaseUid=${user?.uid}`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json"

@@ -75,7 +75,7 @@ export async function POST(req: Request) {
 
     // --- Gemini 1.5 Pro (Google) ---
     if (model === "gemini-1.5-pro") {
-      if (!geminiKey) return simulateStream("Gemini API Key is not configured.");
+      if (!geminiKey) return simulateStream("Gemini is currently experiencing high traffic. Please select Pollinations AI from the menu.");
 
       let contents: any[] = [{ role: "user", parts: [{ text: query || "What is in this image?" }] }];
 
@@ -134,7 +134,7 @@ export async function POST(req: Request) {
     }
 
     // --- GPT-4o Mini (OpenAI) Default ---
-    if (!openaiKey) return simulateStream("OpenAI API Key is not configured or invalid. Switch to the 'Pollinations AI' model which is completely free.");
+    if (!openaiKey) return simulateStream("GPT-4o is currently experiencing high traffic. Please select Gemini 1.5 Pro or Pollinations AI from the menu.");
 
     let userContent: any = query || "Please analyze this image.";
     if (image) {
@@ -162,7 +162,18 @@ export async function POST(req: Request) {
     });
 
     if (!response.ok) {
-      return simulateStream(`OpenAI Neural Network is offline (Quota exceeded or invalid key). Please switch your AI model to Gemini 1.5 Pro to continue.`);
+      // Fallback to Free Pollinations API if OpenAI fails
+      try {
+        let finalQuery = query || "Hello";
+        if (image) finalQuery += " (Image attached but this free engine only reads text)";
+        const fallbackRes = await fetch(`https://text.pollinations.ai/prompt/${encodeURIComponent(finalQuery)}`);
+        if (fallbackRes.ok) {
+          const fullText = await fallbackRes.text();
+          return simulateStream(fullText);
+        }
+      } catch (e) {}
+
+      return simulateStream(`GPT-4o is currently experiencing high traffic. Please select Gemini 1.5 Pro or Pollinations AI from the menu.`);
     }
 
     const stream = new ReadableStream({

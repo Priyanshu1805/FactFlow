@@ -95,6 +95,21 @@ export default function ArticlePage() {
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({ deviceId: getDeviceId(), userId: user?.uid })
             }).catch(() => {})
+
+            // Also log to user reading history
+            if (user?.uid) {
+              fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/history`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  firebaseUid: user.uid,
+                  itemId: articleId,
+                  itemType: "post",
+                  category: data.data.category || "General",
+                  engagement: "viewed"
+                })
+              }).catch(() => {})
+            }
           }
         }
         setLoading(false)

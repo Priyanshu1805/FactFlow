@@ -8,7 +8,24 @@ export type SettingsData = {
   feed?: { autoplayVideos: boolean; dataSaver: boolean; layout?: string }
   layout?: string
   displayOptions?: { thumbnails: boolean }
-  // ... other types
+  accessibility?: {
+    highContrast: boolean;
+    reduceMotion: boolean;
+    largeTapTargets: boolean;
+    boldText: boolean;
+    textSize: number;
+    screenReaderSupport: boolean;
+    imageAltText: boolean;
+  }
+  privacy?: {
+    profileVisibility: string
+    incognitoMode: boolean
+    anonymousFactCheck: boolean
+    hideLiveStatus: boolean
+    blurGraphicImagery: boolean
+    commentVisibility: "public" | "followers" | "private"
+    allowAITraining: boolean
+  }
 }
 
 interface SettingsState {
@@ -30,6 +47,24 @@ export const useSettingsStore = create<SettingsState>()(
         appearance: { theme: 'light', fontSize: 'default', fontStyle: 'sans' },
         layout: 'comfortable',
         displayOptions: { thumbnails: true },
+        accessibility: {
+          highContrast: false,
+          reduceMotion: false,
+          largeTapTargets: false,
+          boldText: false,
+          textSize: 100,
+          screenReaderSupport: false,
+          imageAltText: true,
+        },
+        privacy: {
+          profileVisibility: "public",
+          incognitoMode: false,
+          anonymousFactCheck: false,
+          hideLiveStatus: false,
+          blurGraphicImagery: false,
+          commentVisibility: "public",
+          allowAITraining: true,
+        }
       },
       isLoading: false,
       socket: null,
@@ -52,6 +87,10 @@ export const useSettingsStore = create<SettingsState>()(
               newSet.layout = value
             } else if (settingType === 'displayOptions') {
               newSet.displayOptions = { ...newSet.displayOptions, ...value } as any
+            } else if (settingType === 'accessibility') {
+              newSet.accessibility = { ...newSet.accessibility, ...value } as any
+            } else if (settingType === 'privacy') {
+              newSet.privacy = { ...newSet.privacy, ...value } as any
             }
             return { settings: newSet }
           })
@@ -72,6 +111,10 @@ export const useSettingsStore = create<SettingsState>()(
             newSet.layout = value
           } else if (settingType === 'displayOptions') {
             newSet.displayOptions = { ...newSet.displayOptions, ...value } as any
+          } else if (settingType === 'accessibility') {
+            newSet.accessibility = { ...newSet.accessibility, ...value } as any
+          } else if (settingType === 'privacy') {
+            newSet.privacy = { ...newSet.privacy, ...value } as any
           }
           return { settings: newSet }
         })

@@ -429,7 +429,7 @@ export default function PublicProfilePage() {
                   return userPosts.length > 0 ? (
                     <div className="w-full max-w-[600px] mx-auto py-6">
                       {userPosts.map((post: any) => (
-                        <PostCard key={post._id} post={post} isDark={isDark} socket={socketRef.current} />
+                        <PostCard key={post._id} post={post} isDark={isDark} socket={socket} />
                       ))}
                     </div>
                   ) : (

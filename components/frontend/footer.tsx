@@ -2,7 +2,7 @@
 
 import { Instagram, Youtube, Mail, MapPin, Phone, Send } from "lucide-react"
 import { useTheme } from "@/components/theme-provider"
-import Image from "next/image"
+import { AccessibleImage as Image } from "@/components/frontend/accessible-image"
 import Link from "next/link"
 
 const socialLinks = [

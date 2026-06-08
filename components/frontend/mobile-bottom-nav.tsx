@@ -89,19 +89,20 @@ export function MobileBottomNav() {
   const navItems = [
     { name: "Home", href: "/social", icon: Home },
     { name: "Search", href: "/social?tab=search", icon: Search },
+    { name: "Live", href: "/live", icon: PlaySquare },
     { name: "Profile", href: user ? `/u/${(user as any)?.username || user?.uid}` : "/login", icon: User },
   ]
 
 
-  // Only show mobile nav on Social and Profile pages
-  const shouldShow = pathname.startsWith("/social") || pathname.startsWith("/u/") || pathname.startsWith("/reels")
+  // Only show mobile nav on relevant pages, but explicitly HIDE it on the Live page
+  const shouldShow = (pathname.startsWith("/social") || pathname.startsWith("/u/") || pathname.startsWith("/reels")) && !pathname.startsWith("/live")
 
   if (!shouldShow) return null
 
   // Determine active index
   let activeIndex = -1
   navItems.forEach((item, index) => {
-    if (pathname === item.href || (item.name === "Profile" && pathname.startsWith("/u/"))) {
+    if (pathname === item.href || (item.name === "Profile" && pathname.startsWith("/u/")) || (item.name === "Live" && pathname.startsWith("/live"))) {
       activeIndex = index
     }
   })

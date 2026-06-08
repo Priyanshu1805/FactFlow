@@ -1,4 +1,5 @@
 "use client"
+import { useAuthStore } from "@/store/auth-store";
 
 import { useState, useEffect, useRef } from "react"
 import { motion } from "framer-motion"
@@ -64,7 +65,7 @@ function SocialUpdateCard({ article }: { article: Article }) {
 
       {/* Top Right: Glowing Logo */}
       <div className="absolute top-4 right-4 sm:top-6 sm:right-6 z-10 opacity-70 group-hover:opacity-100 transition-opacity">
-        <div className="w-9 h-9 sm:w-12 sm:h-12 bg-white/5 backdrop-blur-xl border border-white/20 rounded-full flex items-center justify-center shadow-[0_0_15px_rgba(255,255,255,0.1)] text-white text-sm sm:font-bold">
+        <div className="w-9 h-9 sm:w-12 h-12 bg-white/5 backdrop-blur-xl border border-white/20 rounded-full flex items-center justify-center shadow-[0_0_15px_rgba(255,255,255,0.1)] text-white text-sm sm:font-bold">
           F
         </div>
       </div>
@@ -181,19 +182,29 @@ export function BreakingNewsHero() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const r = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/news?breaking=true&limit=20`)
-        if (!r.ok) throw new Error("Fetch failed")
-        const data = await r.json()
+        let r = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/news?breaking=true&limit=20&${useAuthStore.getState().user?.uid ? 'firebaseUid=' + useAuthStore.getState().user?.uid : ''}`)
+        let data = r.ok ? await r.json() : { success: false, data: [] }
+        
+        let allArticles = data.success && data.data ? data.data : []
 
-        if (data.success && data.data?.length) {
-          const allArticles: Article[] = data.data
+        if (allArticles.length < 5) {
+          const fbR = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/news?limit=10&${useAuthStore.getState().user?.uid ? 'firebaseUid=' + useAuthStore.getState().user?.uid : ''}`)
+          const fbData = fbR.ok ? await fbR.json() : null
+          if (fbData && fbData.success && fbData.data) {
+             const existingIds = new Set(allArticles.map((a: any) => a._id))
+             const more = fbData.data.filter((a: any) => !existingIds.has(a._id))
+             allArticles = [...allArticles, ...more].slice(0, 15)
+          }
+        }
+
+        if (allArticles.length > 0) {
           // Separate social updates (Twitter/Reddit) from standard breaking news
-          const social = allArticles.filter(a => 
+          const social = allArticles.filter((a: any) => 
             a.source?.toLowerCase().includes("twitter") || 
             a.source?.toLowerCase().includes("nitter") || 
             a.source?.toLowerCase().includes("reddit")
           )
-          const standard = allArticles.filter(a => !social.includes(a))
+          const standard = allArticles.filter((a: any) => !social.includes(a))
           
           setArticles(standard.length > 0 ? standard : allArticles)
           setSocialUpdates(social)
@@ -279,8 +290,11 @@ export function BreakingNewsHero() {
     }
   })
 
-  // Duplicate items for seamless infinite scrolling (2x is enough to prevent heavy DOM)
-  const displayItems = [...items, ...items]
+  // Duplicate items for seamless infinite scrolling to ensure enough width
+  let displayItems = [...items]
+  while (displayItems.length > 0 && displayItems.length < 8) {
+    displayItems = [...displayItems, ...items]
+  }
 
   return (
     <div className="relative w-full overflow-hidden bg-black py-4">
@@ -333,7 +347,6 @@ export function BreakingNewsHero() {
       {/* Left/Right Fade Overlays for seamless look */}
       <div className="absolute inset-y-0 left-0 w-8 sm:w-24 bg-gradient-to-r from-black to-transparent pointer-events-none z-10" />
       <div className="absolute inset-y-0 right-0 w-8 sm:w-24 bg-gradient-to-l from-black to-transparent pointer-events-none z-10" />
-
 
     </div>
   )

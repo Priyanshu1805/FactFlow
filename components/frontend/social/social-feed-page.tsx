@@ -14,7 +14,7 @@ import { useTheme } from "@/components/theme-provider"
 import { useSearchParams, useRouter } from "next/navigation"
 import { useAuthStore } from "@/store/auth-store"
 import Link from "next/link"
-import Image from "next/image"
+import { AccessibleImage as Image } from "@/components/frontend/accessible-image"
 import { CreateMenuSheet } from "@/components/frontend/create-menu-sheet"
 import { UploadFlowModal } from "@/components/frontend/upload-flow-modal"
 import { SocialNotificationPanel } from "@/components/frontend/social/social-notification-panel"
@@ -212,7 +212,7 @@ export function SocialFeedPage({ isDark, onStoryClick }: SocialFeedPageProps) {
       })
       .catch(() => ({ success: false, data: [] }))
     
-    const fetchPosts = fetch(`${API}/posts/feed?limit=6`)
+    const fetchPosts = fetch(`${API}/posts/feed?limit=6${user?.uid ? '&firebaseUid=' + user.uid : ''}`)
       .then(res => {
         if (!res.ok) throw new Error("Fetch failed")
         return res.json()
@@ -362,7 +362,7 @@ export function SocialFeedPage({ isDark, onStoryClick }: SocialFeedPageProps) {
         })
         .catch(() => ({ success: false, users: [] }))
 
-      const fetchSearchPosts = fetch(`${API}/posts/feed?search=${encodeURIComponent(searchVal)}&limit=10`)
+      const fetchSearchPosts = fetch(`${API}/posts/feed?search=${encodeURIComponent(searchVal)}&limit=10${user?.uid ? '&firebaseUid=' + user.uid : ''}`)
         .then(res => {
           if (!res.ok) throw new Error("Fetch failed")
           return res.json()

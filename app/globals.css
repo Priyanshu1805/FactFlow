@@ -943,3 +943,68 @@ html, body {
     display: flex !important;
     flex-direction: column !important;
 }
+
+/* --- Accessibility Overrides --- */
+
+/* High Contrast Mode */
+.high-contrast {
+  /* Increase contrast of base colors */
+  --foreground: #000000;
+  --muted-foreground: #111111;
+  --secondary-foreground: #000000;
+  --border: #000000;
+}
+
+.dark.high-contrast,
+.high-contrast.dark {
+  --background: #000000;
+  --card: #000000;
+  --popover: #000000;
+  --foreground: #ffffff;
+  --muted-foreground: #eeeeee;
+  --secondary-foreground: #ffffff;
+  --border: #ffffff;
+}
+
+.high-contrast * {
+  /* Force stronger borders for inputs, buttons, dividers */
+  border-color: var(--border) !important;
+}
+
+/* Reduce Motion */
+.reduce-motion * {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+  scroll-behavior: auto !important;
+}
+
+/* Large Tap Targets */
+.large-tap-targets button, 
+.large-tap-targets a {
+  min-height: 48px;
+  min-width: 48px;
+}
+
+/* Bold Text */
+.bold-text * {
+  font-weight: 700 !important;
+}
+
+/* Screen Reader Optimized */
+.screen-reader-optimized button,
+.screen-reader-optimized a {
+  position: relative;
+}
+
+.screen-reader-optimized button::before,
+.screen-reader-optimized a::before {
+  content: '';
+  position: absolute;
+  top: -12px;
+  right: -12px;
+  bottom: -12px;
+  left: -12px;
+  z-index: 10;
+}
+

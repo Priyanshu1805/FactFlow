@@ -8,6 +8,7 @@ import { AccountStatusGuard } from "@/components/providers/account-status-guard"
 import { Toaster } from "sonner"
 import { DynamicClients } from "@/components/dynamic-clients"
 import { ClientShell } from "@/components/client-shell"
+import { AccessibilityProvider } from "@/components/accessibility-provider"
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://factflow.news"),
@@ -70,17 +71,19 @@ export default function RootLayout({
         <AuthProvider>
           <SocketProvider>
             <ThemeProvider>
-              <ClientShell>
-                <Toaster position="bottom-right" />
-                <DynamicClients />
-                <TwoFactorGuard>
-                  <AccountStatusGuard>
-                    <div className="flex flex-col min-h-screen">
-                      {children}
-                    </div>
-                  </AccountStatusGuard>
-                </TwoFactorGuard>
-              </ClientShell>
+              <AccessibilityProvider>
+                <ClientShell>
+                  <Toaster position="bottom-right" />
+                  <DynamicClients />
+                  <TwoFactorGuard>
+                    <AccountStatusGuard>
+                      <div className="flex flex-col min-h-screen">
+                        {children}
+                      </div>
+                    </AccountStatusGuard>
+                  </TwoFactorGuard>
+                </ClientShell>
+              </AccessibilityProvider>
             </ThemeProvider>
           </SocketProvider>
         </AuthProvider>

@@ -1,5 +1,6 @@
 import { create } from "zustand"
 import Parser from "rss-parser"
+import { useAuthStore } from "@/store/auth-store"
 
 export interface RSSItem {
   id: string
@@ -53,6 +54,8 @@ export const useRssStore = create<RssState>((set, get) => ({
     try {
       // 1. Language Preference
       let savedLanguages = ["english"]
+      let contentPrefs: any = null
+      
       try {
         const feedLangs = localStorage.getItem("ff_newsfeed_newsLanguages")
         const globalLangs = localStorage.getItem("ff_news_languages")
@@ -64,16 +67,31 @@ export const useRssStore = create<RssState>((set, get) => ({
       } catch { /* ignore */ }
       const primaryLang = savedLanguages[0] || "english"
 
+      const uid = useAuthStore.getState().user?.uid
+      const uidParam = uid ? `&firebaseUid=${uid}` : ''
+
+      if (uid) {
+        try {
+          const prefRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api"}/users/settings/${uid}`)
+          if (prefRes.ok) {
+            const prefData = await prefRes.json()
+            if (prefData.success && prefData.settings?.content) {
+              contentPrefs = prefData.settings.content
+            }
+          }
+        } catch(e) {}
+      }
+
       let allItems: RSSItem[] = []
 
       // 2. Fetch from Unified Backend (Memes, AI News, User articles)
       try {
-        const apiRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api"}/news?limit=300`)
+        const apiRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api"}/news?limit=300${uidParam}`)
         if (apiRes.ok) {
           const apiData = await apiRes.json()
           if (apiData.success && apiData.data) {
             // Ensure memes are fetched if they aren't in the top 300
-            const memeRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api"}/news?category=Memes&limit=50`).catch(() => null)
+            const memeRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api"}/news?category=Memes&limit=50${uidParam}`).catch(() => null)
             if (memeRes && memeRes.ok) {
                const memeData = await memeRes.json()
                if (memeData.success && memeData.data) {
@@ -147,6 +165,31 @@ export const useRssStore = create<RssState>((set, get) => ({
       const uniqueItems = new Map<string, RSSItem>()
       for (const item of allItems) {
         if (!item.title) continue
+        
+        // Apply Client-Side Content Filters for External RSS
+        if (contentPrefs) {
+          const { mutedKeywords = [], hiddenPublishers = [] } = contentPrefs
+          let isHidden = false
+          
+          if (hiddenPublishers.length > 0) {
+            const isHiddenPub = hiddenPublishers.some((p: string) => 
+              item.source?.toLowerCase().includes(p.toLowerCase()) || 
+              item.author?.toLowerCase().includes(p.toLowerCase())
+            )
+            if (isHiddenPub) isHidden = true
+          }
+          
+          if (!isHidden && mutedKeywords.length > 0) {
+            const hasMutedWord = mutedKeywords.some((kw: string) => 
+              item.title.toLowerCase().includes(kw.toLowerCase()) || 
+              item.summary?.toLowerCase().includes(kw.toLowerCase())
+            )
+            if (hasMutedWord) isHidden = true
+          }
+          
+          if (isHidden) continue
+        }
+
         // simple deduplication by title
         if (!uniqueItems.has(item.title)) {
           uniqueItems.set(item.title, item)

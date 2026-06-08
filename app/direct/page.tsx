@@ -274,7 +274,7 @@ export default function DirectInboxPage() {
     // Stop typing immediately
     if (isTyping) {
       setIsTyping(false)
-      socket.emit("stop_typing", { chatId: selectedChat._id, username: user.displayName || user.email })
+      socket?.emit("stop_typing", { chatId: selectedChat._id, username: user.displayName || user.email })
     }
 
     try {

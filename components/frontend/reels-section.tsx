@@ -4,7 +4,7 @@ import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
 import { Play, Heart, Share2, ArrowRight, Eye } from "lucide-react"
 import { useTheme } from "@/components/theme-provider"
-import Image from "next/image"
+import { AccessibleImage as Image } from "@/components/frontend/accessible-image"
 import Link from "next/link"
 import { useSocket } from "@/hooks/use-socket"
 
