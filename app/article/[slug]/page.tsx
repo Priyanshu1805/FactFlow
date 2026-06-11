@@ -4,6 +4,7 @@ import { useState, useEffect } from "react"
 import { useParams, useSearchParams } from "next/navigation"
 import { SafeImage as Image } from "@/components/frontend/safe-image"
 import Link from "next/link"
+import { io, Socket } from "socket.io-client"
 import { ArrowLeft, Clock, MapPin, Share2, Heart, Tag, BookOpen, Eye, ThumbsUp, ThumbsDown, Sparkles, ChevronDown, ChevronUp, Bookmark } from "lucide-react"
 import { useTheme } from "@/components/theme-provider"
 import { Navbar } from "@/components/frontend/navbar"
@@ -124,6 +125,38 @@ export default function ArticlePage() {
     }
     fetchArticle()
   }, [slug, user])
+
+  useEffect(() => {
+    if (!article?._id) return;
+
+    const socketUrl = process.env.NEXT_PUBLIC_API_URL?.replace("/api/backend", "").replace("/api", "") || "http://localhost:5000";
+    if (!socket) {
+      socket = io(socketUrl, {
+        transports: ["websocket", "polling"],
+      });
+    }
+
+    socket.emit("join_article", article._id);
+
+    const handleViewUpdate = (data: { views: number }) => {
+      setArticle((prev: any) => prev ? { ...prev, views: data.views } : prev);
+    };
+
+    const handleStatsUpdate = (data: { likes: number, dislikes: number }) => {
+      setStats({ likes: data.likes, dislikes: data.dislikes });
+    };
+
+    socket.on("view_update", handleViewUpdate);
+    socket.on("stats_update", handleStatsUpdate);
+
+    return () => {
+      if (socket) {
+        socket.emit("leave_article", article._id);
+        socket.off("view_update", handleViewUpdate);
+        socket.off("stats_update", handleStatsUpdate);
+      }
+    };
+  }, [article?._id]);
 
   const handleLike = async () => {
     if (!article) return
