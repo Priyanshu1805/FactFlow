@@ -520,7 +520,7 @@ export default function ArticlePage() {
                 >
                   <ThumbsUp className={`w-5 h-5 ${isLiked ? "fill-current" : ""}`} />
                   <span className="font-semibold text-sm">
-                    {stats.likes > 0 ? (stats.likes > 999 ? (stats.likes/1000).toFixed(1) + 'K' : stats.likes) : 'Like'}
+                    {stats.likes > 999 ? (stats.likes/1000).toFixed(1) + 'K' : stats.likes}
                   </span>
                 </button>
                 <div className={`w-px h-5 ${isDark ? "bg-white/20" : "bg-gray-300"}`}></div>
@@ -530,7 +530,7 @@ export default function ArticlePage() {
                 >
                   <ThumbsDown className={`w-5 h-5 ${isDisliked ? "fill-current" : ""}`} />
                   <span className="font-semibold text-sm">
-                    {stats.dislikes > 0 ? (stats.dislikes > 999 ? (stats.dislikes/1000).toFixed(1) + 'K' : stats.dislikes) : ''}
+                    {stats.dislikes > 999 ? (stats.dislikes/1000).toFixed(1) + 'K' : stats.dislikes}
                   </span>
                 </button>
               </div>

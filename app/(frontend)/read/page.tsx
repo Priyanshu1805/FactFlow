@@ -438,12 +438,12 @@ const getRandomFallback = () => fallbacks[Math.floor(Math.random() * fallbacks.l
                     <div className="flex items-center rounded-full border border-white/10 bg-white/5 overflow-hidden">
                       <button onClick={handleLike} className={`flex items-center gap-2 px-4 h-10 transition-colors font-bold text-xs ${isLiked ? "bg-green-500/20 text-green-500" : "text-white/80 hover:bg-white/10"}`}>
                         <ThumbsUp className={`w-4 h-4 ${isLiked ? "fill-green-500" : ""}`} />
-                        <span>{stats.likes > 0 ? stats.likes : "Like"}</span>
+                        <span>{stats.likes > 999 ? (stats.likes/1000).toFixed(1) + 'K' : stats.likes}</span>
                       </button>
                       <div className="w-[1px] h-6 bg-white/10" />
                       <button onClick={handleDislike} className={`flex items-center gap-2 px-4 h-10 transition-colors font-bold text-xs ${isDisliked ? "bg-red-500/20 text-red-500" : "text-white/80 hover:bg-white/10"}`}>
                         <ThumbsDown className={`w-4 h-4 ${isDisliked ? "fill-red-500" : ""}`} />
-                        <span>{stats.dislikes > 0 ? stats.dislikes : ""}</span>
+                        <span>{stats.dislikes > 999 ? (stats.dislikes/1000).toFixed(1) + 'K' : stats.dislikes}</span>
                       </button>
                     </div>
                   </div>
