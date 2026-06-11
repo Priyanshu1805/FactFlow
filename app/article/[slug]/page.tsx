@@ -19,7 +19,7 @@ import { PaywallOverlay } from "@/components/frontend/paywall-overlay"
 import { useSubscription } from "@/lib/use-subscription"
 import { AISummaryButton } from "@/components/frontend/article/ai-summary-button"
 
-const ReactPlayer = dynamic(() => import("react-player"), { ssr: false }) as any
+const ReactPlayer = dynamic(() => import("react-player")) as any
 
 export default function ArticlePage() {
   const { slug } = useParams()

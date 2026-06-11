@@ -43,6 +43,11 @@ export const metadata: Metadata = {
 }
 
 import { SocketProvider } from "@/components/providers/socket-provider"
+import { RegionProvider } from "@/components/providers/region-provider"
+import { GoogleTranslate } from "@/components/google-translate"
+import { FeedInitializer } from "@/components/providers/feed-initializer"
+
+
 
 export default function RootLayout({
   children,
@@ -68,6 +73,7 @@ export default function RootLayout({
         <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400;1,700&family=Old+Standard+TT:ital,wght@0,400;0,700;1,400&family=UnifrakturMaguntia&display=swap" rel="stylesheet" />
       </head>
       <body>
+        <GoogleTranslate />
         <AuthProvider>
           <SocketProvider>
             <ThemeProvider>
@@ -77,9 +83,12 @@ export default function RootLayout({
                   <DynamicClients />
                   <TwoFactorGuard>
                     <AccountStatusGuard>
-                      <div className="flex flex-col min-h-screen">
-                        {children}
-                      </div>
+                      <RegionProvider>
+                        <FeedInitializer />
+                        <div className="flex flex-col min-h-screen">
+                          {children}
+                        </div>
+                      </RegionProvider>
                     </AccountStatusGuard>
                   </TwoFactorGuard>
                 </ClientShell>

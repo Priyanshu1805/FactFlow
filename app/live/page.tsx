@@ -1,12 +1,10 @@
 "use client"
 
-import dynamic from "next/dynamic"
 import { Suspense } from "react"
-
-const PageShell = dynamic(() => import("@/components/frontend/page-shell").then(m => ({ default: m.PageShell })), { ssr: false })
-const LiveTvSection = dynamic(() => import("@/components/frontend/live-tv-section").then(m => ({ default: m.LiveTvSection })), { ssr: false })
-const NewsTicker = dynamic(() => import("@/components/frontend/news-ticker").then(m => ({ default: m.NewsTicker })), { ssr: false })
-const ReelsSection = dynamic(() => import("@/components/frontend/reels-section").then(m => ({ default: m.ReelsSection })), { ssr: false })
+import { PageShell } from "@/components/frontend/page-shell"
+import { LiveTvSection } from "@/components/frontend/live-tv-section"
+import { NewsTicker } from "@/components/frontend/news-ticker"
+import { ReelsSection } from "@/components/frontend/reels-section"
 
 function LiveLoader() {
   return (

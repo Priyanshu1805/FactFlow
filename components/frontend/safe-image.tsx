@@ -28,7 +28,7 @@ export function SafeImage({ src, alt, fallbackSrc = "https://images.unsplash.com
   }
 
   const finalSrc = error || !src ? fallbackSrc : src
-  const isHttp = finalSrc.startsWith("http://")
+  const isHttp = finalSrc.startsWith("http://") || finalSrc.startsWith("https://")
 
   let imgElement: React.ReactNode
 

@@ -9,6 +9,7 @@ import { SafeImage as Image } from "@/components/frontend/safe-image"
 import Link from "next/link"
 import { useSettings } from "@/lib/use-settings"
 import { PremiumBadge } from "@/components/frontend/premium-badge"
+import { LiveNewsBanner } from "@/components/frontend/live-news-banner"
 
 export function SportsSection() {
   const { theme } = useTheme()
@@ -22,13 +23,14 @@ export function SportsSection() {
 
   const sectionNews = useMemo(() => {
     const filtered = rssItems
-      .filter(item => item.category === "Sports")
+      .filter(item => item.category === "Sports" || item.category === "Cricket" || item.category === "Football")
       .sort((a, b) => {
-        const aHas = a.image && a.image.trim() !== "" ? 1 : 0;
-        const bHas = b.image && b.image.trim() !== "" ? 1 : 0;
-        return bHas - aHas; // Real images go first
+        const aImg = a.image && a.image.trim() !== "" ? 1 : 0
+        const bImg = b.image && b.image.trim() !== "" ? 1 : 0
+        if (bImg !== aImg) return bImg - aImg
+        return new Date(b.published).getTime() - new Date(a.published).getTime()
       })
-      .slice(0, 20)
+      .slice(0, 5)
     
     // Category-specific fallback images (very related, no dummy abstract images)
     const fallbacks = {
@@ -87,8 +89,8 @@ export function SportsSection() {
     })
   }, [rssItems])
 
-  const featured = sectionNews.find((n) => n.featured) || sectionNews[0]
-  const rest = sectionNews.filter((n) => !n.featured).slice(0, 6)
+  const featured = sectionNews[0]
+  const rest = sectionNews.slice(1, 5)
 
   if (sectionNews.length === 0 && !loading) return null;
 
@@ -96,6 +98,7 @@ export function SportsSection() {
     <section id="sports" className={`py-12 px-4 relative overflow-hidden ${
       isDark ? "bg-transparent" : "bg-gray-50/30"
     }`}>
+      <LiveNewsBanner category="Sports" />
       {isDark && (
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full max-w-4xl bg-orange-900/10 blur-[120px] rounded-full pointer-events-none -z-10" />
       )}
@@ -121,8 +124,8 @@ export function SportsSection() {
               </p>
             </div>
           </div>
-          <Link href="#breaking-updates" className={`group flex items-center gap-2 px-4 py-2 rounded-full ${isDark ? "bg-white/5 hover:bg-white/10 text-white/80" : "bg-black/5 hover:bg-black/10 text-black/80"} transition-all backdrop-blur-md text-sm font-bold`}>
-            Explore More 
+          <Link href="/sports" className="group flex items-center gap-2 px-5 py-2.5 rounded-full font-bold text-sm transition-all duration-300 bg-orange-500 hover:bg-orange-600 text-white shadow-lg shadow-orange-500/25">
+            View More
             <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
           </Link>
         </motion.div>
@@ -203,16 +206,15 @@ export function SportsSection() {
           )}
 
           <div className={`grid ${
-            layout === "compact" ? "lg:col-span-3 grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3" : 
-            layout === "spacious" ? "col-span-1 grid-cols-1 gap-8" : 
-            "lg:col-span-2 grid-cols-1 sm:grid-cols-2 gap-4 xl:gap-6"
+            layout === "compact" ? "lg:col-span-3 grid-cols-2 gap-3" :
+            "lg:col-span-2 grid-cols-1 sm:grid-cols-2 gap-4"
           }`}>
             {rest.map((article, idx) => (
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
-                transition={{ delay: idx * 0.1 }}
+                transition={{ delay: Math.min(idx * 0.1, 0.5) }}
                 key={article.id}
                 className="h-full"
               >

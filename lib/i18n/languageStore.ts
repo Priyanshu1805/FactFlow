@@ -1,4 +1,5 @@
 import { create } from "zustand"
+import { translations } from "./translations"
 
 export type LangCode = "english" | "hindi" | "marathi" | "tamil" | "telugu" | "bengali" | "gujarati" | "punjabi"
 export type RegionCode = "india" | "us" | "uk" | "global"
@@ -33,6 +34,45 @@ export const useLanguageStore = create<LanguageState>((set) => ({
       // Sync news content language so news API filter works
       const newsLang = LANG_CODE_TO_NEWS_LANG[lang] || "English"
       localStorage.setItem("ff_news_languages", JSON.stringify([newsLang]))
+      
+      // Google Translate Integration
+      const gLang: Record<LangCode, string> = {
+        english: "en", hindi: "hi", marathi: "mr", tamil: "ta", telugu: "te", bengali: "bn", gujarati: "gu", punjabi: "pa"
+      }
+      const targetGLang = gLang[lang] || "en"
+      
+      const triggerGoogleTranslate = () => {
+        const clearGoogleCookies = () => {
+          const domain = window.location.hostname;
+          document.cookie = `googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
+          document.cookie = `googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=${domain};`;
+          document.cookie = `googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=.${domain};`;
+        }
+
+        if (targetGLang === "en") {
+          clearGoogleCookies();
+          setTimeout(() => window.location.reload(), 100);
+          return;
+        }
+
+        const combos = document.querySelectorAll(".goog-te-combo")
+        if (combos.length > 0) {
+          combos.forEach(c => {
+            const el = c as HTMLSelectElement
+            el.value = targetGLang
+            el.dispatchEvent(new Event("change", { bubbles: true, cancelable: true }))
+          })
+        } else {
+          // Fallback if widget not loaded
+          if (targetGLang !== "en") {
+            document.cookie = `googtrans=/en/${targetGLang}; path=/;`;
+            document.cookie = `googtrans=/en/${targetGLang}; path=/; domain=${window.location.hostname};`;
+            setTimeout(() => window.location.reload(), 300);
+          }
+        }
+      }
+      
+      triggerGoogleTranslate();
       window.dispatchEvent(new Event("ff_settings_changed"))
     }
   },
@@ -52,8 +92,29 @@ export const useLanguageStore = create<LanguageState>((set) => ({
         // Also sync news language on init
         const newsLang = LANG_CODE_TO_NEWS_LANG[savedLang] || "English"
         localStorage.setItem("ff_news_languages", JSON.stringify([newsLang]))
+        
+        // Sync Google Translate cookie
+        const gLang: Record<LangCode, string> = {
+          english: "en", hindi: "hi", marathi: "mr", tamil: "ta", telugu: "te", bengali: "bn", gujarati: "gu", punjabi: "pa"
+        }
+        const targetGLang = gLang[savedLang] || "en"
+        
+        if (targetGLang !== "en") {
+          document.cookie = `googtrans=/en/${targetGLang}; path=/;`;
+          document.cookie = `googtrans=/en/${targetGLang}; path=/; domain=${window.location.hostname};`;
+        }
       }
       if (savedRegion) set({ region: savedRegion })
     }
   }
 }))
+
+export const useTranslation = () => {
+  const { lang } = useLanguageStore()
+  
+  const t = (key: string): string => {
+    return translations[lang]?.[key] || translations.english[key] || key
+  }
+
+  return { t, lang }
+}

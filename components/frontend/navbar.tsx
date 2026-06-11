@@ -3,7 +3,7 @@
 
 import { useState, useRef, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { Menu, X, Search, TrendingUp, Radio, Users, Gamepad2, Laugh, Cpu, User, Settings, ShieldCheck, Sparkles, Globe, Bookmark, Bell, Clapperboard } from "lucide-react"
+import { Menu, X, Search, TrendingUp, Radio, Users, Gamepad2, Palette, Cpu, User, Settings, ShieldCheck, Sparkles, Globe, Bookmark, Bell, Clapperboard, Home } from "lucide-react"
 
 import Link from "next/link"
 import { useRouter } from "next/navigation"
@@ -13,21 +13,24 @@ import { auth } from "@/lib/firebase"
 import { useSubscription } from "@/lib/use-subscription"
 import { PremiumBadge } from "@/components/frontend/premium-badge"
 import { NotificationBell } from "@/components/frontend/notification-bell"
+import { useTranslation } from "@/lib/i18n/languageStore"
 
 const navLinks = [
-  { name: "Live", href: "/live", icon: Radio },
-  { name: "Newspaper", href: "/newspaper", icon: TrendingUp },
-  { name: "Politics", href: "/politics", icon: Users },
-  { name: "Trending", href: "/#trending", icon: TrendingUp },
-  { name: "Lifestyle", href: "/#lifestyle", icon: Users },
-  { name: "Sports", href: "/#sports", icon: Gamepad2 },
-  { name: "Tech", href: "/#tech", icon: Cpu },
-  { name: "Memes", href: "/#memes", icon: Laugh },
-  { name: "Social", href: "/social", icon: Globe },
-  { name: "Saved", href: "/saved", icon: Bookmark },
+  { name: "Home", tKey: "navHome", href: "/", icon: Home },
+  { name: "Live", tKey: "navLive", href: "/live", icon: Radio },
+  { name: "Newspaper", tKey: "navNewspaper", href: "/newspaper", icon: TrendingUp },
+  { name: "Politics", tKey: "navPolitics", href: "/politics", icon: Users },
+  { name: "Trending", tKey: "navTrending", href: "/trending", icon: TrendingUp },
+  { name: "Lifestyle", tKey: "navLifestyle", href: "/lifestyle", icon: Users },
+  { name: "Sports", tKey: "navSports", href: "/sports", icon: Gamepad2 },
+  { name: "Tech", tKey: "navTech", href: "/tech", icon: Cpu },
+  { name: "Art", tKey: "navArt", href: "/art", icon: Palette },
+  { name: "Social", tKey: "navSocial", href: "/social", icon: Globe },
+  { name: "Saved", tKey: "navSaved", href: "/saved", icon: Bookmark },
 ]
 
 export function Navbar() {
+  const { t } = useTranslation()
   const [isOpen, setIsOpen] = useState(false)
   const [searchExpanded, setSearchExpanded] = useState(false)
   const [settingsOpen, setSettingsOpen] = useState(false)
@@ -205,30 +208,65 @@ export function Navbar() {
         <div className="flex items-center justify-between h-16">
           {/* Left Side: Logo */}
           <Link href="/" className="flex items-center shrink-0 py-1">
-            <div className="flex items-center gap-3 cursor-pointer group">
-              {/* Crimson Square Badge with White "FF" */}
-              <div className="w-9 h-9 rounded-lg bg-red-800 flex items-center justify-center shadow-md shadow-red-900/20 font-black text-white text-base tracking-tighter">
-                FF
+            <div className="flex items-center gap-3.5 cursor-pointer group">
+              {/* Logo Vector Container with Premium border */}
+              <div className="relative p-[1px] bg-gradient-to-tr from-red-500/30 via-purple-500/30 to-blue-500/30 rounded-xl shadow-sm">
+                {/* Vector SVG Emblem */}
+                <div className="relative z-10 w-9 h-9 sm:w-10 sm:h-10 rounded-[10px] overflow-hidden bg-black flex items-center justify-center border border-white/10">
+                  <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full select-none">
+                    <text 
+                      x="30" 
+                      y="74" 
+                      fontFamily="Georgia, 'Times New Roman', serif" 
+                      fontWeight="bold" 
+                      fontSize="68" 
+                      fill="#FFFFFF"
+                      textAnchor="middle"
+                    >
+                      F
+                    </text>
+                    <circle cx="50" cy="74" r="6" fill="#a8152e" />
+                    <text 
+                      x="70" 
+                      y="74" 
+                      fontFamily="Georgia, 'Times New Roman', serif" 
+                      fontWeight="bold" 
+                      fontSize="68" 
+                      fill="#FFFFFF"
+                      textAnchor="middle"
+                    >
+                      F
+                    </text>
+                  </svg>
+                </div>
               </div>
 
-              {/* Bold Modern Sans-Serif Logo Text */}
-              <span className={`font-black text-xl tracking-tight ${isDark ? "text-white" : "text-gray-900"}`}>
-                FACTFLOW
-              </span>
+              {/* Elegant Professional Brand Name */}
+              <div className="relative flex flex-col justify-center">
+                <div className="flex items-center notranslate">
+                  <span className={`font-black text-lg sm:text-xl tracking-tighter ${isDark ? "text-white" : "text-gray-900"}`} style={{ letterSpacing: "-0.05em" }}>
+                    FACT
+                  </span>
+                  <span className="font-black text-lg sm:text-xl tracking-tighter text-red-500 flex" style={{ letterSpacing: "-0.05em" }}>
+                    FLOW
+                  </span>
+                </div>
+                <p className="text-gray-500 dark:text-gray-400 text-[9px] sm:text-[10px] mt-0 leading-none hidden sm:block">Digital News Platform</p>
+              </div>
             </div>
           </Link>
 
           {/* Center Side: Navigation Links (hidden on mobile) */}
-          <div className="hidden lg:flex items-center gap-1.5">
+          <div className="hidden lg:flex items-center gap-0.5 xl:gap-1.5">
             {navLinks.map((link) => (
               <Link
                 key={link.name}
                 href={link.href}
                 onClick={(e) => handleNavClick(e, link.href)}
-                className={`relative group flex items-center gap-1.5 px-3 py-2 text-sm font-bold transition-colors duration-300 ${isDark ? "text-gray-300 hover:text-white" : "text-gray-600 hover:text-red-500"}`}
+                className={`relative group flex items-center gap-1 px-2 xl:px-3 py-2 text-[11px] xl:text-sm font-bold transition-colors duration-300 ${isDark ? "text-gray-300 hover:text-white" : "text-gray-600 hover:text-red-500"}`}
               >
                 <link.icon className="w-4 h-4 opacity-75 group-hover:opacity-100 transition-opacity" />
-                {link.name}
+                {t(link.tKey)}
                 {link.name === "Live" && (
                   <span className="w-1.5 h-1.5 bg-red-500 rounded-full animate-pulse shadow-[0_0_8px_rgba(239,68,68,0.8)]" />
                 )}
@@ -283,11 +321,11 @@ export function Navbar() {
                     }`}
                   >
                     <div className="p-1">
-                                            <Link href="/settings" className={`flex items-center gap-2 px-3 py-2 text-sm rounded-lg ${isDark ? "hover:bg-white/10" : "hover:bg-gray-50"}`}>
-                        <Settings className="w-4 h-4" /> Preferences
+                      <Link href="/settings" className={`flex items-center gap-2 px-3 py-2 text-sm rounded-lg ${isDark ? "hover:bg-white/10" : "hover:bg-gray-50"}`}>
+                        <Settings className="w-4 h-4" /> {t("preferences")}
                       </Link>
                       <Link href="/admin" className={`flex items-center gap-2 px-3 py-2 text-sm rounded-lg ${isDark ? "hover:bg-white/10" : "hover:bg-gray-50"}`}>
-                        <ShieldCheck className="w-4 h-4" /> Admin Dashboard
+                        <ShieldCheck className="w-4 h-4" /> {t("adminDashboard")}
                       </Link>
                     </div>
                   </motion.div>
@@ -339,14 +377,14 @@ export function Navbar() {
                             onClick={() => setProfileOpen(false)}
                             className={`flex items-center gap-2 px-3 py-2 text-sm rounded-lg ${isDark ? "hover:bg-white/10" : "hover:bg-gray-50"}`}
                           >
-                            <User className="w-4 h-4" /> View Profile
+                            <User className="w-4 h-4" /> {t("viewProfile")}
                           </Link>
                           <Link 
                             href="/settings" 
                             onClick={() => setProfileOpen(false)}
                             className={`flex items-center gap-2 px-3 py-2 text-sm rounded-lg ${isDark ? "hover:bg-white/10" : "hover:bg-gray-50"}`}
                           >
-                            <Settings className="w-4 h-4" /> Settings
+                            <Settings className="w-4 h-4" /> {t("settings")}
                           </Link>
                         </div>
                         <div className="p-1 border-t border-white/5">
@@ -378,7 +416,7 @@ export function Navbar() {
                 href="/login"
                 className="bg-gradient-to-r from-red-600 to-orange-500 text-white px-3 py-1.5 sm:px-4 sm:py-2 rounded-full text-xs sm:text-sm font-bold shadow-md shadow-red-900/20 hover:brightness-110 transition-all active:scale-95 text-center whitespace-nowrap"
               >
-                Login
+                {t("login")}
               </Link>
             )}
 
@@ -425,10 +463,10 @@ export function Navbar() {
                 {/* Header */}
                 <div className="flex items-center justify-between pb-6 border-b border-white/10">
                   <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-lg bg-red-800 flex items-center justify-center font-black text-white text-sm">
+                    <div className="w-8 h-8 rounded-lg bg-red-800 flex items-center justify-center font-black text-white text-sm notranslate">
                       FF
                     </div>
-                    <span className="font-extrabold text-lg text-white">FACTFLOW</span>
+                    <span className="font-extrabold text-lg text-white notranslate">FACTFLOW</span>
                   </div>
                   <button
                     onClick={() => setIsOpen(false)}
@@ -507,7 +545,7 @@ export function Navbar() {
                       className="flex items-center gap-3.5 px-4 py-3 rounded-xl text-sm font-bold text-gray-300 hover:text-white hover:bg-white/5 transition-colors"
                     >
                       <link.icon className="w-5 h-5 opacity-70" />
-                      {link.name}
+                      {t(link.tKey)}
                       {link.name === "Live" && (
                         <span className="w-2 h-2 bg-red-500 rounded-full animate-pulse ml-auto" />
                       )}
@@ -527,7 +565,7 @@ export function Navbar() {
                       className="flex items-center gap-3.5 px-4 py-3 rounded-xl text-sm font-bold text-gray-300 hover:text-white hover:bg-white/5 transition-colors"
                     >
                       <Globe className="w-5 h-5 opacity-70" />
-                      Social Feed
+                      {t("navSocial")}
                       {hasUnreadSocial && (
                         <span className="w-1.5 h-1.5 bg-red-500 rounded-full animate-pulse ml-auto" />
                       )}
@@ -539,7 +577,7 @@ export function Navbar() {
                       className="flex items-center gap-3.5 px-4 py-3 rounded-xl text-sm font-bold text-gray-300 hover:text-white hover:bg-white/5 transition-colors"
                     >
                       <Settings className="w-5 h-5 opacity-70" />
-                      Settings
+                      {t("settings")}
                     </Link>
 
                     <Link
@@ -548,7 +586,7 @@ export function Navbar() {
                       className="flex items-center gap-3.5 px-4 py-3 rounded-xl text-sm font-bold text-gray-300 hover:text-white hover:bg-white/5 transition-colors"
                     >
                       <ShieldCheck className="w-5 h-5 opacity-70" />
-                      Admin Dashboard
+                      {t("adminDashboard")}
                     </Link>
                   </div>
                 </div>

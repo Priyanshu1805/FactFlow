@@ -7,6 +7,19 @@ import { useVideoSettings } from "@/hooks/useVideoSettings"
 import { useTTS } from "@/hooks/useTTS"
 
 export function RssNewsCard({ item, variant = "default" }: { item: RSSItem, variant?: "default" | "compact" | "hero" }) {
+  const fallbacks = [
+  "https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=1200&q=80",
+  "https://images.unsplash.com/photo-1495020689067-958852a7765e?w=1200&q=80",
+  "https://images.unsplash.com/photo-1585829365295-ab7cd400c167?w=1200&q=80",
+  "https://images.unsplash.com/photo-1557992260-ec58e38d363c?w=1200&q=80",
+  "https://images.unsplash.com/photo-1526304640581-d334cdbbf45e?w=1200&q=80",
+  "https://images.unsplash.com/photo-1529236183275-4fdcf2bc741e?w=1200&q=80",
+  "https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=1200&q=80",
+  "https://images.unsplash.com/photo-1432821596592-e2c18b78144f?w=1200&q=80",
+  "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=1200&q=80",
+  "https://images.unsplash.com/photo-1518609878373-06d740f60d8b?w=1200&q=80"
+];
+const getRandomFallback = () => fallbacks[Math.floor(Math.random() * fallbacks.length)];
   const { saveItem, removeItem, isSaved } = useSavedStore()
   const saved = isSaved(item.id)
   
@@ -33,9 +46,7 @@ export function RssNewsCard({ item, variant = "default" }: { item: RSSItem, vari
   if (variant === "hero") {
     return (
       <div className="relative group rounded-2xl overflow-hidden shadow-lg h-full min-h-[400px]">
-        {item.image && (
-          <img src={item.image} alt={item.title} className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
-        )}
+        <img src={item.image || getRandomFallback()} alt={item.title} className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" onError={(e) => { e.currentTarget.src = getRandomFallback(); e.currentTarget.onerror = null; }} />
         <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent" />
         
         <div className="absolute bottom-0 left-0 right-0 p-6 z-10 flex flex-col justify-end h-full">
@@ -84,9 +95,8 @@ export function RssNewsCard({ item, variant = "default" }: { item: RSSItem, vari
 
   return (
     <div className={`group bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-xl overflow-hidden hover:shadow-xl transition-all duration-300 ${variant === 'compact' ? 'flex h-32' : 'flex flex-col h-full'}`}>
-      {item.image && (
-        <div className={`relative overflow-hidden ${variant === 'compact' ? 'w-1/3 min-w-[120px]' : 'aspect-video w-full'}`}>
-          <img src={item.image} alt={item.title} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
+      <div className={`relative overflow-hidden ${variant === 'compact' ? 'w-1/3 min-w-[120px]' : 'aspect-video w-full'}`}>
+          <img src={item.image || getRandomFallback()} alt={item.title} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" onError={(e) => { e.currentTarget.src = getRandomFallback(); e.currentTarget.onerror = null; }} />
           {variant !== 'compact' && (
             <div className="absolute top-3 left-3 flex gap-2">
               <span className="px-2.5 py-1 bg-black/60 backdrop-blur-md text-white text-xs font-semibold rounded-md">
@@ -95,8 +105,7 @@ export function RssNewsCard({ item, variant = "default" }: { item: RSSItem, vari
             </div>
           )}
         </div>
-      )}
-      
+
       <div className={`p-4 flex flex-col flex-1 ${variant === 'compact' ? 'justify-between' : ''}`}>
         {variant === 'compact' && (
           <div className="flex items-center justify-between mb-1">

@@ -1,117 +1,163 @@
 "use client"
-import { useAuthStore } from "@/store/auth-store";
 
-
-import { useState, useEffect } from "react"
-import { motion } from "framer-motion"
-import { TrendingUp, Clock, Eye, ArrowLeft } from "lucide-react"
+import { useTheme } from "@/components/theme-provider"
+import { useRssStore } from "@/lib/rss/rssStore"
+import { useAuthStore } from "@/store/auth-store"
+import { TrendingUp, Heart } from "lucide-react"
 import { SafeImage as Image } from "@/components/frontend/safe-image"
 import Link from "next/link"
-import { useTheme } from "@/components/theme-provider"
-import { PageShell } from "@/components/frontend/page-shell"
+import { useEffect, useState, useMemo, useRef } from "react"
+import { BackButton } from "@/components/frontend/back-button"
 
 export default function TrendingPage() {
   const { theme } = useTheme()
   const isDark = theme !== "light"
-  const [news, setNews] = useState<any[]>([])
+  const { items: rssItems, fetchNextPage, hasMore, fetchNews } = useRssStore()
   const [loading, setLoading] = useState(true)
+  const sentinelRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    fetch(`${process.env.NEXT_PUBLIC_API_URL}/news?limit=50&sort=views&${useAuthStore.getState().user?.uid ? 'firebaseUid=' + useAuthStore.getState().user?.uid : ''}`)
-      .then((res) => {
-        if (!res.ok) throw new Error("Fetch failed")
-        return res.json()
-      })
-      .then((data) => {
-        if (data.success && data.data) {
-          setNews(data.data)
-        }
-        setLoading(false)
-      })
-      .catch(() => setLoading(false))
+    fetchNews(false, "IN", "Trending").then(() => setLoading(false)).catch(() => setLoading(false))
   }, [])
 
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting && hasMore) {
+          fetchNextPage()
+        }
+      },
+      { threshold: 0.1 }
+    )
+    if (sentinelRef.current) observer.observe(sentinelRef.current)
+    return () => observer.disconnect()
+  }, [hasMore, fetchNextPage])
+
+  const trendingItems = useMemo(() => {
+    const fallbacks = [
+      "https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=600&h=400&fit=crop",
+      "https://images.unsplash.com/photo-1585829365295-ab7cd400c167?w=600&h=400&fit=crop",
+      "https://images.unsplash.com/photo-1557683316-973673baf926?w=600&h=400&fit=crop"
+    ]
+    
+    return rssItems
+      .filter(item => item.category === "Trending" || item.tags?.includes("Trending"))
+      .map((item, i) => ({
+        ...item,
+        image: (!item.image || item.image.trim() === "") ? fallbacks[i % fallbacks.length] : item.image
+      }))
+      .sort((a, b) => {
+        const aReal = a.image && !a.image.includes('unsplash.com') && !a.image.includes('pollinations.ai');
+        const bReal = b.image && !b.image.includes('unsplash.com') && !b.image.includes('pollinations.ai');
+        if (aReal && !bReal) return -1;
+        if (!aReal && bReal) return 1;
+        return new Date(b.published).getTime() - new Date(a.published).getTime();
+      })
+  }, [rssItems])
+
   return (
-    <PageShell className={`min-h-screen ${isDark ? "bg-black" : "bg-gray-50"}`}>
-      <main className="pt-24 pb-16 px-4 max-w-7xl mx-auto min-h-screen">
-        <div className="mb-8 flex items-center gap-4">
-          <Link href="/" className={`p-2 rounded-full border transition-colors ${isDark ? "border-white/20 text-white hover:bg-white/10" : "border-gray-200 text-gray-900 hover:bg-gray-100"}`}>
-            <ArrowLeft className="w-5 h-5" />
-          </Link>
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-red-500/15 rounded-lg">
-              <TrendingUp className="w-6 h-6 text-red-500" />
-            </div>
-            <div>
-              <h1 className={`text-3xl font-bold ${isDark ? "text-white" : "text-gray-900"}`}>
-                Trending Now
-              </h1>
-              <p className={`text-sm ${isDark ? "text-white/[0.85]" : "text-gray-500"}`}>
-                Most-read stories across the globe
-              </p>
+    <div className={`min-h-screen pt-20 pb-12 ${isDark ? "bg-[#0a0a0a]" : "bg-white"}`}>
+      <div className="max-w-7xl mx-auto px-4">
+        
+        {/* Header */}
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12 border-b border-zinc-200 dark:border-zinc-800 pb-8">
+          <div>
+            <BackButton className="mb-6" />
+            <div className="flex items-center gap-4">
+              <div className={`p-4 bg-zinc-100 dark:bg-zinc-900`}>
+                <TrendingUp className={`w-8 h-8 text-zinc-900 dark:text-zinc-100`} />
+              </div>
+              <div>
+                <h1 className={`text-4xl md:text-5xl font-serif tracking-tight ${isDark ? "text-white" : "text-zinc-900"}`}>
+                  Trending Now
+                </h1>
+                <p className={`mt-2 text-lg font-serif italic ${isDark ? "text-zinc-400" : "text-zinc-600"}`}>
+                  The most discussed and highly anticipated stories across the globe
+                </p>
+              </div>
             </div>
           </div>
         </div>
 
-        {loading ? (
-          <div className="flex justify-center items-center h-64">
-            <div className="w-10 h-10 border-4 border-red-500 border-t-transparent rounded-full animate-spin" />
+        {loading && trendingItems.length === 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {[1, 2, 3, 4, 5, 6].map(i => (
+              <div key={i} className="animate-pulse">
+                <div className={`w-full h-64 ${isDark ? "bg-zinc-800" : "bg-zinc-200"}`}></div>
+                <div className={`h-6 mt-4 w-3/4 ${isDark ? "bg-zinc-800" : "bg-zinc-200"}`}></div>
+                <div className={`h-4 mt-2 w-1/2 ${isDark ? "bg-zinc-800" : "bg-zinc-200"}`}></div>
+              </div>
+            ))}
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
-            {news.map((article, idx) => (
-              <motion.article
-                key={article._id || idx}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: idx * 0.05 }}
-                className={`group cursor-pointer rounded-xl overflow-hidden border transition-all duration-300 hover:-translate-y-1 ${
-                  isDark
-                    ? "bg-white/5 border-white/10 hover:border-red-500/30"
-                    : "bg-white border-gray-200 hover:border-red-300 shadow-sm"
-                }`}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-12">
+            {trendingItems.map((article, idx) => (
+              <Link 
+                key={article.id} 
+                href={`/article/${article.id}`}
+                className="group flex flex-col"
               >
-                <div className="relative overflow-hidden aspect-video">
-                  <Image
-                    src={article.image || "https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=400&h=300&fit=crop"}
-                    alt={article.title}
-                    fill
-                    className="object-cover group-hover:scale-105 transition-transform duration-500"
+                <div className="relative w-full h-64 overflow-hidden mb-5">
+                  <Image 
+                    src={article.image || ""} 
+                    alt={article.title} 
+                    fill 
+                    className="object-cover grayscale group-hover:grayscale-0 transition-all duration-700"
                   />
-                  {article.isBreaking && (
-                    <div className="absolute top-3 left-3">
-                      <span className="px-2.5 py-1 bg-red-500 text-white text-xs font-semibold rounded-md animate-pulse">
-                        Breaking
-                      </span>
-                    </div>
-                  )}
-                </div>
-
-                <div className="p-4">
-                  <h3 className={`font-bold text-sm leading-snug mb-2 line-clamp-2 group-hover:text-red-500 transition-colors ${
-                    isDark ? "text-white" : "text-gray-900"
-                  }`}>
-                    {article.title}
-                  </h3>
-                  <p className={`text-xs leading-relaxed mb-4 line-clamp-2 ${isDark ? "text-white/55" : "text-gray-500"}`}>
-                    {article.excerpt}
-                  </p>
-                  <div className={`flex items-center justify-between text-xs ${isDark ? "text-white/[0.85]" : "text-gray-400"}`}>
-                    <span className="flex items-center gap-1">
-                      <Clock className="w-3.5 h-3.5" />
-                      {new Date(article.publishedAt || Date.now()).toLocaleDateString()}
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <Eye className="w-3.5 h-3.5" />
-                      {article.views || Math.floor(Math.random() * 10000)}
+                  <div className="absolute top-3 left-3 flex gap-2">
+                    <span className="px-2.5 py-1 bg-red-600 text-white text-xs font-sans font-bold uppercase tracking-widest">
+                      #{idx + 1}
                     </span>
                   </div>
                 </div>
-              </motion.article>
+                
+                <div className="flex flex-col flex-1">
+                  <div className="mb-3">
+                    <span className="text-red-600 dark:text-red-500 text-xs font-sans font-bold uppercase tracking-widest">
+                      {article.tags?.[0] || article.category || "Trending"}
+                    </span>
+                  </div>
+
+                  <h2 className={`text-2xl font-serif leading-tight mb-3 transition-colors duration-300 ${isDark ? "text-zinc-100 group-hover:text-white" : "text-zinc-900 group-hover:text-black"}`}>
+                    {article.title}
+                  </h2>
+                  
+                  <p className={`font-sans font-light line-clamp-3 mb-6 ${isDark ? "text-zinc-400" : "text-zinc-600"}`}>
+                    {article.summary}
+                  </p>
+
+                  <div className={`mt-auto pt-4 border-t ${isDark ? "border-zinc-800 text-zinc-500" : "border-zinc-200 text-zinc-500"} flex items-center justify-between text-xs font-sans uppercase tracking-widest`}>
+                    <span>{new Date(article.published).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}</span>
+                    <div className="flex items-center gap-4">
+                       <div className="flex items-center gap-1.5 hover:text-red-500 transition-colors">
+                         <Heart className="w-4 h-4" /> 
+                         <span>{article.upvotes || 0}</span>
+                       </div>
+                    </div>
+                  </div>
+                </div>
+              </Link>
             ))}
           </div>
         )}
-      </main>
-    </PageShell>
+        
+        {!loading && trendingItems.length === 0 && (
+          <div className="text-center py-20">
+            <TrendingUp className="w-16 h-16 mx-auto text-zinc-300 dark:text-zinc-700 mb-4" />
+            <h3 className="text-xl font-serif text-zinc-900 dark:text-zinc-100">No stories found</h3>
+            <p className="text-zinc-500 mt-2 font-sans">Check back later for more trending updates.</p>
+          </div>
+        )}
+      
+        {/* Sentinel div for infinite scroll */}
+        <div ref={sentinelRef} className="py-10 text-center">
+          {hasMore ? (
+            <div className="inline-block w-8 h-8 border-4 border-zinc-200 border-t-red-500 rounded-full animate-spin"></div>
+          ) : (
+            trendingItems.length > 0 && <p className="text-zinc-500 font-sans">You're all caught up!</p>
+          )}
+        </div>
+      </div>
+    </div>
   )
 }

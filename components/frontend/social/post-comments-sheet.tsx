@@ -8,7 +8,7 @@ import { formatDistanceToNow } from "date-fns"
 import { toast } from "sonner"
 import dynamic from "next/dynamic"
 
-const EmojiPicker = dynamic(() => import("emoji-picker-react"), { ssr: false })
+const EmojiPicker = dynamic(() => import("emoji-picker-react"))
 
 interface PostCommentsSheetProps {
   isOpen: boolean

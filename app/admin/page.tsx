@@ -468,7 +468,7 @@ export default function AdminDashboard() {
                         <option value="Politics">Politics</option>
                         <option value="Science">Science</option>
                         <option value="World">World</option>
-                        <option value="Memes">Memes</option>
+                        <option value="Art">Art</option>
                         <option value="Breaking">Breaking</option>
                       </select>
                     </div>

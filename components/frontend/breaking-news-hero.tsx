@@ -101,6 +101,19 @@ function SocialUpdateCard({ article }: { article: Article }) {
   )
 }
 
+const fallbacks = [
+  "https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=1200&q=80",
+  "https://images.unsplash.com/photo-1495020689067-958852a7765e?w=1200&q=80",
+  "https://images.unsplash.com/photo-1585829365295-ab7cd400c167?w=1200&q=80",
+  "https://images.unsplash.com/photo-1557992260-ec58e38d363c?w=1200&q=80",
+  "https://images.unsplash.com/photo-1526304640581-d334cdbbf45e?w=1200&q=80",
+  "https://images.unsplash.com/photo-1529236183275-4fdcf2bc741e?w=1200&q=80",
+  "https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=1200&q=80",
+  "https://images.unsplash.com/photo-1432821596592-e2c18b78144f?w=1200&q=80",
+  "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=1200&q=80",
+  "https://images.unsplash.com/photo-1518609878373-06d740f60d8b?w=1200&q=80"
+];
+const getRandomFallback = () => fallbacks[Math.floor(Math.random() * fallbacks.length)];
 function ArticleHeroCard({ article }: { article: Article }) {
   const sourceLabel = "Fact Flow Live"
 
@@ -110,11 +123,12 @@ function ArticleHeroCard({ article }: { article: Article }) {
       
       <div className="absolute inset-0 overflow-hidden">
         <img
-          src={article.image}
+          src={article.image || getRandomFallback()}
           alt={article.title}
           className="w-full h-full object-cover transition-transform duration-[15s] ease-linear group-hover:scale-110"
           onError={(e) => {
-            ;(e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=1200&q=80"
+            e.currentTarget.src = getRandomFallback()
+            e.currentTarget.onerror = null
           }}
         />
         <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0IiBoZWlnaHQ9IjQiPgo8cmVjdCB3aWR0aD0iNCIgaGVpZ2h0PSI0IiBmaWxsPSJ3aGl0ZSIgZmlsbC1vcGFjaXR5PSIwLjA1Ii8+Cjwvc3ZnPg==')] opacity-30 mix-blend-overlay pointer-events-none" />
@@ -182,18 +196,19 @@ export function BreakingNewsHero() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        let r = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/news?breaking=true&limit=20&${useAuthStore.getState().user?.uid ? 'firebaseUid=' + useAuthStore.getState().user?.uid : ''}`)
+        let r = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/news?breaking=true&limit=20&region=global&${useAuthStore.getState().user?.uid ? 'firebaseUid=' + useAuthStore.getState().user?.uid : ''}`)
         let data = r.ok ? await r.json() : { success: false, data: [] }
         
         let allArticles = data.success && data.data ? data.data : []
 
-        if (allArticles.length < 5) {
-          const fbR = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/news?limit=10&${useAuthStore.getState().user?.uid ? 'firebaseUid=' + useAuthStore.getState().user?.uid : ''}`)
+        if (allArticles.length < 15) {
+          // Fallback to top standard global news if we don't have enough breaking
+          const fbR = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/news?limit=20&region=global&${useAuthStore.getState().user?.uid ? 'firebaseUid=' + useAuthStore.getState().user?.uid : ''}`)
           const fbData = fbR.ok ? await fbR.json() : null
           if (fbData && fbData.success && fbData.data) {
              const existingIds = new Set(allArticles.map((a: any) => a._id))
              const more = fbData.data.filter((a: any) => !existingIds.has(a._id))
-             allArticles = [...allArticles, ...more].slice(0, 15)
+             allArticles = [...allArticles, ...more].slice(0, 20)
           }
         }
 
@@ -273,7 +288,15 @@ export function BreakingNewsHero() {
     )
   }
 
-  if (articles.length === 0) return null
+  if (articles.length === 0) {
+    return (
+      <div className="w-full h-[360px] sm:h-[550px] flex flex-col items-center justify-center bg-black border-b border-white/10">
+        <Globe className="w-16 h-16 text-white/20 mb-4" />
+        <h2 className="text-white/60 text-xl font-bold uppercase tracking-widest">Global Desk Standby</h2>
+        <p className="text-white/40 text-sm mt-2 max-w-md text-center">We are actively monitoring global sources for the top 15-20 biggest world news. Next update in a few minutes.</p>
+      </div>
+    )
+  }
 
   // Mix Articles with Social Updates
   const items: any[] = []

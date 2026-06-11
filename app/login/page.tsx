@@ -72,11 +72,19 @@ export default function LoginPage() {
           .then(async (result) => {
             window.localStorage.removeItem("emailForSignIn")
             // Create/Update profile in MongoDB
-            await fetch(`${API}/users/profile?firebaseUid=${result.user.uid}&email=${result.user.email}&name=${encodeURIComponent(result.user.displayName || "")}`)
+            const profileRes = await fetch(`${API}/users/profile?firebaseUid=${result.user.uid}&email=${result.user.email}&name=${encodeURIComponent(result.user.displayName || "")}`)
+            const profileData = await profileRes.json()
+            const mongoUser = profileData.success ? profileData.user : {}
             
             setUser({
-              uid: result.user.uid, email: result.user.email,
-              displayName: result.user.displayName, photoURL: result.user.photoURL
+              uid: result.user.uid,
+              email: result.user.email,
+              displayName: result.user.displayName || mongoUser.name || "",
+              photoURL: result.user.photoURL || mongoUser.avatar || "",
+              _id: mongoUser._id,
+              id: mongoUser._id,
+              username: mongoUser.username,
+              role: mongoUser.role
             })
             router.push("/")
           })
@@ -138,12 +146,19 @@ export default function LoginPage() {
     setIsLoading(true); setError("")
     try {
       const result = await signInWithPopup(auth, googleProvider)
-      await fetch(`${API}/users/profile?firebaseUid=${result.user.uid}&email=${result.user.email}&name=${encodeURIComponent(result.user.displayName || "")}`)
+      const profileRes = await fetch(`${API}/users/profile?firebaseUid=${result.user.uid}&email=${result.user.email}&name=${encodeURIComponent(result.user.displayName || "")}`)
+      const profileData = await profileRes.json()
+      const mongoUser = profileData.success ? profileData.user : {}
+
       setUser({
         uid: result.user.uid,
         email: result.user.email,
-        displayName: result.user.displayName,
-        photoURL: result.user.photoURL,
+        displayName: result.user.displayName || mongoUser.name || "",
+        photoURL: result.user.photoURL || mongoUser.avatar || "",
+        _id: mongoUser._id,
+        id: mongoUser._id,
+        username: mongoUser.username,
+        role: mongoUser.role
       })
       router.push("/")
     } catch (err: any) {
@@ -203,8 +218,14 @@ export default function LoginPage() {
         }
 
         setUser({
-          uid: result.user.uid, email: result.user.email,
-          displayName: result.user.displayName || name, photoURL: result.user.photoURL
+          uid: result.user.uid,
+          email: result.user.email,
+          displayName: result.user.displayName || name || profileData.user.name || "",
+          photoURL: result.user.photoURL || profileData.user.avatar || "",
+          _id: profileData.user._id,
+          id: profileData.user._id,
+          username: profileData.user.username,
+          role: profileData.user.role
         })
         router.push("/")
       } else {
@@ -227,9 +248,21 @@ export default function LoginPage() {
 
         // Login with resolved Email
         const result = await signInWithEmailAndPassword(auth, loginEmail, password)
+        
+        // Fetch MongoDB Profile during standard login
+        const profileRes = await fetch(`${API}/users/profile?firebaseUid=${result.user.uid}`)
+        const profileData = await profileRes.json()
+        const mongoUser = profileData.success ? profileData.user : {}
+
         setUser({
-          uid: result.user.uid, email: result.user.email,
-          displayName: result.user.displayName, photoURL: result.user.photoURL
+          uid: result.user.uid,
+          email: result.user.email,
+          displayName: result.user.displayName || mongoUser.name || "",
+          photoURL: result.user.photoURL || mongoUser.avatar || "",
+          _id: mongoUser._id,
+          id: mongoUser._id,
+          username: mongoUser.username,
+          role: mongoUser.role
         })
         router.push("/")
       }
@@ -299,7 +332,7 @@ export default function LoginPage() {
             </h1>
             
             <p className={`text-lg sm:text-xl max-w-xl mx-auto lg:mx-0 mb-8 ${isDark ? "text-white/[0.85]" : "text-gray-600"}`}>
-              Your AI-powered social news operating system. Join the global network of minds, memes, and breaking stories.
+              Your AI-powered social news operating system. Join the global network of minds, ideas, and breaking stories.
             </p>
           </motion.div>
         </div>

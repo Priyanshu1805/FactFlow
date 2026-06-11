@@ -9,7 +9,8 @@ import {
   CryptoWidget, 
   ClockWidget, 
   SunriseWidget,
-  DemoDetailWidget 
+  DemoDetailWidget,
+  LiveCricketWidget
 } from "./widget-cards"
 
 // Define all possible widgets available in the system
@@ -17,22 +18,22 @@ const AVAILABLE_WIDGETS = [
   { id: "weather", name: "Weather & AQI", icon: Cloud, Component: WeatherWidget, props: {} },
   { id: "crypto", name: "Bitcoin (BTC)", icon: Zap, Component: CryptoWidget, props: {} },
   { id: "clock", name: "World Clock", icon: Clock, Component: ClockWidget, props: {} },
-  { id: "sunrise", name: "Solar Tracking", icon: Sunrise, Component: SunriseWidget, props: {} },
+  { id: "cricket", name: "Cricket Live Score", icon: Activity, Component: LiveCricketWidget, props: { title: "Cricket Live", icon: Activity, color: "blue" } },
   { id: "sensex", name: "BSE Sensex", icon: Activity, Component: DemoDetailWidget, props: { title: "BSE Sensex", icon: Activity, color: "green", apiType: "market", apiTarget: "^BSESN", tvSymbol: "BSE:SENSEX", baseValue: 74000, variance: 150, isUpInitial: true } },
   { id: "nifty", name: "Nifty 50", icon: Activity, Component: DemoDetailWidget, props: { title: "Nifty 50", icon: Activity, color: "green", apiType: "market", apiTarget: "^NSEI", tvSymbol: "NSE:NIFTY", baseValue: 22500, variance: 40, isUpInitial: false } },
-  { id: "gold", name: "Gold (10g)", icon: Flame, Component: DemoDetailWidget, props: { title: "Gold (10g)", icon: Flame, color: "yellow", apiType: "metal", apiTarget: "gold", tvSymbol: "TVC:GOLD", baseValue: 72000, prefix: "₹", variance: 150, isUpInitial: true } },
-  { id: "silver", name: "Silver (1kg)", icon: Flame, Component: DemoDetailWidget, props: { title: "Silver (1kg)", icon: Flame, color: "gray", apiType: "metal", apiTarget: "silver", tvSymbol: "TVC:SILVER", baseValue: 85000, prefix: "₹", variance: 200, isUpInitial: true } },
+  { id: "gold", name: "Gold (10g)", icon: Flame, Component: DemoDetailWidget, props: { title: "Gold (10g)", icon: Flame, color: "yellow", apiType: "metal_india", apiTarget: "gold", tvSymbol: "", baseValue: 72000, prefix: "₹", variance: 150, isUpInitial: true } },
+  { id: "silver", name: "Silver (1kg)", icon: Flame, Component: DemoDetailWidget, props: { title: "Silver (1kg)", icon: Flame, color: "gray", apiType: "metal_india", apiTarget: "silver", tvSymbol: "", baseValue: 85000, prefix: "₹", variance: 200, isUpInitial: true } },
   { id: "usdinr", name: "USD/INR", icon: CircleDollarSign, Component: DemoDetailWidget, props: { title: "USD/INR", icon: CircleDollarSign, color: "blue", apiType: "currency", apiTarget: "INR=X", tvSymbol: "FX_IDC:USDINR", baseValue: 83.50, prefix: "₹", variance: 0.05, isUpInitial: true } },
-  { id: "fuel", name: "Petrol Price", icon: Droplets, Component: DemoDetailWidget, props: { title: "Petrol", icon: Droplets, color: "orange", apiType: "fuel", apiTarget: "auto", baseValue: 104.21, prefix: "₹", suffix: "/L", variance: 0.05, isUpInitial: true } },
 ]
 
-const DEFAULT_WIDGETS = ["weather", "crypto", "sensex", "gold"]
+const DEFAULT_WIDGETS = ["weather", "cricket", "sensex", "gold"]
 
 export function LiveWidgetsDashboard() {
   const containerRef = useRef<HTMLUListElement>(null)
   
   // State for which widgets are active
   const [activeIds, setActiveIds] = useState<string[]>(DEFAULT_WIDGETS)
+  const [draftIds, setDraftIds] = useState<string[]>(DEFAULT_WIDGETS)
   const [isCustomizeOpen, setIsCustomizeOpen] = useState(false)
   const [isLoaded, setIsLoaded] = useState(false) // To prevent hydration mismatch on localStorage
   const [warning, setWarning] = useState<string | null>(null)
@@ -42,8 +43,28 @@ export function LiveWidgetsDashboard() {
     const saved = localStorage.getItem("factflow_widgets")
     if (saved) {
       try {
-        setActiveIds(JSON.parse(saved))
-      } catch (e) {}
+        let parsed = JSON.parse(saved) as string[]
+        // Filter out any IDs that are no longer in AVAILABLE_WIDGETS
+        let validIds = parsed.filter(id => AVAILABLE_WIDGETS.some(w => w.id === id))
+        
+        // If we have less than 4, fill them up from DEFAULT_WIDGETS
+        if (validIds.length < 4) {
+          for (const defaultId of DEFAULT_WIDGETS) {
+            if (validIds.length >= 4) break
+            if (!validIds.includes(defaultId) && AVAILABLE_WIDGETS.some(w => w.id === defaultId)) {
+              validIds.push(defaultId)
+            }
+          }
+        }
+        setActiveIds(validIds)
+        setDraftIds(validIds)
+      } catch (e) {
+        setActiveIds(DEFAULT_WIDGETS)
+        setDraftIds(DEFAULT_WIDGETS)
+      }
+    } else {
+      setActiveIds(DEFAULT_WIDGETS)
+      setDraftIds(DEFAULT_WIDGETS)
     }
     setIsLoaded(true)
   }, [])
@@ -55,10 +76,29 @@ export function LiveWidgetsDashboard() {
     }
   }, [activeIds, isLoaded])
 
+  const openCustomize = () => {
+    setDraftIds(activeIds)
+    setIsCustomizeOpen(true)
+  }
+
+  const saveCustomize = () => {
+    if (draftIds.length < 1) {
+      setWarning("Please select at least 1 widget.")
+      setTimeout(() => setWarning(null), 3000)
+      return
+    }
+    setActiveIds(draftIds)
+    setIsCustomizeOpen(false)
+  }
+
   const toggleWidget = (id: string) => {
-    setActiveIds(prev => {
+    setDraftIds(prev => {
       if (prev.includes(id)) {
-        if (prev.length <= 1) return prev // Prevent removing the last widget
+        if (prev.length <= 1) {
+          setWarning("You must have at least 1 widget active.")
+          setTimeout(() => setWarning(null), 3000)
+          return prev
+        }
         setWarning(null)
         return prev.filter(w => w !== id)
       }
@@ -93,7 +133,7 @@ export function LiveWidgetsDashboard() {
           
           {/* Gear Icon: Customize Your Space */}
           <button 
-            onClick={() => setIsCustomizeOpen(true)}
+            onClick={openCustomize}
             className="group flex items-center gap-2 text-sm font-semibold text-white/[0.85] bg-white/5 hover:bg-white/10 hover:text-white px-4 py-2 rounded-full backdrop-blur-md transition-all shadow-lg border border-white/5"
           >
             <Settings2 className="w-4 h-4 group-hover:rotate-90 transition-transform duration-300" />
@@ -191,7 +231,7 @@ export function LiveWidgetsDashboard() {
                 <div className="p-6 overflow-y-auto">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     {AVAILABLE_WIDGETS.map(widget => {
-                      const isActive = activeIds.includes(widget.id)
+                      const isActive = draftIds.includes(widget.id)
                       return (
                         <button
                           key={widget.id}
@@ -223,7 +263,7 @@ export function LiveWidgetsDashboard() {
                 
                 <div className="p-6 border-t border-white/5 bg-black/50">
                   <button 
-                    onClick={() => setIsCustomizeOpen(false)}
+                    onClick={saveCustomize}
                     className="w-full py-4 bg-gradient-to-r from-red-600 to-red-500 hover:from-red-500 hover:to-red-400 text-white font-bold rounded-xl transition-all shadow-[0_0_20px_rgba(239,68,68,0.3)] hover:scale-[1.02]"
                   >
                     Save & Apply Changes

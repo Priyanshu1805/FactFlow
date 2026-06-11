@@ -1,6 +1,7 @@
 import { create } from "zustand"
 import Parser from "rss-parser"
 import { useAuthStore } from "@/store/auth-store"
+import { NEWS_SOURCES } from "./newsSources"
 
 export interface RSSItem {
   id: string
@@ -15,6 +16,8 @@ export interface RSSItem {
   category: string
   published: Date
   isPremium?: boolean
+  tags?: string[]
+  upvotes?: number
 }
 
 interface RssState {
@@ -22,21 +25,22 @@ interface RssState {
   loading: boolean
   error: string | null
   lastFetched: number
-  fetchNews: (force?: boolean) => Promise<void>
+  currentPage: number
+  hasMore: boolean
+  activeRegionCode: string
+  activeCategory: string | null
+  fetchNews: (force?: boolean, regionCode?: string, category?: string | null) => Promise<void>
+  fetchNextPage: () => Promise<void>
+  prependLiveArticles: (newArticles: RSSItem[]) => void
 }
 
-// HYBRID CONFIG
-const RSS_FEEDS = [
-  { url: "https://www.thehindu.com/news/national/feeder/default.rss", source: "The Hindu", category: "Politics", lang: "english" },
-  { url: "https://timesofindia.indiatimes.com/rssfeeds/4719148.cms", source: "TOI", category: "Sports", lang: "english" },
-  { url: "https://timesofindia.indiatimes.com/rssfeeds/1081479906.cms", source: "Entertainment", category: "Entertainment", lang: "english" },
-  { url: "https://timesofindia.indiatimes.com/rssfeeds/66949542.cms", source: "Tech", category: "Technology", lang: "english" },
-  { url: "https://techcrunch.com/feed/", source: "TechCrunch", category: "Technology", lang: "english" },
-  { url: "https://www.reddit.com/r/memes/top/.rss?t=day", source: "r/memes", category: "Memes", lang: "english" },
-  { url: "https://www.reddit.com/r/dankmemes/top/.rss?t=day", source: "r/dankmemes", category: "Memes", lang: "english" },
-  { url: "https://www.reddit.com/r/ProgrammerHumor/top/.rss?t=day", source: "r/ProgrammerHumor", category: "Memes", lang: "english" },
-  { url: "https://knowyourmeme.com/news/feed", source: "KnowYourMeme", category: "Memes", lang: "english" },
-  { url: "https://thechive.com/feed/", source: "The Chive", category: "Memes", lang: "english" }
+// ART FALLBACKS
+const ART_FEEDS = [
+  { url: "https://www.theartnewspaper.com/rss.xml", source: "The Art Newspaper", category: "Art", lang: "english" },
+  { url: "https://hyperallergic.com/feed/", source: "Hyperallergic", category: "Art", lang: "english" },
+  { url: "https://www.artnews.com/feed/", source: "ARTnews", category: "Art", lang: "english" },
+  { url: "https://www.thisiscolossal.com/feed/", source: "Colossal", category: "Art", lang: "english" },
+  { url: "https://www.juxtapoz.com/news/?format=feed", source: "Juxtapoz", category: "Art", lang: "english" }
 ]
 
 export const useRssStore = create<RssState>((set, get) => ({
@@ -44,15 +48,37 @@ export const useRssStore = create<RssState>((set, get) => ({
   loading: false,
   error: null,
   lastFetched: 0,
+  currentPage: 1,
+  hasMore: true,
+  activeRegionCode: "IN",
+  activeCategory: null,
 
-  fetchNews: async (force = false) => {
+  fetchNews: async (force = false, regionCode = "IN", category = null) => {
     const now = Date.now()
-    if (!force && now - get().lastFetched < 60000) return
+    // Don't refetch initial page if recently fetched, unless forced or category changed
+    if (!force && now - get().lastFetched < 60000 && get().activeRegionCode === regionCode && get().activeCategory === category) return
 
-    set({ loading: true, error: null })
+    set({ loading: true, error: null, currentPage: 1, activeRegionCode: regionCode, activeCategory: category, items: [], hasMore: true })
 
     try {
-      // 1. Language Preference
+      await get().fetchNextPage()
+      set({ lastFetched: Date.now() })
+    } catch (err: any) {
+      set({ error: err.message, loading: false })
+    }
+  },
+
+  fetchNextPage: async () => {
+    if (get().loading && get().currentPage > 1) return // Prevent duplicate calls while loading next page
+    if (!get().hasMore) return
+
+    set({ loading: true })
+
+    try {
+      const page = get().currentPage;
+      const regionCode = get().activeRegionCode;
+      const category = get().activeCategory;
+      
       let savedLanguages = ["english"]
       let contentPrefs: any = null
       
@@ -70,34 +96,29 @@ export const useRssStore = create<RssState>((set, get) => ({
       const uid = useAuthStore.getState().user?.uid
       const uidParam = uid ? `&firebaseUid=${uid}` : ''
 
-      if (uid) {
-        try {
-          const prefRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api"}/users/settings/${uid}`)
-          if (prefRes.ok) {
-            const prefData = await prefRes.json()
-            if (prefData.success && prefData.settings?.content) {
-              contentPrefs = prefData.settings.content
-            }
-          }
-        } catch(e) {}
+      let allItems: RSSItem[] = []
+      
+      const code = regionCode.toLowerCase();
+      const regionKey = (code === "in" || code === "india") ? "india" 
+        : ["us", "uk", "gb", "ca", "au", "fr", "de", "jp", "br", "ae", "za"].includes(code) ? (code === "gb" ? "uk" : code)
+        : "global"
+
+      let regionSources = NEWS_SOURCES[regionKey] || NEWS_SOURCES.global
+      
+      let activeLang = primaryLang;
+      if (regionSources && !regionSources[activeLang]) {
+        activeLang = Object.keys(regionSources)[0] || "english";
       }
 
-      let allItems: RSSItem[] = []
+      const catParam = category ? `&category=${encodeURIComponent(category)}` : ""
 
-      // 2. Fetch from Unified Backend (Memes, AI News, User articles)
+      // 1. Fetch from Unified Backend (Art, AI News, User articles)
+      // Paginated with page and limit=20
       try {
-        const apiRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api"}/news?limit=300${uidParam}`)
+        const apiRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api"}/news?limit=20&page=${page}${catParam}&region=${regionCode}${uidParam}&language=${activeLang}`)
         if (apiRes.ok) {
           const apiData = await apiRes.json()
           if (apiData.success && apiData.data) {
-            // Ensure memes are fetched if they aren't in the top 300
-            const memeRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api"}/news?category=Memes&limit=50${uidParam}`).catch(() => null)
-            if (memeRes && memeRes.ok) {
-               const memeData = await memeRes.json()
-               if (memeData.success && memeData.data) {
-                 apiData.data = [...apiData.data, ...memeData.data]
-               }
-            }
             allItems.push(...apiData.data.map((item: any) => ({
               id: item._id,
               title: item.title,
@@ -105,112 +126,121 @@ export const useRssStore = create<RssState>((set, get) => ({
               source: item.source || "FactFlow AI",
               author: item.author || "FactFlow",
               summary: item.excerpt || item.content || "",
-              image: item.imageUrl || "",
-              country: "india",
+              image: item.image || item.imageUrl || "",
+              country: item.location || code.toUpperCase(),
               language: (item.language || "english").toLowerCase(),
               category: item.category || "General",
               published: new Date(item.publishedAt),
               isPremium: item.isPremium || false
             })))
+            
+            // Set hasMore false if fewer than 20 items are returned
+            if (apiData.data.length < 20) {
+              set({ hasMore: false })
+            }
           }
         }
       } catch (err) {
         console.warn("Backend fetch failed, relying entirely on RSS.")
       }
 
-      // 3. Fetch from External RSS Feeds (High Volume Fallback)
-      // We use proxy to bypass CORS
-      const parser = new Parser({
-        customFields: { item: [['media:content', 'mediaContent'], ['enclosure', 'enclosure']] }
-      })
+      const processItems = (rawItems: RSSItem[]) => {
+        const uniqueItems = new Map<string, RSSItem>()
+        for (const item of rawItems) {
+          if (!item.title) continue
+          if (!uniqueItems.has(item.title)) {
+            uniqueItems.set(item.title, item)
+          }
+        }
+        let filtered = Array.from(uniqueItems.values())
+        return filtered.sort((a, b) => b.published.getTime() - a.published.getTime())
+      }
+
+      const processedNewItems = processItems(allItems)
       
-      const fetchPromises = RSS_FEEDS.map(async (feed) => {
-        try {
-          const res = await fetch(`/api/rss?url=${encodeURIComponent(feed.url)}`)
-          if (!res.ok) return
-          const data = await res.json()
-          
-          const items = data.items.slice(0, 30).map((item: any) => {
-            let imageUrl = ""
-            if (item.enclosure?.url) imageUrl = item.enclosure.url
-            else if (item.mediaContent?.$?.url) imageUrl = item.mediaContent.$.url
-            else {
-              const match = item.content?.match(/<img[^>]+src="([^">]+)"/)
-              if (match) imageUrl = match[1]
-            }
-
-            return {
-              id: item.guid || item.link || Math.random().toString(),
-              title: item.title || "",
-              link: item.link || "",
-              source: feed.source,
-              author: feed.source,
-              summary: item.contentSnippet || item.content || "",
-              image: imageUrl,
-              country: "india",
-              language: feed.lang,
-              category: feed.category,
-              published: new Date(item.pubDate || new Date())
-            }
-          })
-          allItems.push(...items)
-        } catch (e) {
-          // Ignore individual feed failures
+      // Update store: Append new items to existing, do not replace
+      set(state => {
+        const existingIds = new Set(state.items.map(i => i.id))
+        const uniqueNew = processedNewItems.filter(a => !existingIds.has(a.id))
+        return { 
+          items: [...state.items, ...uniqueNew],
+          loading: false,
+          currentPage: state.currentPage + 1
         }
       })
 
-      await Promise.allSettled(fetchPromises)
-
-      // 4. Filter, Deduplicate, and Sort
-      const uniqueItems = new Map<string, RSSItem>()
-      for (const item of allItems) {
-        if (!item.title) continue
-        
-        // Apply Client-Side Content Filters for External RSS
-        if (contentPrefs) {
-          const { mutedKeywords = [], hiddenPublishers = [] } = contentPrefs
-          let isHidden = false
-          
-          if (hiddenPublishers.length > 0) {
-            const isHiddenPub = hiddenPublishers.some((p: string) => 
-              item.source?.toLowerCase().includes(p.toLowerCase()) || 
-              item.author?.toLowerCase().includes(p.toLowerCase())
-            )
-            if (isHiddenPub) isHidden = true
+      // We only fetch external feeds ONCE on initial load (page 1) to supplement data if needed.
+      // This is the fallback/supplemental RSS layer.
+      if (page === 1 && allItems.length < 10) {
+        const parser = new Parser({
+          customFields: { item: [['media:content', 'mediaContent'], ['enclosure', 'enclosure']] }
+        })
+        const dynamicFeeds: any[] = []
+        if (regionSources && regionSources[activeLang]) {
+          for (const s of regionSources[activeLang]) {
+            dynamicFeeds.push({ url: s.url, source: s.name, category: s.category, lang: activeLang })
           }
-          
-          if (!isHidden && mutedKeywords.length > 0) {
-            const hasMutedWord = mutedKeywords.some((kw: string) => 
-              item.title.toLowerCase().includes(kw.toLowerCase()) || 
-              item.summary?.toLowerCase().includes(kw.toLowerCase())
-            )
-            if (hasMutedWord) isHidden = true
+        }
+        const finalFeeds = [...dynamicFeeds, ...ART_FEEDS]
+
+        const fetchPromises = finalFeeds.map(async (feed) => {
+          try {
+            const res = await fetch(`/api/rss?url=${encodeURIComponent(feed.url)}`)
+            if (!res.ok) return
+            const data = await res.json()
+            
+            // Restored external fetch limit to 50
+            const items = data.items.slice(0, 50).map((item: any) => {
+              let imageUrl = ""
+              if (item.enclosure?.url) imageUrl = item.enclosure.url
+              else if (item.mediaContent?.$?.url) imageUrl = item.mediaContent.$.url
+              else {
+                const match = item.content?.match(/<img[^>]+src="([^">]+)"/)
+                if (match) imageUrl = match[1]
+              }
+
+              return {
+                id: item.guid || item.link || Math.random().toString(),
+                title: item.title || "",
+                link: item.link || "",
+                source: feed.source,
+                author: feed.source,
+                summary: item.contentSnippet || item.content || "",
+                image: imageUrl,
+                country: code.toUpperCase(),
+                language: feed.lang,
+                category: feed.category,
+                published: new Date(item.pubDate || new Date())
+              }
+            })
+            
+            // Merge dynamically as they arrive
+            set(state => {
+              const currentIds = new Set(state.items.map(i => i.id))
+              const newUnique = items.filter((i: any) => !currentIds.has(i.id))
+              return { items: [...state.items, ...newUnique] }
+            })
+          } catch (e) {
           }
-          
-          if (isHidden) continue
-        }
-
-        // simple deduplication by title
-        if (!uniqueItems.has(item.title)) {
-          uniqueItems.set(item.title, item)
-        }
-      }
-      allItems = Array.from(uniqueItems.values())
-
-      // Lang priority sorting
-      if (primaryLang && primaryLang !== "english") {
-        const localItems = allItems.filter(item => item.language === primaryLang)
-        if (localItems.length > 0) {
-          allItems = [...localItems, ...allItems.filter(item => item.language !== primaryLang)]
-        }
+        })
+        Promise.allSettled(fetchPromises)
       }
 
-      allItems = allItems.filter(item => item.language.toLowerCase() === "english")
-      allItems.sort((a, b) => b.published.getTime() - a.published.getTime())
-
-      set({ items: allItems, loading: false, lastFetched: now })
     } catch (err: any) {
       set({ error: err.message, loading: false })
     }
   },
+
+  prependLiveArticles: (newArticles) => {
+    set((state) => {
+      const existingIds = new Set(state.items.map(i => i.id))
+      const uniqueNew = newArticles.filter(a => !existingIds.has(a.id))
+      
+      if (uniqueNew.length === 0) return state;
+
+      // Restored theoretical max items store to 1000
+      const combined = [...uniqueNew, ...state.items].slice(0, 1000)
+      return { items: combined }
+    })
+  }
 }))

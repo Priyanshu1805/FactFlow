@@ -12,6 +12,7 @@ const nextConfig = {
     "*.lhr.life"
   ],
   images: {
+    unoptimized: true,
     remotePatterns: [
       { protocol: "https", hostname: "**" },
       { protocol: "http", hostname: "**" },

@@ -8,8 +8,10 @@ const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api"
 
 export function TwoFactorGuard({ children }: { children: React.ReactNode }) {
   const { user, is2faVerified, set2faVerified, logout } = useAuthStore()
-  const [checking, setChecking] = useState(true)
+  const [checking, setChecking] = useState(false)
   const [needs2FA, setNeeds2FA] = useState(false)
+  
+  console.log("[TwoFactorGuard] checking:", checking, "needs2FA:", needs2FA)
   
   const [token, setToken] = useState("")
   const [verifying, setVerifying] = useState(false)

@@ -1,25 +1,30 @@
 "use client"
 
-import dynamic from "next/dynamic"
+
 import { useTheme } from "@/components/theme-provider"
 import Link from "next/link"
 import { Suspense, useEffect, useState } from "react"
 import { useRssStore } from "@/lib/rss/rssStore"
+import { useRegion } from "@/components/providers/region-provider"
+import { useFeedStore } from "@/lib/store/feed-store"
 
-const Navbar = dynamic(() => import("@/components/frontend/navbar").then(m => ({ default: m.Navbar })), { ssr: false })
-const HeroContent = dynamic(() => import("@/components/frontend/hero-content").then(m => ({ default: m.HeroContent })), { ssr: false })
-const BackgroundScene = dynamic(() => import("@/components/ui/cybercore-section-hero"), { ssr: false })
-const Footer = dynamic(() => import("@/components/frontend/footer").then(m => ({ default: m.Footer })), { ssr: false })
-const BreakingNewsHero = dynamic(() => import("@/components/frontend/breaking-news-hero").then(m => ({ default: m.BreakingNewsHero })), { ssr: false })
-const NewsTicker = dynamic(() => import("@/components/frontend/news-ticker").then(m => ({ default: m.NewsTicker })), { ssr: false })
-const NewspaperSection = dynamic(() => import("@/components/frontend/newspaper-section").then(m => ({ default: m.NewspaperSection })), { ssr: false })
-const PoliticsSection = dynamic(() => import("@/components/frontend/politics-section").then(m => ({ default: m.PoliticsSection })), { ssr: false })
-const TrendingSection = dynamic(() => import("@/components/frontend/trending-section").then(m => ({ default: m.TrendingSection })), { ssr: false })
-const LifestyleSection = dynamic(() => import("@/components/frontend/lifestyle-section").then(m => ({ default: m.LifestyleSection })), { ssr: false })
-const SportsSection = dynamic(() => import("@/components/frontend/sports-section").then(m => ({ default: m.SportsSection })), { ssr: false })
-const TechSection = dynamic(() => import("@/components/frontend/tech-section").then(m => ({ default: m.TechSection })), { ssr: false })
-const MemesSection = dynamic(() => import("@/components/frontend/memes-section").then(m => ({ default: m.MemesSection })), { ssr: false })
-const ReelsCarouselSection = dynamic(() => import("@/components/frontend/reels-carousel-section").then(m => ({ default: m.ReelsCarouselSection })), { ssr: false })
+import { Navbar } from "@/components/frontend/navbar"
+import { HeroContent } from "@/components/frontend/hero-content"
+import BackgroundScene from "@/components/ui/cybercore-section-hero"
+import { Footer } from "@/components/frontend/footer"
+import { BreakingNewsHero } from "@/components/frontend/breaking-news-hero"
+import { NewsTicker } from "@/components/frontend/news-ticker"
+
+import dynamic from "next/dynamic"
+
+const NewspaperSection = dynamic(() => import("@/components/frontend/newspaper-section").then(m => m.NewspaperSection))
+const PoliticsSection = dynamic(() => import("@/components/frontend/politics-section").then(m => m.PoliticsSection))
+const TrendingSection = dynamic(() => import("@/components/frontend/trending-section").then(m => m.TrendingSection))
+const SportsSection = dynamic(() => import("@/components/frontend/sports-section").then(m => m.SportsSection))
+const LifestyleSection = dynamic(() => import("@/components/frontend/lifestyle-section").then(m => m.LifestyleSection))
+const TechSection = dynamic(() => import("@/components/frontend/tech-section").then(m => m.TechSection))
+const ArtSection = dynamic(() => import("@/components/frontend/art-section").then(m => m.ArtSection))
+const InternationalTopNews = dynamic(() => import("@/components/frontend/international-top-news").then(m => m.InternationalTopNews))
 
 function SectionLoader() {
   return <div className="w-full h-64 flex items-center justify-center"><div className="w-8 h-8 border-2 border-red-500 border-t-transparent rounded-full animate-spin" /></div>
@@ -31,22 +36,15 @@ function NavbarLoader() {
 
 export default function HomePage() {
   const { theme } = useTheme()
-  const [categories, setCategories] = useState<string[]>([])
+  const { region } = useRegion()
+  const { followedTopics } = useFeedStore()
 
   useEffect(() => {
-    // Fetch RSS feeds on mount so the content updates
-    useRssStore.getState().fetchNews(true) // force=true ensures fresh fetch on page load
-    
-    // Check saved categories
-    const savedCats = localStorage.getItem("newsCategories")
-    if (savedCats) {
-      try {
-        setCategories(JSON.parse(savedCats))
-      } catch (e) {}
-    }
-  }, []) // Empty dependency array
+    // Fetch RSS feeds on mount or region change
+    useRssStore.getState().fetchNews(true, region.code) 
+  }, [region.code])
 
-  const hasCat = (catId: string) => categories.length === 0 || categories.includes(catId)
+  const hasCat = (catId: string) => followedTopics.length === 0 || followedTopics.includes(catId)
 
   const bg =
     theme === "light"
@@ -84,47 +82,50 @@ export default function HomePage() {
         </Suspense>
       </div>
 
-      {hasCat("World News") && (
-        <Suspense fallback={<SectionLoader />}>
-          <NewspaperSection />
-        </Suspense>
-      )}
+      {/* International Top News */}
+      <Suspense fallback={<SectionLoader />}>
+        <InternationalTopNews />
+      </Suspense>
 
-      {hasCat("Politics") && (
+      {/* ── SECTION ORDER: Newspaper → Politics → Trending → Sports → Lifestyle → Tech → Art ── */}
+
+      <Suspense fallback={<SectionLoader />}>
+        <NewspaperSection />
+      </Suspense>
+
+      {hasCat("politics") && (
         <Suspense fallback={<SectionLoader />}>
           <PoliticsSection />
         </Suspense>
       )}
 
-      {(hasCat("World News") || hasCat("Crypto & Finance")) && (
+      {hasCat("trending") && (
         <Suspense fallback={<SectionLoader />}>
           <TrendingSection />
         </Suspense>
       )}
 
-
-
-      {(hasCat("Entertainment") || hasCat("Celebrities")) && (
+      {hasCat("lifestyle") && (
         <Suspense fallback={<SectionLoader />}>
           <LifestyleSection />
         </Suspense>
       )}
 
-      {hasCat("Sports") && (
+      {hasCat("sports") && (
         <Suspense fallback={<SectionLoader />}>
           <SportsSection />
         </Suspense>
       )}
 
-      {(hasCat("Technology") || hasCat("Science")) && (
+      {hasCat("tech") && (
         <Suspense fallback={<SectionLoader />}>
           <TechSection />
         </Suspense>
       )}
 
-      {hasCat("Memes & Viral") && (
+      {hasCat("art") && (
         <Suspense fallback={<SectionLoader />}>
-          <MemesSection />
+          <ArtSection />
         </Suspense>
       )}
 

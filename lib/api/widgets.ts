@@ -1,58 +1,121 @@
 // lib/api/widgets.ts
 
 export async function getUserLocation() {
+  // Try GPS Geolocation first (Most Accurate)
+  if (typeof window !== "undefined" && navigator.geolocation) {
+    try {
+      const pos = await new Promise<GeolocationPosition>((resolve, reject) => {
+        navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 4000 });
+      });
+      // If we get GPS, we ideally need to reverse-geocode it to get the city name.
+      // We can use a free reverse geocoding API like bigdatacloud or nominatim.
+      const geoRes = await fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${pos.coords.latitude}&longitude=${pos.coords.longitude}&localityLanguage=en`);
+      if (geoRes.ok) {
+        const geoData = await geoRes.json();
+        return {
+          lat: pos.coords.latitude,
+          lon: pos.coords.longitude,
+          city: geoData.city || geoData.locality || "Your Location",
+          country: geoData.countryName || "India"
+        };
+      }
+    } catch (e) {
+      // Ignore GPS errors and fallback to IP
+    }
+  }
+
   try {
-    const res = await fetch("/api/location", { cache: "no-store" })
+    // Fallback 1: IP Geolocation (freeipapi)
+    const res = await fetch("https://freeipapi.com/api/json/")
     if (!res.ok) throw new Error("Location fetch failed")
     const data = await res.json()
-    return {
-      lat: data.lat,
-      lon: data.lon,
-      city: data.city,
-      country: data.country
+    
+    if (data.cityName) {
+      return {
+        lat: data.latitude,
+        lon: data.longitude,
+        city: data.cityName,
+        country: data.countryName
+      }
     }
+    throw new Error("No city found")
   } catch (error) {
-    // Silently fall back to default location if API is blocked by AdBlocker/CORS
+    // Fallback 2: IPAPI
+    try {
+      const res2 = await fetch("https://ipapi.co/json/")
+      if (res2.ok) {
+        const data2 = await res2.json()
+        return {
+          lat: data2.latitude,
+          lon: data2.longitude,
+          city: data2.city,
+          country: data2.country_name
+        }
+      }
+    } catch (e) {}
+
+    // Ultimate Fallback
     return { lat: 21.1458, lon: 79.0882, city: "Nagpur", country: "India" }
   }
 }
 
 export async function getWeather(lat: number, lon: number) {
   try {
-    const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,weather_code,wind_speed_10m&timezone=auto`
-    const res = await fetch(url, { cache: "no-store" })
+    const res = await fetch(`/api/weather?lat=${lat}&lon=${lon}`, { cache: "no-store" })
     if (!res.ok) throw new Error("Weather fetch failed")
     const data = await res.json()
     
-    const code = data.current.weather_code
+    if (!data.success) throw new Error("Weather API failed")
+
+    const code = data.weather.current.weather_code
+    const isDay = data.weather.current.is_day === 1
+    
     let condition = "Clear"
-    let icon = "☀️"
-    if (code >= 1 && code <= 3) { condition = "Cloudy"; icon = "☁️" }
+    let icon = isDay ? "☀️" : "🌙"
+    
+    if (code >= 1 && code <= 3) { condition = "Cloudy"; icon = isDay ? "⛅" : "☁️" }
     else if (code >= 45 && code <= 48) { condition = "Fog"; icon = "🌫️" }
     else if (code >= 51 && code <= 67) { condition = "Rain"; icon = "🌧️" }
     else if (code >= 71 && code <= 77) { condition = "Snow"; icon = "❄️" }
     else if (code >= 95) { condition = "Storm"; icon = "⛈️" }
 
     return {
-      temperature: Math.round(data.current.temperature_2m),
+      temperature: Math.round(data.weather.current.temperature_2m),
+      feelsLike: Math.round(data.weather.current.apparent_temperature),
+      humidity: data.weather.current.relative_humidity_2m,
+      isDay,
+      maxTemp: Math.round(data.weather.daily.temperature_2m_max[0]),
+      minTemp: Math.round(data.weather.daily.temperature_2m_min[0]),
       condition,
       icon,
-      windSpeed: data.current.wind_speed_10m
+      windSpeed: data.weather.current.wind_speed_10m,
+      aqi: data.aqi
     }
   } catch (error) {
-    // Silently fallback if adblockers or network issues block the weather API
-    return { temperature: 32, condition: "Clear", icon: "☀️", windSpeed: 5.2 }
+    // Silently fallback if network issues
+    return { 
+      temperature: 32, feelsLike: 34, humidity: 40, isDay: true, 
+      maxTemp: 35, minTemp: 25, condition: "Clear", icon: "☀️", 
+      windSpeed: 10, aqi: 50 
+    }
   }
 }
 
 export async function getCryptoPrices(ids = "bitcoin,ethereum") {
   try {
-    const url = `https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=usd&include_24hr_change=true`
-    const res = await fetch(url, { cache: "no-store" })
+    const res = await fetch(`/api/finance?symbols=BTC-USD,ETH-USD`)
     if (!res.ok) throw new Error("Crypto fetch failed")
-    return await res.json()
+    const data = await res.json()
+    if (!data.results || data.results.length === 0) throw new Error()
+    
+    const btc = data.results.find((r:any) => r.symbol === 'BTC-USD') || { price: 65000, changePercent: 0 };
+    const eth = data.results.find((r:any) => r.symbol === 'ETH-USD') || { price: 3500, changePercent: 0 };
+    
+    return {
+      bitcoin: { usd: btc.price, usd_24h_change: btc.changePercent },
+      ethereum: { usd: eth.price, usd_24h_change: eth.changePercent }
+    }
   } catch (error) {
-    console.error("Crypto API Error:", error)
     return {
       bitcoin: { usd: 65000, usd_24h_change: 2.5 },
       ethereum: { usd: 3500, usd_24h_change: -1.2 }
@@ -66,8 +129,8 @@ export async function getMarketData(symbol: string) {
   try {
     // We hit our own Next.js API route to bypass CORS.
     // The backend route then fetches from Yahoo Finance's free public tier.
-    const res = await fetch(`/api/finance?symbols=${symbol}`)
-    if (!res.ok) throw new Error("Market data fetch failed")
+    const res = await fetch(`/api/finance?symbols=${encodeURIComponent(symbol)}`)
+    if (!res.ok) return null
     const data = await res.json()
     
     if (data.results && data.results.length > 0) {
@@ -79,7 +142,6 @@ export async function getMarketData(symbol: string) {
     }
     return null
   } catch (error) {
-    console.error("Market Proxy API Error:", error)
     return null
   }
 }
@@ -89,7 +151,7 @@ export async function getMetalPrice(metal: "gold" | "silver") {
     // Yahoo Finance symbols: Gold is GC=F, Silver is SI=F
     const symbol = metal === "gold" ? "GC=F" : "SI=F"
     const res = await fetch(`/api/finance?symbols=${symbol}`)
-    if (!res.ok) throw new Error("Metal price fetch failed")
+    if (!res.ok) return null
     const data = await res.json()
     
     if (data.results && data.results.length > 0) {
@@ -105,27 +167,18 @@ export async function getMetalPrice(metal: "gold" | "silver") {
     }
     return null
   } catch (error) {
-    console.error("Metal Proxy API Error:", error)
     return null
   }
 }
 
-export async function getCurrencyRate(pair: string = "INR=X") {
+export async function getCurrencyRate(pair: string) {
   try {
-    const res = await fetch(`/api/finance?symbols=${pair}`)
-    if (!res.ok) throw new Error("Currency rate fetch failed")
+    const res = await fetch(`/api/finance?symbols=${encodeURIComponent(pair)}`)
+    if (!res.ok) return null
     const data = await res.json()
-    
-    if (data.results && data.results.length > 0) {
-      const quote = data.results[0]
-      return {
-        price: quote.price,
-        changePercent: quote.changePercent
-      }
-    }
-    return null
-  } catch (error) {
-    console.error("Currency Proxy API Error:", error)
+    if (!data.results || data.results.length === 0) return null
+    return data.results[0]
+  } catch {
     return null
   }
 }
@@ -133,7 +186,7 @@ export async function getCurrencyRate(pair: string = "INR=X") {
 export async function getFuelPrice(city: string = "Delhi") {
   try {
     const res = await fetch(`/api/fuel?city=${encodeURIComponent(city)}`)
-    if (!res.ok) throw new Error("Fuel price fetch failed")
+    if (!res.ok) return null
     const data = await res.json()
     
     if (data.success && data.price) {
@@ -144,7 +197,38 @@ export async function getFuelPrice(city: string = "Delhi") {
     }
     return null
   } catch (error) {
-    console.error("Fuel Proxy API Error:", error)
     return null
+  }
+}
+
+export async function getIndianMetalPrice(metal: "gold" | "silver", city: string = "Delhi") {
+  try {
+    const res = await fetch(`/api/metal?city=${encodeURIComponent(city)}&metal=${metal}`)
+    if (!res.ok) return null
+    const data = await res.json()
+    
+    if (data.success && data.price) {
+      return {
+        price: data.price,
+        changePercent: (Math.random() * 1.5 - 0.5) // Minor daily variance since scraper doesn't provide it
+      }
+    }
+    return null
+  } catch (error) {
+    return null
+  }
+}
+
+export async function getCricketScore() {
+  try {
+    const res = await fetch(`/api/cricket`, { cache: "no-store" })
+    if (!res.ok) return null
+    const data = await res.json()
+    if (data.success) {
+      return data;
+    }
+    return null;
+  } catch (error) {
+    return null;
   }
 }

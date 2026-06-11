@@ -13,6 +13,7 @@ import { Footer } from "@/components/frontend/footer"
 export default function NewspaperPage() {
   const [news, setNews] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
+  const sentinelRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     fetch(`${process.env.NEXT_PUBLIC_API_URL}/news?longform=true&limit=50&${useAuthStore.getState().user?.uid ? 'firebaseUid=' + useAuthStore.getState().user?.uid : ''}`)

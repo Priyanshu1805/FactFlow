@@ -13,7 +13,6 @@ import { NotificationSettings } from "@/components/frontend/settings/notificatio
 import { FeedSettings } from "@/components/frontend/settings/feed-settings"
 import { PrivacySettings } from "@/components/frontend/settings/privacy-settings"
 import {
-  LanguageSettings,
   ContentSettings,
   AccessibilitySettings,
 } from "@/components/frontend/settings/other-settings"
@@ -26,7 +25,6 @@ const PANELS: Record<string, React.ComponentType> = {
   appearance:    AppearanceSettings,
   notifications: NotificationSettings,
   feed:          FeedSettings,
-  language:      LanguageSettings,
   privacy:       PrivacySettings,
   accessibility: AccessibilitySettings,
   content:       ContentSettings,
@@ -81,6 +79,7 @@ function SettingsContent() {
               onChange={(id) => {
                 setActive(id)
                 setMobileOpen(false)
+                window.history.replaceState(null, "", `?tab=${id}`)
               }}
             />
           </div>

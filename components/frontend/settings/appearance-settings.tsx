@@ -144,29 +144,30 @@ export function AppearanceSettings() {
           <Monitor className="w-4 h-4 text-red-400" />
           Theme
         </h3>
-        <div className="neu-radiogroup">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           {THEMES.map((t) => {
             const Icon = t.icon
             const isActive = currentTheme === t.id
             return (
-              <div key={t.id} className="neu-wrapper">
+              <label 
+                key={t.id} 
+                className={`cursor-pointer flex flex-col items-center justify-center p-4 rounded-xl border-2 transition-all duration-200 ${
+                  isActive 
+                    ? 'border-red-500 bg-red-50 dark:bg-red-500/10 text-red-600 dark:text-red-400' 
+                    : 'border-gray-200 dark:border-white/10 hover:border-gray-300 dark:hover:border-white/20 bg-white dark:bg-white/5 text-gray-700 dark:text-gray-300'
+                }`}
+              >
                 <input 
-                  className="neu-state" 
+                  className="sr-only" 
                   type="radio" 
                   name="theme" 
-                  id={`theme-${t.id}`} 
                   value={t.id} 
                   checked={isActive}
                   onChange={() => handleThemeChange(t.id)}
                 />
-                <label className="neu-label" htmlFor={`theme-${t.id}`}>
-                  <div className="neu-indicator"></div>
-                  <div className="neu-text flex items-center gap-2">
-                    <Icon className="w-5 h-5" />
-                    <span>{t.label}</span>
-                  </div>
-                </label>
-              </div>
+                <Icon className={`w-6 h-6 mb-2 ${isActive ? 'text-red-500' : 'text-gray-500 dark:text-gray-400'}`} />
+                <span className="font-semibold text-sm">{t.label}</span>
+              </label>
             )
           })}
         </div>
@@ -182,25 +183,28 @@ export function AppearanceSettings() {
             <Type className="w-4 h-4 text-red-400" />
             Font Size
           </h3>
-          <div className="neu-radiogroup">
+          <div className="flex flex-wrap gap-2">
             {FONT_SIZES.map((size) => {
               const isActive = currentFontSize === size.id
               return (
-                <div key={size.id} className="neu-wrapper">
+                <label 
+                  key={size.id} 
+                  className={`cursor-pointer px-4 py-2.5 rounded-xl border text-sm font-semibold transition-all duration-200 ${
+                    isActive 
+                      ? 'border-red-500 bg-red-50 dark:bg-red-500/10 text-red-600 dark:text-red-400 shadow-sm' 
+                      : 'border-gray-200 dark:border-white/10 hover:border-gray-300 dark:hover:border-white/20 bg-white dark:bg-white/5 text-gray-700 dark:text-gray-300'
+                  }`}
+                >
                   <input 
-                    className="neu-state" 
+                    className="sr-only" 
                     type="radio" 
                     name="fontsize" 
-                    id={`fontsize-${size.id}`} 
                     value={size.id} 
                     checked={isActive}
                     onChange={() => handleFontSizeChange(size.id)}
                   />
-                  <label className="neu-label" htmlFor={`fontsize-${size.id}`}>
-                    <div className="neu-indicator"></div>
-                    <span className="neu-text">{size.label}</span>
-                  </label>
-                </div>
+                  {size.label}
+                </label>
               )
             })}
           </div>
@@ -263,25 +267,28 @@ export function AppearanceSettings() {
       {/* Layout Density */}
       <div className="space-y-3 mt-10">
         <h3 className="text-gray-900 dark:text-white font-semibold text-sm px-2">News Feed Layout</h3>
-        <div className="neu-radiogroup">
+        <div className="flex flex-wrap gap-2 mt-3">
           {LAYOUTS.map((layout) => {
             const isActive = currentLayout === layout.id
             return (
-              <div key={layout.id} className="neu-wrapper">
+              <label 
+                key={layout.id} 
+                className={`cursor-pointer px-5 py-2.5 rounded-xl border text-sm font-semibold transition-all duration-200 ${
+                  isActive 
+                    ? 'border-red-500 bg-red-50 dark:bg-red-500/10 text-red-600 dark:text-red-400 shadow-sm' 
+                    : 'border-gray-200 dark:border-white/10 hover:border-gray-300 dark:hover:border-white/20 bg-white dark:bg-white/5 text-gray-700 dark:text-gray-300'
+                }`}
+              >
                 <input 
-                  className="neu-state" 
+                  className="sr-only" 
                   type="radio" 
                   name="layout" 
-                  id={`layout-${layout.id}`} 
                   value={layout.id} 
                   checked={isActive}
                   onChange={() => handleLayoutChange(layout.id)}
                 />
-                <label className="neu-label" htmlFor={`layout-${layout.id}`}>
-                  <div className="neu-indicator"></div>
-                  <span className="neu-text">{layout.label}</span>
-                </label>
-              </div>
+                {layout.label}
+              </label>
             )
           })}
         </div>

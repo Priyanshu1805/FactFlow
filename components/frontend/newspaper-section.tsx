@@ -8,9 +8,13 @@ import { SafeImage as Image } from "@/components/frontend/safe-image"
 import Link from "next/link"
 import { useSettings } from "@/lib/use-settings"
 import { PremiumBadge } from "@/components/frontend/premium-badge"
+import { useRegion } from "@/components/providers/region-provider"
+import { Separator } from "@/components/ui/separator"
+import { LiveNewsBanner } from "@/components/frontend/live-news-banner"
 
 export function NewspaperSection() {
   const { settings } = useSettings()
+  const { region } = useRegion()
   const displayOptions = settings?.displayOptions || {
     thumbnails: true, readingTime: true, authorName: true, reduceAnimations: false
   }
@@ -20,7 +24,7 @@ export function NewspaperSection() {
 
   useEffect(() => {
     const fetchNews = () => {
-      fetch(`${process.env.NEXT_PUBLIC_API_URL}/news?longform=true&limit=16&${useAuthStore.getState().user?.uid ? 'firebaseUid=' + useAuthStore.getState().user?.uid : ''}`)
+      fetch(`${process.env.NEXT_PUBLIC_API_URL}/news?longform=true&limit=16&${useAuthStore.getState().user?.uid ? 'firebaseUid=' + useAuthStore.getState().user?.uid : ''}&region=GLOBAL`)
         .then((res) => {
           if (!res.ok) throw new Error("Fetch failed")
           return res.json()
@@ -37,6 +41,7 @@ export function NewspaperSection() {
               time: new Date(item.publishedAt).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" }),
               isPremium: item.isPremium || false,
               tag: item.tags?.[0] || item.category || "Press Dispatch",
+              country: item.location || "GLOBAL"
             }))
             setNewspaperNews(formatted)
           }
@@ -51,12 +56,10 @@ export function NewspaperSection() {
     return () => clearInterval(interval)
   }, [])
 
-  if (newspaperNews.length === 0 && !loading) return null;
-
-  const featured = newspaperNews[0];
-  const leftStories = newspaperNews.slice(1, 4);
-  const rightStories = newspaperNews.slice(4, 8);
-  const bottomStories = newspaperNews.slice(8, 16);
+  const featured = newspaperNews.length > 0 ? newspaperNews[0] : null;
+  const leftStories = newspaperNews.length > 1 ? newspaperNews.slice(1, 4) : [];
+  const rightStories = newspaperNews.length > 4 ? newspaperNews.slice(4, 8) : [];
+  const bottomStories = newspaperNews.length > 8 ? newspaperNews.slice(8, 120) : [];
 
   const currentDate = new Date().toLocaleDateString("en-US", {
     weekday: "long",
@@ -67,6 +70,7 @@ export function NewspaperSection() {
 
   return (
     <section id="newspaper" className="relative py-20 px-4 newspaper-parchment newspaper-texture overflow-hidden">
+      <LiveNewsBanner category="Newspaper" />
       <div className="max-w-6xl mx-auto relative z-10">
 
         {/* ═══ MASTHEAD ═══ */}
@@ -95,11 +99,26 @@ export function NewspaperSection() {
         {/* ═══ TRIPLE RULE DIVIDER ═══ */}
         <hr className="newspaper-triple-rule mb-6 mt-1" />
 
-        {/* ═══ DESKTOP/TABLET FRONT PAGE (md and larger) ═══ */}
-        <div className="hidden md:grid lg:grid-cols-12 md:grid-cols-2 gap-0" style={{ gridAutoRows: 'min-content' }}>
+        {newspaperNews.length === 0 && !loading ? (
+          <div className="flex flex-col items-center justify-center py-20 text-center">
+            <h3 className="font-newspaper-headline text-3xl md:text-5xl text-[#111] opacity-70 mb-4">No Print Edition Available</h3>
+            <p className="font-newspaper-body text-lg text-[#111] opacity-60 max-w-lg">
+              The editors are currently gathering and writing long-form stories for the {region.name} edition. Please check back later for full coverage.
+            </p>
+          </div>
+        ) : (
+          <>
+            {/* ═══ DESKTOP/TABLET FRONT PAGE (md and larger) ═══ */}
+            <div className={`hidden md:grid gap-0 ${
+          leftStories.length > 0 && rightStories.length > 0 ? 'lg:grid-cols-12 md:grid-cols-2' :
+          leftStories.length > 0 ? 'lg:grid-cols-9 md:grid-cols-2 justify-center mx-auto' :
+          rightStories.length > 0 ? 'lg:grid-cols-9 md:grid-cols-2 justify-center mx-auto' :
+          'lg:grid-cols-6 md:grid-cols-1 justify-center mx-auto'
+        }`} style={{ gridAutoRows: 'min-content' }}>
           
           {/* ─── LEFT COLUMN (Opinion/Secondary) ─── */}
-          <div className="md:col-span-1 lg:col-span-3 md:border-r md:border-[#e5e5e5] pr-0 md:pr-4">
+          {leftStories.length > 0 && (
+            <div className="md:col-span-1 lg:col-span-3 md:border-r md:border-[#e5e5e5] pr-0 md:pr-4">
             <div className="flex flex-col h-auto">
               {leftStories.map((article, idx) => (
                 <Link href={`/article/${article.id}`} key={article.id} className="block group">
@@ -123,11 +142,11 @@ export function NewspaperSection() {
                   </motion.article>
                 </Link>
               ))}
+              </div>
             </div>
-          </div>
-
+          )}
           {/* ─── CENTER COLUMN (Main Story) ─── */}
-          <div className="md:col-span-1 lg:col-span-6 md:border-r md:border-[#e5e5e5] px-4 md:px-4 lg:px-6">
+          <div className="md:col-span-1 lg:col-span-6 px-4 md:px-4 lg:px-6">
             {featured && (
               <Link href={`/article/${featured.id}`} className="block group">
                 <motion.article
@@ -145,10 +164,20 @@ export function NewspaperSection() {
                   </h1>
 
                   {displayOptions.thumbnails !== false && (
-                    <div className="w-full mb-4">
+                    <div className="w-full mb-4 relative">
                       <div className="relative w-full aspect-[16/9] overflow-hidden grayscale hover:grayscale-0 transition-all duration-700">
                         <Image src={featured.image || "https://images.unsplash.com/photo-1504711434969-e33886168f5c"} alt={featured.title} fill className="object-cover" />
                       </div>
+                      
+                      {/* Classy Stamp instead of massive watermark */}
+                      {featured.country && featured.country !== "Global" && (
+                        <div className="absolute top-2 right-2 border-2 border-[#111] bg-[#f4f1ea] px-2 py-1 transform rotate-[-5deg] shadow-sm">
+                          <span className="text-[#111] font-newspaper-headline font-bold uppercase tracking-widest text-xs">
+                            {featured.country.substring(0, 2)}
+                          </span>
+                        </div>
+                      )}
+
                       <div className="flex flex-col sm:flex-row justify-between mt-1 gap-1">
                         <div className="font-newspaper-body text-[9px] uppercase text-[#111]">By {featured.authorName}</div>
                         <p className="font-newspaper-body text-[9px] text-[#111] text-right">
@@ -172,8 +201,9 @@ export function NewspaperSection() {
           </div>
 
           {/* ─── RIGHT COLUMN ─── */}
-          <div className="md:col-span-2 lg:col-span-3 pl-0 lg:pl-4">
-            <div className="flex flex-col h-auto">
+          {rightStories.length > 0 && (
+            <div className="md:col-span-2 lg:col-span-3 pl-0 lg:pl-4 md:border-l md:border-[#e5e5e5]">
+              <div className="flex flex-col h-auto">
               {rightStories.map((article, idx) => (
                 <Link href={`/article/${article.id}`} key={article.id} className="block group">
                   <motion.article
@@ -196,8 +226,9 @@ export function NewspaperSection() {
                   </motion.article>
                 </Link>
               ))}
+              </div>
             </div>
-          </div>
+          )}
         </div>
 
         {/* ═══ DESKTOP BOTTOM GRID ═══ */}
@@ -314,7 +345,7 @@ export function NewspaperSection() {
                   - LATE NEWS DISPATCH INDEX -
                 </h4>
                 <div className="space-y-2.5">
-                  {newspaperNews.slice(7, 13).map((article, idx) => (
+                  {newspaperNews.slice(7, 120).map((article, idx) => (
                     <Link href={`/article/${article.id}`} key={article.id} className="block group">
                       <div className="flex justify-between items-baseline font-newspaper-body text-xs text-[#111] group-hover:underline gap-2">
                         <span className="font-bold uppercase text-[9px] text-red-800 shrink-0">{article.tag || "BULLETIN"}</span>
@@ -329,8 +360,9 @@ export function NewspaperSection() {
               </div>
             </div>
           )}
-
         </div>
+        </>
+      )}
 
       </div>
     </section>

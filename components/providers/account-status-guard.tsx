@@ -8,8 +8,11 @@ const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api"
 
 export function AccountStatusGuard({ children }: { children: React.ReactNode }) {
   const { user, logout } = useAuthStore()
-  const [checking, setChecking] = useState(true)
+  const [checking, setChecking] = useState(false)
   const [status, setStatus] = useState<"active" | "disabled" | "scheduled">("active")
+  
+  console.log("[AccountStatusGuard] checking:", checking, "status:", status)
+  
   const [deletionDate, setDeletionDate] = useState<string>("")
   const [reactivating, setReactivating] = useState(false)
 

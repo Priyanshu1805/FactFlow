@@ -1,25 +1,67 @@
 "use client"
 
-import { Instagram, Youtube, Mail, MapPin, Phone, Send } from "lucide-react"
+import { Instagram, Youtube, Facebook, AtSign } from "lucide-react"
 import { useTheme } from "@/components/theme-provider"
-import { AccessibleImage as Image } from "@/components/frontend/accessible-image"
 import Link from "next/link"
 
 const socialLinks = [
-  { name: "Instagram", icon: Instagram, href: "https://instagram.com/fact_flow", color: "hover:text-pink-500" },
-  { name: "YouTube", icon: Youtube, href: "#", color: "hover:text-red-500" },
+  { 
+    name: "Instagram", 
+    icon: Instagram, 
+    href: "https://www.instagram.com/fact__flow?igsh=cms3dWo1bjJuc2Ex", 
+    style: "bg-gradient-to-tr from-yellow-400 via-pink-500 to-purple-600 shadow-[0_4px_14px_rgba(236,72,153,0.3)] hover:shadow-[0_6px_20px_rgba(236,72,153,0.5)] border-pink-400/20"
+  },
+  { 
+    name: "Facebook", 
+    icon: Facebook, 
+    href: "https://www.facebook.com/share/1AxNjs8P1N/", 
+    style: "bg-gradient-to-b from-blue-400 to-blue-600 shadow-[0_4px_14px_rgba(37,99,235,0.3)] hover:shadow-[0_6px_20px_rgba(37,99,235,0.5)] border-blue-400/20"
+  },
+  { 
+    name: "Threads", 
+    icon: AtSign, 
+    href: "https://www.threads.com/@fact__flow", 
+    style: "bg-gradient-to-b from-zinc-700 to-black shadow-[0_4px_14px_rgba(0,0,0,0.3)] hover:shadow-[0_6px_20px_rgba(0,0,0,0.5)] border-zinc-600/30"
+  },
+  { 
+    name: "YouTube", 
+    icon: Youtube, 
+    href: "https://youtube.com/@priyanshutalavekar?si=3WO9ApKy3YZjV-O5", 
+    style: "bg-gradient-to-b from-red-500 to-red-700 shadow-[0_4px_14px_rgba(220,38,38,0.3)] hover:shadow-[0_6px_20px_rgba(220,38,38,0.5)] border-red-400/20"
+  },
 ]
 
-const quickLinks = [
-  { name: "Home", href: "/" },
-  { name: "Trending", href: "#trending" },
-  { name: "Live News", href: "#live" },
-  { name: "AI & Tech", href: "#ai-news" },
-  { name: "Sports", href: "#sports" },
-  { name: "Memes", href: "#memes" },
+const productLinks = [
+  { name: "Live", href: "/live" },
+  { name: "Newspaper", href: "/newspaper" },
+  { name: "Trending", href: "/#trending" },
+  { name: "Social", href: "/social" },
 ]
 
-const categories = ["Breaking News", "Celebrities", "Crypto & Markets", "Entertainment", "Science", "World News"]
+const categoryLinks = [
+  { name: "Politics", href: "/?category=politics" },
+  { name: "Lifestyle", href: "/?category=lifestyle" },
+  { name: "Sports", href: "/?category=sports" },
+  { name: "Tech", href: "/?category=tech" },
+  { name: "Art", href: "/#art" },
+]
+
+const companyLinks = [
+  { name: "About Us", href: "/about" },
+  { name: "Contact Us", href: "/contact" },
+  { name: "Advertise with Us", href: "/advertise" },
+  { name: "Help & FAQs", href: "/help" },
+]
+
+// BBC-style bottom strip — legal & policy links only (no duplicates from above)
+const bottomLinks = [
+  { name: "Terms of Use", href: "/terms" },
+  { name: "Subscription Terms", href: "/subscription-terms" },
+  { name: "Privacy Policy", href: "/privacy" },
+  { name: "Cookies", href: "/cookies" },
+  { name: "Accessibility Help", href: "/accessibility" },
+  { name: "Do Not Sell My Info", href: "/do-not-sell" },
+]
 
 export function Footer() {
   const { theme } = useTheme()
@@ -27,92 +69,54 @@ export function Footer() {
 
   return (
     <footer className="border-t mt-8 bg-background border-border">
-      <div className="max-w-7xl mx-auto px-4 py-14">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10">
-          {/* Brand */}
-          <div className="lg:col-span-1">
+      <div className="max-w-7xl mx-auto px-4 py-16">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10 lg:gap-8">
+          {/* Brand & Socials */}
+          <div className="flex flex-col">
             <div className="flex items-center gap-3.5 mb-5 cursor-pointer group w-fit">
-              {/* Logo Vector Container with Premium border */}
               <div className="relative p-[1px] bg-gradient-to-tr from-red-500/30 via-purple-500/30 to-blue-500/30 rounded-xl shadow-sm">
-                
-                {/* Vector SVG Emblem */}
                 <div className="relative z-10 w-10 h-10 rounded-[10px] overflow-hidden bg-black flex items-center justify-center border border-white/10">
                   <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full select-none">
-                    {/* Symmetrical exact F.F design */}
-                    <text 
-                      x="30" 
-                      y="74" 
-                      fontFamily="Georgia, 'Times New Roman', serif" 
-                      fontWeight="bold" 
-                      fontSize="68" 
-                      fill="#FFFFFF"
-                      textAnchor="middle"
-                    >
-                      F
-                    </text>
-                    
-                    {/* Red Dot */}
-                    <circle 
-                      cx="50" 
-                      cy="74" 
-                      r="6" 
-                      fill="#a8152e"
-                    />
-                    
-                    <text 
-                      x="70" 
-                      y="74" 
-                      fontFamily="Georgia, 'Times New Roman', serif" 
-                      fontWeight="bold" 
-                      fontSize="68" 
-                      fill="#FFFFFF"
-                      textAnchor="middle"
-                    >
-                      F
-                    </text>
+                    <text x="30" y="74" fontFamily="Georgia, 'Times New Roman', serif" fontWeight="bold" fontSize="68" fill="#FFFFFF" textAnchor="middle">F</text>
+                    <circle cx="50" cy="74" r="6" fill="#a8152e" />
+                    <text x="70" y="74" fontFamily="Georgia, 'Times New Roman', serif" fontWeight="bold" fontSize="68" fill="#FFFFFF" textAnchor="middle">F</text>
                   </svg>
                 </div>
               </div>
-
-              {/* Elegant Professional Brand Name */}
               <div className="relative flex flex-col justify-center">
-                <div className="flex items-center">
-                  <span className="font-black text-xl tracking-tighter text-foreground" style={{ letterSpacing: "-0.05em" }}>
-                    FACT
-                  </span>
-                  
-                  <span className="font-black text-xl tracking-tighter text-red-500 flex" style={{ letterSpacing: "-0.05em" }}>
-                    FLOW
-                  </span>
+                <div className="flex items-center notranslate">
+                  <span className="font-black text-xl tracking-tighter text-foreground" style={{ letterSpacing: "-0.05em" }}>FACT</span>
+                  <span className="font-black text-xl tracking-tighter text-red-500 flex" style={{ letterSpacing: "-0.05em" }}>FLOW</span>
                 </div>
-                <p className="text-muted-foreground text-xs mt-0.5">Digital News Platform</p>
               </div>
             </div>
-            <p className="text-muted-foreground text-sm leading-relaxed mb-5">
+            <p className="text-muted-foreground text-sm leading-relaxed mb-6">
               Your daily pulse of global news. Fast, accurate, and entertaining — all in one place.
             </p>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 mt-4">
               {socialLinks.map((link) => (
                 <a
                   key={link.name}
                   href={link.href}
-                  className={`p-3 sm:p-2.5 rounded-lg bg-secondary text-secondary-foreground transition-colors ${link.color}`}
+                  className={`relative p-2.5 rounded-xl text-white transition-all duration-300 transform hover:-translate-y-1 border ${link.style}`}
                   target="_blank"
                   rel="noopener noreferrer"
+                  title={link.name}
                 >
-                  <link.icon className="w-4 h-4" />
+                  <div className="absolute inset-0 rounded-xl bg-white/20 opacity-0 hover:opacity-100 transition-opacity mix-blend-overlay"></div>
+                  <link.icon className="w-4 h-4 relative z-10 drop-shadow-md" />
                 </a>
               ))}
             </div>
           </div>
 
-          {/* Quick Links */}
+          {/* Product Links */}
           <div>
-            <h4 className="text-foreground font-semibold mb-5">Quick Links</h4>
-            <ul className="space-y-2.5">
-              {quickLinks.map((link) => (
+            <h4 className="text-foreground font-semibold mb-5 text-base">Product</h4>
+            <ul className="space-y-3">
+              {productLinks.map((link) => (
                 <li key={link.name}>
-                  <Link href={link.href} className="text-muted-foreground hover:text-red-500 transition-colors text-sm">
+                  <Link href={link.href} className="text-muted-foreground hover:text-red-500 transition-colors text-sm font-medium">
                     {link.name}
                   </Link>
                 </li>
@@ -120,53 +124,61 @@ export function Footer() {
             </ul>
           </div>
 
-          {/* Categories */}
+          {/* Category Links */}
           <div>
-            <h4 className="text-foreground font-semibold mb-5">Categories</h4>
-            <ul className="space-y-2.5">
-              {categories.map((item) => (
-                <li key={item}>
-                  <a href="#" className="text-muted-foreground hover:text-red-500 transition-colors text-sm">{item}</a>
+            <h4 className="text-foreground font-semibold mb-5 text-base">Categories</h4>
+            <ul className="space-y-3">
+              {categoryLinks.map((link) => (
+                <li key={link.name}>
+                  <Link href={link.href} className="text-muted-foreground hover:text-red-500 transition-colors text-sm font-medium">
+                    {link.name}
+                  </Link>
                 </li>
               ))}
             </ul>
           </div>
 
-          {/* Contact */}
+          {/* Company Links */}
           <div>
-            <h4 className="text-foreground font-semibold mb-5">Contact Us</h4>
-            <ul className="space-y-3 mb-6">
-              <li className="flex items-center gap-3 text-muted-foreground text-sm">
-                <Mail className="w-4 h-4 text-red-500 shrink-0" />
-                factflow1819@gmail.com
-              </li>
-              <li className="flex items-center gap-3 text-muted-foreground text-sm">
-                <MapPin className="w-4 h-4 text-red-500 shrink-0" />
-                India
-              </li>
+            <h4 className="text-foreground font-semibold mb-5 text-base">Company</h4>
+            <ul className="space-y-3">
+              {companyLinks.map((link) => (
+                <li key={link.name}>
+                  <Link href={link.href} className="text-muted-foreground hover:text-foreground transition-colors text-sm font-medium">
+                    {link.name}
+                  </Link>
+                </li>
+              ))}
             </ul>
-            <p className="text-foreground text-xs mb-3">Subscribe to our newsletter</p>
-            <div className="flex gap-2">
-              <input
-                suppressHydrationWarning
-                type="email"
-                placeholder="Your email"
-                className="flex-1 px-3 py-3 sm:py-2.5 rounded-lg bg-secondary border border-border text-foreground placeholder:text-muted-foreground text-sm focus:outline-none focus:border-red-500 transition-colors"
-              />
-              <button suppressHydrationWarning className="p-3 sm:p-2.5 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors">
-                <Send className="w-4 h-4" />
-              </button>
-            </div>
           </div>
         </div>
 
-        {/* Bottom */}
-        <div className="mt-12 pt-8 border-t border-border flex flex-col md:flex-row items-center justify-between gap-4">
-          <p className="text-muted-foreground text-sm">© 2026 Fact Flow. All rights reserved.</p>
-          <div className="flex items-center gap-6">
-            <a href="#" className="text-muted-foreground hover:text-foreground text-sm transition-colors">Privacy Policy</a>
-            <a href="#" className="text-muted-foreground hover:text-foreground text-sm transition-colors">Terms of Service</a>
+        {/* BBC-style Bottom Strip */}
+        <div className="mt-12 pt-6 border-t border-border">
+          {/* Links row */}
+          <div className="flex flex-wrap gap-x-4 gap-y-2 mb-4">
+            {bottomLinks.map((link, idx) => (
+              <span key={link.name} className="flex items-center gap-4">
+                <Link
+                  href={link.href}
+                  className="text-muted-foreground hover:text-foreground text-xs transition-colors"
+                >
+                  {link.name}
+                </Link>
+                {idx < bottomLinks.length - 1 && (
+                  <span className="text-border text-xs select-none">|</span>
+                )}
+              </span>
+            ))}
           </div>
+
+          {/* Copyright */}
+          <p className="text-muted-foreground text-xs leading-relaxed notranslate">
+            Copyright © {new Date().getFullYear()} Fact Flow. All rights reserved. Fact Flow is not responsible for the content of external sites.{" "}
+            <Link href="/external-linking" className="hover:text-foreground underline underline-offset-2 transition-colors">
+              Read about our approach to external linking.
+            </Link>
+          </p>
         </div>
       </div>
     </footer>

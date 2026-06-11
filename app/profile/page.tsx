@@ -5,10 +5,8 @@ import { useAuthStore } from "@/store/auth-store"
 import { User, Settings, LogOut, Calendar, Mail, ShieldCheck } from "lucide-react"
 import Link from "next/link"
 import { useState, useEffect } from "react"
-import dynamic from "next/dynamic"
-
-const Navbar = dynamic(() => import("@/components/frontend/navbar").then(m => ({ default: m.Navbar })), { ssr: false })
-const Footer = dynamic(() => import("@/components/frontend/footer").then(m => ({ default: m.Footer })), { ssr: false })
+import { Navbar } from "@/components/frontend/navbar"
+import { Footer } from "@/components/frontend/footer"
 
 export default function ProfilePage() {
   const { theme } = useTheme()
