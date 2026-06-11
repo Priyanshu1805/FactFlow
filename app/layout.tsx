@@ -57,14 +57,6 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
-        <Script id="abort-error-suppressor" strategy="beforeInteractive" dangerouslySetInnerHTML={{ __html: `
-          window.addEventListener('unhandledrejection', function(event) {
-            if (event.reason && (event.reason.name === 'AbortError' || (event.reason.message && event.reason.message.includes('play()')))) {
-              event.preventDefault();
-              event.stopImmediatePropagation();
-            }
-          }, { capture: true });
-        `}} />
         <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
         <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)" />
         <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
@@ -73,6 +65,16 @@ export default function RootLayout({
         <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400;1,700&family=Old+Standard+TT:ital,wght@0,400;0,700;1,400&family=UnifrakturMaguntia&display=swap" rel="stylesheet" />
       </head>
       <body>
+        <Script id="abort-error-suppressor" strategy="afterInteractive">
+          {`
+            window.addEventListener('unhandledrejection', function(event) {
+              if (event.reason && (event.reason.name === 'AbortError' || (event.reason.message && event.reason.message.includes('play()')))) {
+                event.preventDefault();
+                event.stopImmediatePropagation();
+              }
+            }, { capture: true });
+          `}
+        </Script>
         <GoogleTranslate />
         <AuthProvider>
           <SocketProvider>

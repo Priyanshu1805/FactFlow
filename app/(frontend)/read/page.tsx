@@ -3,7 +3,7 @@
 import { useSearchParams } from "next/navigation"
 import Link from "next/link"
 import { Suspense, useEffect, useState, useRef } from "react"
-import { Share2, Clock, Globe, ChevronLeft, Bookmark, Heart, MoreHorizontal, Copy, ExternalLink, Headphones, Square } from "lucide-react"
+import { Share2, Clock, Globe, ChevronLeft, Bookmark, Heart, MoreHorizontal, Copy, ExternalLink, Headphones, Square, ThumbsUp, ThumbsDown } from "lucide-react"
 import { motion } from "framer-motion"
 import { useSavedStore } from "@/lib/rss/savedStore"
 import { useAuthStore } from "@/store/auth-store"
@@ -30,6 +30,7 @@ function ReadArticleContent() {
   const isSaved = isMounted ? isSavedStore(url || "") : false
   const { user } = useAuthStore()
   const [isLiked, setIsLiked] = useState(false)
+  const [isDisliked, setIsDisliked] = useState(false)
 
   // TTS & Settings
   const settings = useVideoSettings()
@@ -62,7 +63,7 @@ function ReadArticleContent() {
   "https://images.unsplash.com/photo-1518609878373-06d740f60d8b?w=1200&q=80"
 ];
 const getRandomFallback = () => fallbacks[Math.floor(Math.random() * fallbacks.length)];
-  const [stats, setStats] = useState({ likes: 0, saves: 0, shares: 0 })
+  const [stats, setStats] = useState({ likes: 0, dislikes: 0, saves: 0, shares: 0 })
 
   // Reading progress bar
   const containerRef = useRef<HTMLDivElement>(null)
@@ -98,11 +99,12 @@ const getRandomFallback = () => fallbacks[Math.floor(Math.random() * fallbacks.l
 
         // 2. Fetch Global Stats from Backend
         const userId = user?.uid || ""
-        const statsRes = await fetch(`/api/backend/external-articles/stats?url=${encodeURIComponent(url)}&userId=${userId}`)
+        const statsRes = await fetch(`/api/backend/external-articles/stats?url=${encodeURIComponent(url)}&userId=${userId}&t=${Date.now()}`, { cache: "no-store" })
         const statsData = await statsRes.json()
         if (statsData.success) {
-          setStats({ likes: statsData.likes, saves: statsData.saves, shares: statsData.shares })
+          setStats({ likes: statsData.likes, dislikes: statsData.dislikes, saves: statsData.saves, shares: statsData.shares })
           setIsLiked(statsData.hasLiked)
+          setIsDisliked(statsData.hasDisliked)
         }
       } catch (err) {
         setError(true)
@@ -124,6 +126,7 @@ const getRandomFallback = () => fallbacks[Math.floor(Math.random() * fallbacks.l
     }
     const newLiked = !isLiked
     setIsLiked(newLiked)
+    if (newLiked) setIsDisliked(false)
 
     try {
       const res = await fetch(`/api/backend/external-articles/interact`, {
@@ -138,12 +141,46 @@ const getRandomFallback = () => fallbacks[Math.floor(Math.random() * fallbacks.l
       })
       const data = await res.json()
       if (data.success) {
-        setStats(prev => ({ ...prev, likes: data.stats.likes }))
+        setStats(prev => ({ ...prev, likes: data.stats.likes, dislikes: data.stats.dislikes }))
         setIsLiked(data.stats.hasLiked)
+        setIsDisliked(data.stats.hasDisliked)
       }
     } catch (err) {
       console.error(err)
       setIsLiked(!newLiked)
+    }
+  }
+
+  const handleDislike = async () => {
+    if (!url) return
+    if (!user?.uid) {
+      alert("Please sign in to dislike articles.")
+      return
+    }
+    const newDisliked = !isDisliked
+    setIsDisliked(newDisliked)
+    if (newDisliked) setIsLiked(false)
+
+    try {
+      const res = await fetch(`/api/backend/external-articles/interact`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          url,
+          action: "dislike",
+          value: newDisliked ? 1 : -1,
+          userId: user.uid
+        })
+      })
+      const data = await res.json()
+      if (data.success) {
+        setStats(prev => ({ ...prev, likes: data.stats.likes, dislikes: data.stats.dislikes }))
+        setIsLiked(data.stats.hasLiked)
+        setIsDisliked(data.stats.hasDisliked)
+      }
+    } catch (err) {
+      console.error(err)
+      setIsDisliked(!newDisliked)
     }
   }
 
@@ -398,10 +435,17 @@ const getRandomFallback = () => fallbacks[Math.floor(Math.random() * fallbacks.l
                       <Share2 className="w-4 h-4" />
                       <span>Share</span>
                     </button>
-                    <button onClick={handleLike} className={`flex items-center gap-2 px-4 h-10 rounded-full transition-colors font-bold text-xs ${isLiked ? "bg-red-500/20 text-red-500 border border-red-500/50" : "bg-white/5 text-white/80 hover:bg-white/10 border border-transparent"}`}>
-                      <Heart className={`w-4 h-4 ${isLiked ? "fill-red-500" : ""}`} />
-                      <span>{stats.likes > 0 ? stats.likes : "Like"}</span>
-                    </button>
+                    <div className="flex items-center rounded-full border border-white/10 bg-white/5 overflow-hidden">
+                      <button onClick={handleLike} className={`flex items-center gap-2 px-4 h-10 transition-colors font-bold text-xs ${isLiked ? "bg-green-500/20 text-green-500" : "text-white/80 hover:bg-white/10"}`}>
+                        <ThumbsUp className={`w-4 h-4 ${isLiked ? "fill-green-500" : ""}`} />
+                        <span>{stats.likes > 0 ? stats.likes : "Like"}</span>
+                      </button>
+                      <div className="w-[1px] h-6 bg-white/10" />
+                      <button onClick={handleDislike} className={`flex items-center gap-2 px-4 h-10 transition-colors font-bold text-xs ${isDisliked ? "bg-red-500/20 text-red-500" : "text-white/80 hover:bg-white/10"}`}>
+                        <ThumbsDown className={`w-4 h-4 ${isDisliked ? "fill-red-500" : ""}`} />
+                        <span>{stats.dislikes > 0 ? stats.dislikes : ""}</span>
+                      </button>
+                    </div>
                   </div>
                 </div>
               </header>

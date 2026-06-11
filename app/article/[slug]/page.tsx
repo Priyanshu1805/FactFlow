@@ -8,7 +8,6 @@ import { ArrowLeft, Clock, MapPin, Share2, Heart, Tag, BookOpen, Eye, ThumbsUp, 
 import { useTheme } from "@/components/theme-provider"
 import { Navbar } from "@/components/frontend/navbar"
 import { Footer } from "@/components/frontend/footer"
-import { CommentsSection } from "@/components/frontend/comments-section"
 import { RelatedNews } from "@/components/frontend/related-news"
 import { useAuthStore } from "@/store/auth-store"
 import { getSavedItems, saveItem, unsaveItem } from "@/lib/api/saved"
@@ -33,11 +32,11 @@ export default function ArticlePage() {
   const [loading, setLoading] = useState(true)
   const [videoPlaying, setVideoPlaying] = useState(false)
 
-  // Likes state
-  const [likes, setLikes] = useState(0)
-  const [hasLiked, setHasLiked] = useState(false)
+  // Stats state
+  const [stats, setStats] = useState({ likes: 0, dislikes: 0 })
+  const [isLiked, setIsLiked] = useState(false)
+  const [isDisliked, setIsDisliked] = useState(false)
   const [isSaved, setIsSaved] = useState(false)
-  const [likeAnimating, setLikeAnimating] = useState(false)
 
   // Share toast
   const [shareToast, setShareToast] = useState(false)
@@ -64,18 +63,23 @@ export default function ArticlePage() {
   useEffect(() => {
     const fetchArticle = async () => {
       try {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/news/${slug}`)
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/news/${slug}?t=${Date.now()}`, { cache: "no-store" })
         if (!res.ok) throw new Error("Fetch failed")
         const data = await res.json()
         if (data.success && data.data) {
           setArticle(data.data)
-          setLikes(data.data.likes || 0)
+          setStats({
+            likes: data.data.likes || 0,
+            dislikes: data.data.dislikes || 0
+          })
 
           const articleId = data.data._id
 
-          // ── Like state: restore from localStorage across sessions ──
-          const likedSet: string[] = JSON.parse(localStorage.getItem("ff_liked") || "[]")
-          setHasLiked(likedSet.includes(articleId))
+          // ── Like/Dislike state: restore from localStorage across sessions ──
+          const likedSet: string[] = JSON.parse(localStorage.getItem("ff_news_liked") || "[]")
+          const dislikedSet: string[] = JSON.parse(localStorage.getItem("ff_news_disliked") || "[]")
+          setIsLiked(likedSet.includes(articleId))
+          setIsDisliked(dislikedSet.includes(articleId))
 
           // ── Fetch if saved ──
           if (user) {
@@ -87,7 +91,7 @@ export default function ArticlePage() {
           }
 
           // ── View count: only once per browser session per article ──
-          const sessionKey = `ff_viewed_${articleId}`
+          const sessionKey = `ff_news_viewed_${articleId}`
           if (!sessionStorage.getItem(sessionKey)) {
             sessionStorage.setItem(sessionKey, "1")
             fetch(`${process.env.NEXT_PUBLIC_API_URL}/news/${articleId}/view`, {
@@ -123,44 +127,82 @@ export default function ArticlePage() {
 
   const handleLike = async () => {
     if (!article) return
-    setLikeAnimating(true)
-    const nowLiked = !hasLiked
+    const newLiked = !isLiked
 
-    // Optimistic update in UI
-    setHasLiked(nowLiked)
-    setLikes(prev => nowLiked ? prev + 1 : Math.max(0, prev - 1))
+    setIsLiked(newLiked)
+    if (newLiked) setIsDisliked(false)
+    
+    setStats(prev => ({
+      ...prev,
+      likes: prev.likes + (newLiked ? 1 : -1),
+      dislikes: isDisliked ? Math.max(0, prev.dislikes - 1) : prev.dislikes
+    }))
 
-    // Persist like state in localStorage
-    const likedSet: string[] = JSON.parse(localStorage.getItem("ff_liked") || "[]")
-    if (nowLiked) {
-      localStorage.setItem("ff_liked", JSON.stringify([...likedSet, article._id]))
+    // Local Storage Persist
+    const likedSet: string[] = JSON.parse(localStorage.getItem("ff_news_liked") || "[]")
+    const dislikedSet: string[] = JSON.parse(localStorage.getItem("ff_news_disliked") || "[]")
+    
+    if (newLiked) {
+      localStorage.setItem("ff_news_liked", JSON.stringify([...new Set([...likedSet, article._id])]))
+      localStorage.setItem("ff_news_disliked", JSON.stringify(dislikedSet.filter((id: string) => id !== article._id)))
     } else {
-      localStorage.setItem("ff_liked", JSON.stringify(likedSet.filter((id: string) => id !== article._id)))
+      localStorage.setItem("ff_news_liked", JSON.stringify(likedSet.filter((id: string) => id !== article._id)))
     }
 
-    // Sync with backend (smart tracking with user/device ID)
     try {
-      const endpoint = nowLiked ? "like" : "unlike"
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/news/${article._id}/${endpoint}`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/news/${article._id}/interact`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ deviceId: getDeviceId(), userId: user?.uid })
+        body: JSON.stringify({ deviceId: getDeviceId(), userId: user?.uid, action: newLiked ? "like" : "unlike" })
       })
-      if (!res.ok) throw new Error("Fetch failed")
       const data = await res.json()
-      if (data.success) setLikes(data.data.likes)
-    } catch {
-      // Revert on network failure
-      setHasLiked(!nowLiked)
-      setLikes(prev => nowLiked ? Math.max(0, prev - 1) : prev + 1)
-      const revertedSet: string[] = JSON.parse(localStorage.getItem("ff_liked") || "[]")
-      if (!nowLiked) {
-        localStorage.setItem("ff_liked", JSON.stringify([...revertedSet, article._id]))
-      } else {
-        localStorage.setItem("ff_liked", JSON.stringify(revertedSet.filter((id: string) => id !== article._id)))
+      if (data.success) {
+        setStats({ likes: data.data.likes, dislikes: data.data.dislikes })
       }
+    } catch (err) {
+      console.error(err)
+      setIsLiked(!newLiked) // revert
     }
-    setTimeout(() => setLikeAnimating(false), 400)
+  }
+
+  const handleDislike = async () => {
+    if (!article) return
+    const newDisliked = !isDisliked
+
+    setIsDisliked(newDisliked)
+    if (newDisliked) setIsLiked(false)
+    
+    setStats(prev => ({
+      ...prev,
+      dislikes: prev.dislikes + (newDisliked ? 1 : -1),
+      likes: isLiked ? Math.max(0, prev.likes - 1) : prev.likes
+    }))
+
+    // Local Storage Persist
+    const likedSet: string[] = JSON.parse(localStorage.getItem("ff_news_liked") || "[]")
+    const dislikedSet: string[] = JSON.parse(localStorage.getItem("ff_news_disliked") || "[]")
+    
+    if (newDisliked) {
+      localStorage.setItem("ff_news_disliked", JSON.stringify([...new Set([...dislikedSet, article._id])]))
+      localStorage.setItem("ff_news_liked", JSON.stringify(likedSet.filter((id: string) => id !== article._id)))
+    } else {
+      localStorage.setItem("ff_news_disliked", JSON.stringify(dislikedSet.filter((id: string) => id !== article._id)))
+    }
+
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/news/${article._id}/interact`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ deviceId: getDeviceId(), userId: user?.uid, action: newDisliked ? "dislike" : "undislike" })
+      })
+      const data = await res.json()
+      if (data.success) {
+        setStats({ likes: data.data.likes, dislikes: data.data.dislikes })
+      }
+    } catch (err) {
+      console.error(err)
+      setIsDisliked(!newDisliked) // revert
+    }
   }
 
   const handleSaveToggle = async () => {
@@ -474,16 +516,22 @@ export default function ArticlePage() {
               }`}>
                 <button 
                   onClick={handleLike} 
-                  className="flex items-center gap-2 px-4 py-2 transition-transform active:scale-95"
+                  className={`flex items-center gap-2 px-4 py-2 transition-transform active:scale-95 ${isLiked ? (isDark ? "text-green-400 bg-green-500/10" : "text-green-600 bg-green-500/10") : ""}`}
                 >
-                  <ThumbsUp className={`w-5 h-5 ${hasLiked ? "fill-current" : ""}`} />
+                  <ThumbsUp className={`w-5 h-5 ${isLiked ? "fill-current" : ""}`} />
                   <span className="font-semibold text-sm">
-                    {likes > 0 ? (likes > 999 ? (likes/1000).toFixed(1) + 'K' : likes) : 'Like'}
+                    {stats.likes > 0 ? (stats.likes > 999 ? (stats.likes/1000).toFixed(1) + 'K' : stats.likes) : 'Like'}
                   </span>
                 </button>
                 <div className={`w-px h-5 ${isDark ? "bg-white/20" : "bg-gray-300"}`}></div>
-                <button className="px-4 py-2 transition-transform active:scale-95">
-                  <ThumbsDown className="w-5 h-5" />
+                <button 
+                  onClick={handleDislike}
+                  className={`flex items-center gap-2 px-4 py-2 transition-transform active:scale-95 ${isDisliked ? (isDark ? "text-red-400 bg-red-500/10" : "text-red-600 bg-red-500/10") : ""}`}
+                >
+                  <ThumbsDown className={`w-5 h-5 ${isDisliked ? "fill-current" : ""}`} />
+                  <span className="font-semibold text-sm">
+                    {stats.dislikes > 0 ? (stats.dislikes > 999 ? (stats.dislikes/1000).toFixed(1) + 'K' : stats.dislikes) : ''}
+                  </span>
                 </button>
               </div>
 
@@ -509,8 +557,6 @@ export default function ArticlePage() {
               </button>
             </div>
           </div>
-
-          <CommentsSection articleId={article._id} />
 
           <RelatedNews currentCategory={article.category} currentArticleId={article._id} />
         </div>

@@ -2,7 +2,7 @@
 import { useAuthStore } from "@/store/auth-store";
 
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { motion } from "framer-motion"
 import { ArrowLeft } from "lucide-react"
 import { SafeImage as Image } from "@/components/frontend/safe-image"
