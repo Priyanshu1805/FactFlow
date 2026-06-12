@@ -1,0 +1,1 @@
+{"version":3,"file":"emailService.d.ts","sourceRoot":"","sources":["../../backend/services/emailService.ts"],"names":[],"mappings":"AACA,OAAO,EAAE,YAAY,EAAE,MAAM,uBAAuB,CAAA;AAwEpD,wBAAsB,eAAe,CACnC,OAAO,EAAE,MAAM,EACf,IAAI,EAAE,OAAO,GAAG,QAAQ,EACxB,QAAQ,EAAE,YAAY,EAAE,GACvB,OAAO,CAAC,OAAO,CAAC,CAwBlB"}

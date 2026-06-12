@@ -1,0 +1,1 @@
+{"version":3,"file":"ollama.js","sourceRoot":"","sources":["../../backend/routes/ollama.ts"],"names":[],"mappings":";;AAAA,qCAAgC;AAChC,sEAAmF;AAEnF,MAAM,MAAM,GAAG,IAAA,gBAAM,GAAE,CAAA;AAEvB,MAAM,CAAC,IAAI,CAAC,WAAW,EAAE,kCAAe,CAAC,CAAA;AACzC,MAAM,CAAC,IAAI,CAAC,YAAY,EAAE,mCAAgB,CAAC,CAAA;AAE3C,kBAAe,MAAM,CAAA"}

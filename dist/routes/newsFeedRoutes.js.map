@@ -1,0 +1,1 @@
+{"version":3,"file":"newsFeedRoutes.js","sourceRoot":"","sources":["../../backend/routes/newsFeedRoutes.ts"],"names":[],"mappings":";;AAAA,qCAAgC;AAChC,oFAAsF;AACtF,6CAAyD;AAEzD,MAAM,MAAM,GAAG,IAAA,gBAAM,GAAE,CAAA;AAEvB,MAAM,CAAC,GAAG,CAAC,GAAG,EAAE,2BAAoB,EAAE,sCAAY,CAAC,CAAA;AACnD,MAAM,CAAC,GAAG,CAAC,GAAG,EAAE,2BAAoB,EAAE,yCAAe,CAAC,CAAA;AAEtD,kBAAe,MAAM,CAAA"}
