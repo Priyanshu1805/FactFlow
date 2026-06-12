@@ -77,6 +77,8 @@ export function AccountStatusGuard({ children }: { children: React.ReactNode }) 
 
   if (status !== "active") {
     const isScheduled = status === "scheduled"
+    const isDisabled = status === "disabled"
+
     return (
       <div className="fixed inset-0 bg-[#0f0f0f] z-[100] flex items-center justify-center p-4 bg-[url('/grid.svg')] bg-center before:absolute before:inset-0 before:bg-[#0f0f0f]/90">
         <div className="relative bg-[#181818] border border-[#262626] rounded-[24px] p-8 max-w-md w-full shadow-2xl animate-in fade-in zoom-in-95 duration-300">
@@ -86,26 +88,38 @@ export function AccountStatusGuard({ children }: { children: React.ReactNode }) 
               <AlertTriangle className="w-8 h-8 text-red-500" />
             </div>
             <div>
-              <h2 className="text-2xl font-black text-white tracking-tight">
-                {isScheduled ? "Account Deletion Pending" : "Account Deactivated"}
+              <h2 className="text-2xl font-black text-white tracking-tight uppercase">
+                {isScheduled ? "Account Deletion Pending" : "Account Banned"}
               </h2>
               <p className="text-white/[0.85] text-sm mt-3">
                 {isScheduled 
                   ? <>Your account is scheduled to be permanently deleted on <strong>{deletionDate}</strong>. Would you like to cancel the deletion and restore your account?</>
-                  : "Your account is currently deactivated. Would you like to reactivate it?"}
+                  : <>Your account has been <strong>permanently banned</strong> by an administrator due to a violation of our community guidelines. To appeal this ban, please email support with valid proof and reasoning.</>}
               </p>
             </div>
           </div>
 
           <div className="flex flex-col gap-3">
-            <button
-              onClick={handleReactivate}
-              disabled={reactivating}
-              className="w-full flex items-center justify-center gap-2 py-4 rounded-[16px] bg-white text-black text-sm font-bold hover:bg-gray-200 transition-all shadow-[0_0_15px_rgba(255,255,255,0.2)] disabled:opacity-50"
-            >
-              {reactivating ? <Loader2 className="w-5 h-5 animate-spin" /> : <RefreshCw className="w-5 h-5" />}
-              {isScheduled ? "Cancel Deletion & Restore" : "Reactivate Account"}
-            </button>
+            {isScheduled && (
+              <button
+                onClick={handleReactivate}
+                disabled={reactivating}
+                className="w-full flex items-center justify-center gap-2 py-4 rounded-[16px] bg-white text-black text-sm font-bold hover:bg-gray-200 transition-all shadow-[0_0_15px_rgba(255,255,255,0.2)] disabled:opacity-50"
+              >
+                {reactivating ? <Loader2 className="w-5 h-5 animate-spin" /> : <RefreshCw className="w-5 h-5" />}
+                Cancel Deletion & Restore
+              </button>
+            )}
+            
+            {isDisabled && (
+              <a 
+                href="mailto:support@factflow.com?subject=Ban%20Appeal%20Request"
+                className="w-full flex items-center justify-center gap-2 py-4 rounded-[16px] bg-red-600 text-white text-sm font-bold hover:bg-red-700 transition-all shadow-[0_0_15px_rgba(220,38,38,0.2)]"
+              >
+                Appeal Ban via Email
+              </a>
+            )}
+
             <button
               onClick={logout}
               disabled={reactivating}

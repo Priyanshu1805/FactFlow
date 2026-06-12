@@ -3,7 +3,7 @@
 import { useMemo } from "react"
 import { useRssStore } from "@/lib/rss/rssStore"
 import { motion } from "framer-motion"
-import { Palette, ArrowRight, Clock, User, Sparkles } from "lucide-react"
+import { Palette, ArrowRight, Clock, User, Sparkles , Volume2} from "lucide-react"
 import { useTheme } from "@/components/theme-provider"
 import { SafeImage as Image } from "@/components/frontend/safe-image"
 import Link from "next/link"
@@ -23,7 +23,10 @@ export function ArtSection() {
 
   const sectionNews = useMemo(() => {
     const filtered = rssItems
-      .filter(item => item.category === "Art" || item.category === "Arts & Culture")
+      .filter(item => {
+        const itemSections = (item.sections && item.sections.length > 0) ? item.sections : [item.category];
+        return itemSections.some(c => ["art", "arts & culture"].includes(c?.toLowerCase()));
+      })
       .sort((a, b) => {
         const aImg = a.image && a.image.trim() !== "" ? 1 : 0
         const bImg = b.image && b.image.trim() !== "" ? 1 : 0

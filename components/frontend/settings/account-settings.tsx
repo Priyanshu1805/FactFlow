@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Mail, Phone, LogOut, Trash2, Save, X, AlertTriangle, CheckCircle, Loader2, Shield, RefreshCw, KeyRound } from "lucide-react"
+import { Mail, Phone, LogOut, Trash2, Save, X, AlertTriangle, CheckCircle, Loader2, Shield, RefreshCw, KeyRound, BadgeCheck } from "lucide-react"
 import { useAuthStore } from "@/store/auth-store"
 import { auth } from "@/lib/firebase"
 import { signOut, sendPasswordResetEmail, EmailAuthProvider, reauthenticateWithCredential } from "firebase/auth"
@@ -41,6 +41,13 @@ export function AccountSettings() {
   const [token2FA, setToken2FA] = useState("")
   const [isDisabling2FA, setIsDisabling2FA] = useState(false)
 
+  // Verification
+  const [verificationStatus, setVerificationStatus] = useState<"unverified" | "pending" | "verified" | "rejected">("unverified")
+  const [hasCriteriaMet, setHasCriteriaMet] = useState(false)
+  const [followersCount, setFollowersCount] = useState(0)
+  const totalViews = 0 // Mocked for now since backend doesn't aggregate views yet
+  const totalLikes = 0 // Mocked for now
+
   // Load profile from MongoDB on mount
   useEffect(() => {
     if (!user?.uid) return
@@ -62,6 +69,23 @@ export function AccountSettings() {
           if (data.user.isTwoFactorEnabled) {
             setIs2FAEnabled(true)
           }
+          if (data.user.verificationStatus) {
+            setVerificationStatus(data.user.verificationStatus)
+          } else if (data.user.isVerified) {
+            setVerificationStatus("verified")
+          }
+          
+          setFollowersCount(data.followersCount || 0)
+
+          // Check criteria
+          const isProfileComplete = 
+            (data.user.name && data.user.name.length > 0) &&
+            (data.user.bio && data.user.bio.length > 5) &&
+            (data.user.avatar || user.photoURL);
+            
+          const hasNotability = (data.followersCount >= 10000) || (totalViews >= 500000) || (totalLikes >= 500000);
+            
+          setHasCriteriaMet(!!isProfileComplete && hasNotability)
         }
       })
       .catch(() => {})
@@ -179,6 +203,36 @@ export function AccountSettings() {
       router.push("/login")
     } catch (err: any) {
       setErrorMsg("Logout failed: " + err.message)
+      setActionLoading(false)
+    }
+  }
+
+  const handleRequestVerification = async () => {
+    if (!user?.uid) return
+    if (!hasCriteriaMet) {
+      setErrorMsg("You do not meet the criteria for verification. Please complete your profile.")
+      return
+    }
+    setActionLoading(true)
+    setErrorMsg("")
+    try {
+      const res = await fetch(`${API}/users/request-verification`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ firebaseUid: user.uid })
+      })
+      if (!res.ok) throw new Error("Fetch failed")
+      const data = await res.json()
+      if (data.success) {
+        setVerificationStatus("pending")
+        setSavedMsg("Verification requested successfully! We will review your profile.")
+        setTimeout(() => setSavedMsg(""), 5000)
+      } else {
+        setErrorMsg(data.error)
+      }
+    } catch (err: any) {
+      setErrorMsg("Failed to request verification")
+    } finally {
       setActionLoading(false)
     }
   }
@@ -359,6 +413,51 @@ export function AccountSettings() {
               Send Password Reset Email
             </button>
           )}
+        </div>
+
+        {/* Verification Status */}
+        <div className="bg-[#0f0f0f] border border-[#262626] rounded-[20px] p-6 space-y-5 shadow-lg">
+          <div>
+            <h3 className="text-gray-900 dark:text-white font-bold flex items-center gap-2 text-lg">
+              <BadgeCheck className="w-5 h-5 text-blue-500" /> Account Verification
+            </h3>
+            <p className="text-gray-600 dark:text-white/[0.85] text-xs mt-1">Get the blue tick on your profile</p>
+          </div>
+
+          <div className="bg-[#181818] p-4 rounded-[16px] border border-[#262626] flex items-center justify-between">
+            <div>
+               <p className="text-gray-700 dark:text-white/80 text-sm font-bold">Current Status</p>
+               <p className={`text-xs mt-0.5 font-semibold ${
+                 verificationStatus === "verified" ? "text-blue-500" :
+                 verificationStatus === "pending" ? "text-orange-500" :
+                 verificationStatus === "rejected" ? "text-red-500" :
+                 "text-gray-500"
+               }`}>
+                 {verificationStatus.charAt(0).toUpperCase() + verificationStatus.slice(1)}
+               </p>
+            </div>
+            {verificationStatus === "unverified" || verificationStatus === "rejected" ? (
+              <button
+                onClick={handleRequestVerification}
+                disabled={actionLoading || !hasCriteriaMet}
+                className="px-4 py-2 bg-blue-600 hover:bg-blue-500 disabled:bg-[#262626] disabled:text-gray-500 text-white rounded-lg text-xs font-bold transition-colors"
+                title={!hasCriteriaMet ? "Profile criteria not met (Name, Bio, Avatar, and 10k followers or 500k views/likes required)" : "Apply for Verification"}
+              >
+                Apply
+              </button>
+            ) : verificationStatus === "verified" ? (
+              <BadgeCheck className="w-6 h-6 text-blue-500" />
+            ) : null}
+          </div>
+
+          <div className="bg-[#181818] p-4 border border-[#262626] rounded-[16px] text-gray-600 dark:text-white/[0.85] text-xs space-y-2">
+            <p className="font-bold">Requirements for Verification:</p>
+            <ul className="list-disc pl-4 space-y-1 text-[10px]">
+              <li className={hasCriteriaMet ? "text-green-500" : "text-red-400"}>Complete Profile (Name, Bio &gt; 5 chars, Avatar)</li>
+              <li className={hasCriteriaMet ? "text-green-500" : "text-red-400"}>Must have at least 10,000 followers</li>
+              <li>Adhere to Community Guidelines</li>
+            </ul>
+          </div>
         </div>
 
         {/* Danger Zone */}

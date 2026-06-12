@@ -104,39 +104,47 @@ export default function PublicProfilePage() {
 
   // Socket.io Real-time follow / profile update integration
   useEffect(() => {
-    if (!socket) return
+    if (!socket || !profile) return
 
-    const handleFollowerUpdate = (payload: { userId: string; followersCount: number; followingCount: number }) => {
-      if (profile && profile._id === payload.userId) {
-        setStats((prev: any) => ({
-          ...prev,
-          followers: payload.followersCount,
-          following: payload.followingCount
-        }))
-      }
+    socket.emit("join_profile", profile._id)
+
+    const handleProfileStatsUpdate = (payload: { followers: number; following: number }) => {
+      setStats((prev: any) => ({
+        ...prev,
+        followers: payload.followers,
+        following: payload.following
+      }))
     }
 
     const handleNewPost = (post: any) => {
-      if (post.author?.username === profile?.username) {
+      if (post.author?._id === profile?._id || post.author?.username === profile?.username) {
         setPosts((prev) => [post, ...prev])
+        setStats((prev: any) => ({ ...prev, posts: prev.posts + 1 }))
       }
     }
 
     const handlePostDeleted = (data: any) => {
-      setPosts((prev) => prev.filter(p => p._id !== data.postId))
+      setPosts((prev) => {
+        const index = prev.findIndex(p => p._id === data.postId)
+        if (index !== -1) {
+          setStats((s: any) => ({ ...s, posts: Math.max(0, s.posts - 1) }))
+        }
+        return prev.filter(p => p._id !== data.postId)
+      })
     }
 
     const handlePostUpdated = (updatedPost: any) => {
       setPosts((prev) => prev.map(p => p._id === updatedPost._id ? { ...p, ...updatedPost } : p))
     }
 
-    socket.on("follower_update", handleFollowerUpdate)
+    socket.on("profile_stats_update", handleProfileStatsUpdate)
     socket.on("new_post", handleNewPost)
     socket.on("post_deleted", handlePostDeleted)
     socket.on("post_updated", handlePostUpdated)
 
     return () => {
-      socket.off("follower_update", handleFollowerUpdate)
+      socket.emit("leave_profile", profile._id)
+      socket.off("profile_stats_update", handleProfileStatsUpdate)
       socket.off("new_post", handleNewPost)
       socket.off("post_deleted", handlePostDeleted)
       socket.off("post_updated", handlePostUpdated)
@@ -185,22 +193,24 @@ export default function PublicProfilePage() {
     }
     setFollowLoading(true)
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/follow`, {
-        method: "POST",
+      const endpoint = `${process.env.NEXT_PUBLIC_API_URL}/users/${profile._id}/${isFollowing ? "unfollow" : "follow"}`
+      const method = isFollowing ? "DELETE" : "POST"
+
+      const res = await fetch(endpoint, {
+        method,
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ firebaseUid: user.uid, targetUsername: profile.username })
+        body: JSON.stringify({ viewerUid: user.uid })
       })
+
       if (!res.ok) throw new Error("Fetch failed")
       const data = await res.json()
+      
       if (data.success) {
-        setIsFollowing(data.isFollowing)
-        setStats((prev: any) => ({
-          ...prev,
-          followers: data.targetFollowersCount
-        }))
-        toast.success(data.isFollowing ? `Followed @${profile.username}` : `Unfollowed @${profile.username}`)
+        setIsFollowing(!isFollowing)
+        // Note: The actual follower counts will update immediately via Socket.io `profile_stats_update`
+        toast.success(isFollowing ? `Unfollowed @${profile.username}` : `Followed @${profile.username}`)
       } else {
-        toast.error(data.error || "Failed to follow")
+        toast.error(data.error || "Failed to process follow request")
       }
     } catch {
       toast.error("Failed to process follow request")
@@ -284,39 +294,41 @@ export default function PublicProfilePage() {
                 
                 {/* Profile Picture Overlaying Banner */}
                 <div className="absolute -top-16 left-1/2 -translate-x-1/2 md:left-10 md:-top-20 md:translate-x-0 z-10">
-                  {(() => {
-                    const userStoryGroup = stories.find((g: any) => g.user.username === profile.username)
-                    return (
-                      <div 
-                        onClick={() => {
-                          if (userStoryGroup) {
-                            setActiveStoryGroup([userStoryGroup])
-                          }
-                        }}
-                        className={`w-28 h-28 sm:w-36 sm:h-36 rounded-full flex items-center justify-center text-4xl font-black text-white shrink-0 transition-transform shadow-xl ${
-                          userStoryGroup 
-                            ? "bg-gradient-to-tr from-yellow-400 via-red-500 to-fuchsia-600 p-[4px] cursor-pointer hover:scale-105" 
-                            : "bg-gradient-to-br from-red-500 to-purple-600 p-[3px]"
-                        }`}
-                      >
-                        <div className="w-full h-full rounded-full overflow-hidden bg-black border-4 border-black flex items-center justify-center">
-                          {profile.avatar ? (
-                            <img src={profile.avatar} alt={profile.name} className="w-full h-full object-cover" />
-                          ) : (
-                            profile.name.charAt(0).toUpperCase()
-                          )}
+                  <div className="relative w-28 h-28 sm:w-36 sm:h-36">
+                    {(() => {
+                      const userStoryGroup = stories.find((g: any) => g.user.username === profile.username)
+                      return (
+                        <div 
+                          onClick={() => {
+                            if (userStoryGroup) {
+                              setActiveStoryGroup([userStoryGroup])
+                            }
+                          }}
+                          className={`w-full h-full rounded-full flex items-center justify-center text-4xl font-black text-white shrink-0 transition-transform shadow-xl ${
+                            userStoryGroup 
+                              ? "bg-gradient-to-tr from-yellow-400 via-red-500 to-fuchsia-600 p-[4px] cursor-pointer hover:scale-105" 
+                              : "bg-gradient-to-br from-red-500 to-purple-600 p-[3px]"
+                          }`}
+                        >
+                          <div className="w-full h-full rounded-full overflow-hidden bg-black border-4 border-black flex items-center justify-center">
+                            {profile.avatar ? (
+                              <img src={profile.avatar} alt={profile.name} className="w-full h-full object-cover" />
+                            ) : (
+                              profile.name.charAt(0).toUpperCase()
+                            )}
+                          </div>
                         </div>
-                      </div>
-                    )
-                  })()}
-                  {isOwnProfile && (
-                    <button 
-                      onClick={() => setIsMenuOpen(true)}
-                      className="absolute bottom-1 right-1 w-7 h-7 bg-blue-500 rounded-full flex items-center justify-center border-2 border-black hover:scale-110 transition-transform shadow-lg"
-                    >
-                      <Plus className="w-4 h-4 text-white" strokeWidth={3} />
-                    </button>
-                  )}
+                      )
+                    })()}
+                    {isOwnProfile && (
+                      <button 
+                        onClick={() => setIsMenuOpen(true)}
+                        className="absolute bottom-0 right-0 sm:bottom-1 sm:right-1 w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center border-4 border-white dark:border-black hover:scale-110 transition-transform shadow-lg z-20"
+                      >
+                        <Plus className="w-5 h-5 text-white" strokeWidth={3} />
+                      </button>
+                    )}
+                  </div>
                 </div>
 
                 {/* Profile Info details */}

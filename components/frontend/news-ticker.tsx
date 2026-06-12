@@ -8,6 +8,7 @@ interface TickerArticle {
   _id: string
   title: string
   category: string
+  link?: string
 }
 
 export function NewsTicker() {
@@ -20,19 +21,45 @@ export function NewsTicker() {
   useEffect(() => {
     const fetchTicker = async () => {
       try {
+        let localNews: any[] = []
+        try {
+          const baseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api"
+          const dbRes = await fetch(`${baseUrl}/news?limit=15`)
+          const dbData = await dbRes.json()
+          if (dbData.data) {
+            localNews = dbData.data
+              .filter((item: any) => {
+                const itemSections = (item.sections && item.sections.length > 0) ? item.sections : [item.category];
+                return item.isBreaking || itemSections.includes("Live");
+              })
+              .map((item: any) => ({
+                _id: item._id,
+                title: item.title,
+                category: "Live",
+                link: `/article/${item._id}`
+              }))
+          }
+        } catch (e) {
+          console.error("Local ticker fetch failed", e)
+        }
+
         const res = await fetch(`/api/rss?url=${encodeURIComponent("http://feeds.bbci.co.uk/news/world/rss.xml")}`)
         const data = await res.json()
+        let fetchedData: any[] = []
         if (data.items && data.items.length > 0) {
-          const fetchedData = data.items.slice(0, 20).map((item: any) => ({
+          fetchedData = data.items.slice(0, 20).map((item: any) => ({
             _id: item.link || Math.random().toString(),
             title: item.title,
             category: item.categories?.[0] || "World",
             link: item.link
           }))
-          
-          let displayData = [...fetchedData]
-          if (fetchedData.length > 0 && fetchedData.length < 15) {
-             displayData = [...fetchedData, ...fetchedData, ...fetchedData, ...fetchedData, ...fetchedData]
+        }
+        
+        const combined = [...localNews, ...fetchedData]
+        if (combined.length > 0) {
+          let displayData = [...combined]
+          if (combined.length > 0 && combined.length < 15) {
+             displayData = [...combined, ...combined, ...combined, ...combined, ...combined]
           }
           setArticles(displayData)
         }
@@ -76,7 +103,7 @@ export function NewsTicker() {
         <div className="ticker-track">
           {/* Duplicate items for seamless loop */}
           {[...articles, ...articles].map((a, idx) => (
-            <span key={a._id + idx} className="inline-flex items-center mx-4 whitespace-nowrap">
+            <span key={a._id ? `${a._id}-${idx}` : `ticker-${idx}`} className="inline-flex items-center mx-4 whitespace-nowrap">
               <span className={`text-[11px] font-bold uppercase tracking-wider px-2 py-0.5 rounded mr-2 ${
                 isDark ? "bg-zinc-800 text-red-400" : "bg-gray-100 text-red-600"
               }`}>

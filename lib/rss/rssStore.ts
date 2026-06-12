@@ -17,6 +17,7 @@ export interface RSSItem {
   published: Date
   isPremium?: boolean
   tags?: string[]
+  sections?: string[]
   upvotes?: number
 }
 
@@ -34,15 +35,21 @@ interface RssState {
   prependLiveArticles: (newArticles: RSSItem[]) => void
 }
 
-// ART FALLBACKS
-const ART_FEEDS = [
+// GLOBAL FALLBACK FEEDS (to ensure no category is ever empty/hidden)
+const GLOBAL_FALLBACK_FEEDS = [
   { url: "https://www.theartnewspaper.com/rss.xml", source: "The Art Newspaper", category: "Art", lang: "english" },
   { url: "https://hyperallergic.com/feed/", source: "Hyperallergic", category: "Art", lang: "english" },
   { url: "https://www.artnews.com/feed/", source: "ARTnews", category: "Art", lang: "english" },
   { url: "https://www.thisiscolossal.com/feed/", source: "Colossal", category: "Art", lang: "english" },
-  { url: "https://www.juxtapoz.com/news/?format=feed", source: "Juxtapoz", category: "Art", lang: "english" }
+  { url: "https://www.vogue.com/feed/rss", source: "Vogue", category: "Lifestyle", lang: "english" },
+  { url: "https://www.gq.com/feed/rss", source: "GQ", category: "Lifestyle", lang: "english" },
+  { url: "https://www.architecturaldigest.com/feed/rss", source: "Architectural Digest", category: "Lifestyle", lang: "english" },
+  { url: "https://techcrunch.com/feed/", source: "TechCrunch", category: "Tech", lang: "english" },
+  { url: "https://www.skysports.com/rss/12040", source: "Sky Sports", category: "Sports", lang: "english" },
+  { url: "http://feeds.bbci.co.uk/news/world/rss.xml", source: "BBC News", category: "Politics", lang: "english" },
+  { url: "https://www.aljazeera.com/xml/rss/all.xml", source: "Al Jazeera", category: "World", lang: "english" },
+  { url: "https://rss.nytimes.com/services/xml/rss/nyt/Politics.xml", source: "NY Times", category: "Politics", lang: "english" }
 ]
-
 export const useRssStore = create<RssState>((set, get) => ({
   items: [],
   loading: false,
@@ -130,6 +137,7 @@ export const useRssStore = create<RssState>((set, get) => ({
               country: item.location || code.toUpperCase(),
               language: (item.language || "english").toLowerCase(),
               category: item.category || "General",
+              sections: (item.sections && item.sections.length > 0) ? item.sections : [item.category || "General"],
               published: new Date(item.publishedAt),
               isPremium: item.isPremium || false
             })))
@@ -171,7 +179,7 @@ export const useRssStore = create<RssState>((set, get) => ({
 
       // We only fetch external feeds ONCE on initial load (page 1) to supplement data if needed.
       // This is the fallback/supplemental RSS layer.
-      if (page === 1 && allItems.length < 10) {
+      if (page === 1) {
         const parser = new Parser({
           customFields: { item: [['media:content', 'mediaContent'], ['enclosure', 'enclosure']] }
         })
@@ -181,7 +189,7 @@ export const useRssStore = create<RssState>((set, get) => ({
             dynamicFeeds.push({ url: s.url, source: s.name, category: s.category, lang: activeLang })
           }
         }
-        const finalFeeds = [...dynamicFeeds, ...ART_FEEDS]
+        const finalFeeds = [...dynamicFeeds, ...GLOBAL_FALLBACK_FEEDS]
 
         const fetchPromises = finalFeeds.map(async (feed) => {
           try {

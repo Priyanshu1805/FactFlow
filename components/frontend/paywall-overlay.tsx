@@ -14,33 +14,41 @@ export function PaywallOverlay() {
 
           <h3 className="text-white text-2xl font-black mb-2">Premium Article</h3>
           <p className="text-gray-400 text-sm mb-6 leading-relaxed">
-            This article is exclusive to our subscribers. Upgrade to Pro or Premium to unlock unlimited access to premium journalism, ad-free reading, and more.
+            This article is exclusive to our subscribers. Upgrade your plan to unlock unlimited access to premium journalism, ad-free reading, and more.
           </p>
 
           <div className="space-y-3 mb-6">
-            <div className="flex items-center gap-3 p-3 rounded-xl bg-white/5 border border-white/10">
-              <Zap className="w-5 h-5 text-red-400 shrink-0" />
+            <div className="flex items-center gap-3 p-3 rounded-xl bg-blue-500/10 border border-blue-500/20">
+              <Zap className="w-5 h-5 text-blue-400 shrink-0" />
               <div className="text-left">
-                <p className="text-white text-sm font-semibold">Pro Plan — ₹99/month</p>
+                <p className="text-white text-sm font-semibold">Weekly Pass — ₹15/week</p>
                 <p className="text-gray-400 text-xs">Ad-free, all categories, premium articles</p>
               </div>
             </div>
-            <div className="flex items-center gap-3 p-3 rounded-xl bg-yellow-500/10 border border-yellow-500/20">
+            <div className="flex items-center gap-3 p-3 rounded-xl bg-white/5 border border-white/10 border-red-500/30">
+              <Star className="w-5 h-5 text-red-400 shrink-0" />
+              <div className="text-left">
+                <p className="text-white text-sm font-semibold">Monthly Pro — ₹99/month</p>
+                <p className="text-gray-400 text-xs">Weekly features + offline reading, HD reels</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3 p-3 rounded-xl bg-yellow-500/10 border border-yellow-500/20 relative overflow-hidden">
+              <div className="absolute -right-4 -top-4 w-12 h-12 bg-yellow-500/20 blur-xl"></div>
               <Crown className="w-5 h-5 text-yellow-400 shrink-0" />
               <div className="text-left">
-                <p className="text-white text-sm font-semibold">Premium Plan — ₹199/month</p>
-                <p className="text-gray-400 text-xs">Everything in Pro + offline, priority support</p>
+                <p className="text-white text-sm font-semibold">Yearly Premium — ₹399/year</p>
+                <p className="text-gray-400 text-xs">Monthly features + Custom Digest & priority support</p>
               </div>
             </div>
           </div>
 
           <Link
-            href="/premium"
+            href="/subscription"
             className="block w-full py-3 rounded-xl bg-gradient-to-r from-yellow-500 to-orange-500 text-black font-bold text-sm hover:shadow-[0_0_20px_rgba(234,179,8,0.3)] transition-all mb-3"
           >
             <span className="flex items-center justify-center gap-2">
               <Star className="w-4 h-4" />
-              Upgrade Now
+              View Plans & Upgrade
             </span>
           </Link>
 

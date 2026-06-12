@@ -4,6 +4,7 @@ import { useEffect, useState, useRef, useCallback } from "react"
 import { PostCard } from "./post-card"
 import { Loader2 } from "lucide-react"
 import { useSocket } from "@/hooks/use-socket"
+import { useAuthStore } from "@/store/auth-store"
 
 interface SocialFeedProps {
   isDark: boolean
@@ -48,11 +49,14 @@ export function SocialFeed({ isDark }: SocialFeedProps) {
     }
   }, [socket])
 
+  const { user } = useAuthStore()
+
   useEffect(() => {
     const fetchPosts = async () => {
       setLoading(true)
       try {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api"}/posts/feed?page=${page}&limit=5`)
+        const uidParam = user?.uid ? `&firebaseUid=${user.uid}` : ""
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api"}/posts/feed?page=${page}&limit=5${uidParam}`)
         const data = await res.json()
         
         if (data.success) {
@@ -74,7 +78,7 @@ export function SocialFeed({ isDark }: SocialFeedProps) {
     }
     
     fetchPosts()
-  }, [page])
+  }, [page, user?.uid])
 
   if (loading && page === 1) {
     return (

@@ -355,7 +355,7 @@ export function SocialFeedPage({ isDark, onStoryClick }: SocialFeedPageProps) {
     }
     setSearchLoading(true)
     const delay = setTimeout(() => {
-      const fetchUsers = fetch(`${API}/users?search=${encodeURIComponent(searchVal)}&limit=20`)
+      const fetchUsers = fetch(`${API}/users?search=${encodeURIComponent(searchVal)}&limit=20${user?.uid ? '&viewerUid=' + user.uid : ''}`)
         .then(res => {
           if (!res.ok) throw new Error("Fetch failed")
           return res.json()
@@ -398,28 +398,29 @@ export function SocialFeedPage({ isDark, onStoryClick }: SocialFeedPageProps) {
   const handleFollowToggle = async (targetUser: any) => {
     if (!user) { toast.error("Please login to follow"); return }
     try {
-      const res = await fetch(`${API}/users/follow`, {
-        method: "POST",
+      const isCurrentlyFollowing = targetUser.isFollowing;
+      const action = isCurrentlyFollowing ? "unfollow" : "follow";
+      const method = isCurrentlyFollowing ? "DELETE" : "POST";
+
+      const res = await fetch(`${API}/users/${targetUser._id}/${action}`, {
+        method,
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ firebaseUid: user.uid, targetUsername: targetUser.username })
+        body: JSON.stringify({ viewerUid: user.uid })
       })
       if (!res.ok) throw new Error("Fetch failed")
       const data = await res.json()
       if (data.success) {
         setSearchResults(prev => prev.map(u => {
           if (u._id === targetUser._id) {
-            const currentFollowers = u.followers || []
-            const isFollowing = currentFollowers.includes(user.id)
             return {
               ...u,
-              followers: isFollowing 
-                ? currentFollowers.filter((id: string) => id !== user.id) 
-                : [...currentFollowers, user.id]
+              isFollowing: !isCurrentlyFollowing,
+              followers: isCurrentlyFollowing ? Math.max(0, u.followers - 1) : u.followers + 1
             }
           }
           return u
         }))
-        toast.success(data.isFollowing ? `Followed @${targetUser.username}` : `Unfollowed @${targetUser.username}`)
+        toast.success(isCurrentlyFollowing ? `Unfollowed @${targetUser.username}` : `Followed @${targetUser.username}`)
       }
     } catch {
       toast.error("Follow action failed")
@@ -635,7 +636,7 @@ export function SocialFeedPage({ isDark, onStoryClick }: SocialFeedPageProps) {
                       <h4 className={`text-xs font-bold uppercase tracking-wider mb-3 ${isDark ? "text-white/40" : "text-gray-400"}`}>Creators</h4>
                       <div className="flex flex-col gap-3">
                         {searchResults.map(u => {
-                          const isFollowing = u.followers?.includes(user?.id)
+                          const isFollowing = u.isFollowing
                           return (
                             <div 
                               key={u._id}
@@ -662,7 +663,9 @@ export function SocialFeedPage({ isDark, onStoryClick }: SocialFeedPageProps) {
                                       </svg>
                                     )}
                                   </p>
-                                  <p className="text-xs text-gray-400">@{u.username}</p>
+                                  <p className="text-xs text-gray-400">
+                                    @{u.username} • {u.followers || 0} {(u.followers === 1) ? 'follower' : 'followers'}
+                                  </p>
                                 </div>
                               </Link>
 

@@ -3,7 +3,7 @@
 import { useMemo } from "react"
 import { useRssStore } from "@/lib/rss/rssStore"
 import { motion } from "framer-motion"
-import { Trophy, ArrowRight, Clock, User, Sparkles } from "lucide-react"
+import { Trophy, ArrowRight, Clock, User, Sparkles , Volume2} from "lucide-react"
 import { useTheme } from "@/components/theme-provider"
 import { SafeImage as Image } from "@/components/frontend/safe-image"
 import Link from "next/link"
@@ -23,7 +23,10 @@ export function SportsSection() {
 
   const sectionNews = useMemo(() => {
     const filtered = rssItems
-      .filter(item => item.category === "Sports" || item.category === "Cricket" || item.category === "Football")
+      .filter(item => {
+        const itemSections = (item.sections && item.sections.length > 0) ? item.sections : [item.category];
+        return itemSections.some(c => ["sports", "cricket", "football"].includes(c?.toLowerCase()));
+      })
       .sort((a, b) => {
         const aImg = a.image && a.image.trim() !== "" ? 1 : 0
         const bImg = b.image && b.image.trim() !== "" ? 1 : 0
@@ -196,6 +199,18 @@ export function SportsSection() {
                         <div className="flex items-center gap-1.5">
                           <Clock className="w-3.5 h-3.5" />
                           {featured.time}
+                      {settings?.enableAudioNews && (
+                        <button
+                          onClick={(e) => {
+                            e.preventDefault(); e.stopPropagation();
+                            const u = new SpeechSynthesisUtterance(featured.title + ". " + (featured.excerpt || ""));
+                            window.speechSynthesis.speak(u);
+                          }}
+                          className={`flex items-center gap-1.5 px-2 py-1 rounded-lg text-xs font-bold transition-all ml-3 ${isDark ? "bg-white/10 hover:bg-white/20 text-white" : "bg-black/5 hover:bg-black/10 text-gray-700"}`}
+                        >
+                          <Volume2 className="w-3.5 h-3.5" /> Listen
+                        </button>
+                      )}
                         </div>
                       )}
                     </div>
@@ -259,6 +274,18 @@ export function SportsSection() {
                         } ${isDark ? "text-white/40" : "text-gray-400"}`}>
                           <Clock className="w-3.5 h-3.5" />
                           {article.time}
+                      {settings?.enableAudioNews && (
+                        <button
+                          onClick={(e) => {
+                            e.preventDefault(); e.stopPropagation();
+                            const u = new SpeechSynthesisUtterance(article.title + ". " + (article.excerpt || ""));
+                            window.speechSynthesis.speak(u);
+                          }}
+                          className={`flex items-center gap-1.5 px-2 py-1 rounded-lg text-xs font-bold transition-all ml-2 ${isDark ? "bg-white/10 hover:bg-white/20 text-white" : "bg-black/5 hover:bg-black/10 text-gray-700"}`}
+                        >
+                          <Volume2 className="w-3.5 h-3.5" /> Listen
+                        </button>
+                      )}
                         </div>
                       )}
                       <div className={`w-8 h-8 rounded-full flex items-center justify-center border ${isDark ? "border-white/10 bg-white/5 text-white/50 group-hover:bg-white/20 group-hover:text-white" : "border-gray-200 bg-gray-50 text-gray-400 group-hover:bg-gray-200 group-hover:text-gray-900"} transition-all duration-300`}>

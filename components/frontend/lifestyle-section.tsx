@@ -3,7 +3,7 @@
 import { useMemo } from "react"
 import { useRssStore } from "@/lib/rss/rssStore"
 import { motion } from "framer-motion"
-import { Users, ArrowRight, Clock, User, Sparkles } from "lucide-react"
+import { Users, ArrowRight, Clock, User, Sparkles , Volume2} from "lucide-react"
 import { useTheme } from "@/components/theme-provider"
 import { SafeImage as Image } from "@/components/frontend/safe-image"
 import Link from "next/link"
@@ -31,14 +31,10 @@ export function LifestyleSection() {
 
   const sectionNews = useMemo(() => {
     const filtered = rssItems
-      .filter(item =>
-        item.category === "Lifestyle" ||
-        item.category === "Entertainment" ||
-        item.category === "General" ||
-        item.category === "Health" ||
-        item.category === "Fashion" ||
-        item.category === "Travel"
-      )
+      .filter(item => {
+        const itemSections = (item.sections && item.sections.length > 0) ? item.sections : [item.category];
+        return itemSections.some(c => ["lifestyle", "entertainment", "general", "health", "fashion", "travel"].includes(c?.toLowerCase()));
+      })
       .sort((a, b) => {
         const aImg = a.image && a.image.trim() !== "" ? 1 : 0
         const bImg = b.image && b.image.trim() !== "" ? 1 : 0
@@ -143,6 +139,18 @@ export function LifestyleSection() {
                         </div>
                       )}
                       <div className="flex items-center gap-1.5"><Clock className="w-3.5 h-3.5" />{featured.time}</div>
+                      {settings?.enableAudioNews && (
+                        <button
+                          onClick={(e) => {
+                            e.preventDefault(); e.stopPropagation();
+                            const u = new SpeechSynthesisUtterance(featured.title + ". " + (featured.excerpt || ""));
+                            window.speechSynthesis.speak(u);
+                          }}
+                          className={`flex items-center gap-1.5 px-2 py-1 rounded-lg text-xs font-bold transition-all ml-3 ${isDark ? "bg-white/10 hover:bg-white/20 text-white" : "bg-black/5 hover:bg-black/10 text-gray-700"}`}
+                        >
+                          <Volume2 className="w-3.5 h-3.5" /> Listen
+                        </button>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -177,6 +185,18 @@ export function LifestyleSection() {
                     <div className="mt-auto flex items-center justify-between">
                       <div className={`flex items-center gap-1.5 text-xs font-medium ${isDark ? "text-white/40" : "text-gray-400"}`}>
                         <Clock className="w-3.5 h-3.5" />{article.time}
+                      {settings?.enableAudioNews && (
+                        <button
+                          onClick={(e) => {
+                            e.preventDefault(); e.stopPropagation();
+                            const u = new SpeechSynthesisUtterance(article.title + ". " + (article.excerpt || ""));
+                            window.speechSynthesis.speak(u);
+                          }}
+                          className={`flex items-center gap-1.5 px-2 py-1 rounded-lg text-xs font-bold transition-all ml-2 ${isDark ? "bg-white/10 hover:bg-white/20 text-white" : "bg-black/5 hover:bg-black/10 text-gray-700"}`}
+                        >
+                          <Volume2 className="w-3.5 h-3.5" /> Listen
+                        </button>
+                      )}
                       </div>
                       <div className={`w-7 h-7 rounded-full flex items-center justify-center border ${isDark ? "border-white/10 bg-white/5 text-white/40 group-hover:bg-pink-500/20 group-hover:text-pink-400 group-hover:border-pink-500/30" : "border-gray-200 bg-gray-50 text-gray-400 group-hover:bg-pink-50 group-hover:text-pink-500"} transition-all duration-300`}>
                         <ArrowRight className="w-3.5 h-3.5 -rotate-45 group-hover:rotate-0 transition-transform duration-300" />

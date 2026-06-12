@@ -9,6 +9,8 @@ const TOPIC_LABEL_TO_ID: Record<string, string> = {
   "Sports": "sports",
   "Tech": "tech",
   "Art": "art",
+  "Memes": "art",
+  "memes": "art",
 }
 
 /** Normalize a topic that may be a display label or already an ID into lowercase ID */
@@ -29,7 +31,7 @@ interface FeedState {
 export const useFeedStore = create<FeedState>()(
   persist(
     (set) => ({
-      followedTopics: [],
+      followedTopics: ["politics", "trending", "lifestyle", "sports", "tech", "art"],
       feedSortOrder: "latest",
       autoPlay: true,
       
@@ -42,8 +44,10 @@ export const useFeedStore = create<FeedState>()(
           // Normalize topic labels to IDs for consistent filtering
           const rawTopics: string[] = data.followedTopics || []
           const normalizedTopics = rawTopics.map(normalizeTopicId)
+          // Ensure that if it has topics, we keep it, otherwise default to all
+          const finalTopics = normalizedTopics.length > 0 ? normalizedTopics : ["politics", "trending", "lifestyle", "sports", "tech", "art"]
           set({
-            followedTopics: normalizedTopics,
+            followedTopics: finalTopics,
             feedSortOrder: data.feedSortOrder || "latest",
             autoPlay: data.reels?.autoPlay ?? true
           })

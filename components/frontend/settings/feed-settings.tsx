@@ -63,10 +63,13 @@ export function FeedSettings() {
           // Map backend labels to frontend IDs for local UI state
           const backendTopics = data.data.followedTopics || []
           const mappedIds = backendTopics.map((topic: string) => {
+            if (topic.toLowerCase() === "memes") return "art"
             const match = CATEGORIES.find(c => c.label === topic || c.id === topic)
-            return match ? match.id : topic.toLowerCase()
-          })
-          const finalIds = mappedIds.length > 0 ? mappedIds : DEFAULT_TOPICS
+            return match ? match.id : null
+          }).filter((id): id is string => id !== null)
+          
+          const uniqueIds = Array.from(new Set(mappedIds))
+          const finalIds = uniqueIds.length > 0 ? uniqueIds : DEFAULT_TOPICS
           setSelected(finalIds)
           // initFromBackend normalizes topics to IDs and updates the feed store
           initFromBackend(data.data)

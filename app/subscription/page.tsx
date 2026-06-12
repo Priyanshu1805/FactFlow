@@ -4,14 +4,13 @@ import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 
 // ─── Types ──────────────────────────────────────────────────────────────────
-type Plan = "free" | "pro" | "premium";
-type Cycle = "monthly" | "yearly";
+type Plan = "free" | "weekly" | "monthly" | "yearly";
 type Popup = "expiring" | "expired" | "failed" | "success" | null;
 
 interface SubData {
     plan: Plan;
     status: string;
-    billingCycle?: Cycle;
+    billingCycle?: string;
     startDate?: string;
     endDate?: string;
     paymentMethod?: string;
@@ -31,13 +30,11 @@ interface PaymentRecord {
 // ─── Constants ──────────────────────────────────────────────────────────────
 const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:5000/api";
 
-const PLAN_PRICES: Record<string, Record<Cycle, number>> = {
-    pro: { monthly: 99, yearly: 79 },
-    premium: { monthly: 199, yearly: 159 },
+const PLAN_PRICES: Record<string, number> = {
+    weekly: 15,
+    monthly: 99,
+    yearly: 399,
 };
-
-const PLAN_YEARLY_BILLED: Record<string, number> = { pro: 950, premium: 1910 };
-const PLAN_SAVINGS: Record<string, number> = { pro: 238, premium: 478 };
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 function authHeader(): Record<string, string> {
@@ -64,9 +61,9 @@ async function apiFetch<T>(path: string, opts?: RequestInit): Promise<T> {
     return json.data ?? json;
 }
 
-function calcFinal(plan: Plan, cycle: Cycle, coupon: string): number {
+function calcFinal(plan: Plan, coupon: string): number {
     if (plan === "free") return 0;
-    let base = PLAN_PRICES[plan][cycle];
+    let base = PLAN_PRICES[plan] ?? 0;
     const code = coupon.trim().toUpperCase();
     if (code === "GLOW20") base = Math.round(base * 0.8);
     if (code === "WELCOME") base = Math.max(0, base - 50);
@@ -100,13 +97,12 @@ export default function SubscriptionPage() {
     // Plan state
     const [sub, setSub] = useState<SubData>({ plan: "free", status: "inactive" });
     const [history, setHistory] = useState<PaymentRecord[]>([]);
-    const [cycle, setCycle] = useState<Cycle>("monthly");
+
     const [loading, setLoading] = useState(true);
 
     // Modal state
     const [showModal, setShowModal] = useState(false);
-    const [upgradePlan, setUpgradePlan] = useState<Plan>("pro");
-    const [modalCycle, setModalCycle] = useState<Cycle>("monthly");
+    const [upgradePlan, setUpgradePlan] = useState<Plan>("monthly");
     const [payStep, setPayStep] = useState(1);
     const [coupon, setCoupon] = useState("");
     const [couponState, setCouponState] = useState<"idle" | "valid" | "invalid">("idle");
@@ -153,7 +149,8 @@ export default function SubscriptionPage() {
     // ─── Load Razorpay script ────────────────────────────────────────────────
     useEffect(() => {
         const s = document.createElement("script");
-        s.src = "https://checkout.razorpay.com/v1/checkout.js";
+        // Using staging script. To go live, remove "-stage"
+        s.src = "https://securegw-stage.paytm.in/merchantpgpui/checkoutjs/merchants/" + (process.env.NEXT_PUBLIC_PAYTM_MID || "YOUR_TEST_MID") + ".js";
         document.body.appendChild(s);
         return () => { document.body.removeChild(s); };
     }, []);
@@ -161,7 +158,6 @@ export default function SubscriptionPage() {
     // ─── Open upgrade modal ──────────────────────────────────────────────────
     const openModal = (plan: Plan) => {
         setUpgradePlan(plan);
-        setModalCycle(cycle);
         setPayStep(1);
         setCoupon(""); setCouponState("idle");
         setShowModal(true);
@@ -174,73 +170,91 @@ export default function SubscriptionPage() {
         else setCouponState("invalid");
     };
 
-    // ─── Handle payment via Razorpay ─────────────────────────────────────────
+    // ─── Handle payment via Paytm ─────────────────────────────────────────
     const handlePay = useCallback(async () => {
         setPaying(true);
         try {
             // 1. Create order on backend
             const orderData = await apiFetch<{
-                orderId: string; amount: number; currency: string; keyId: string;
+                orderId: string; txnToken: string; amount: number; mid: string;
             }>("/subscription/create-order", {
                 method: "POST",
-                body: JSON.stringify({ plan: upgradePlan, billingCycle: modalCycle, coupon }),
+                body: JSON.stringify({ plan: upgradePlan, coupon }),
             });
 
-            // 2. Open Razorpay popup
-            const options = {
-                key: orderData.keyId,
-                amount: orderData.amount,
-                currency: orderData.currency,
-                order_id: orderData.orderId,
-                name: "Fact Flow News",
-                description: `${upgradePlan.toUpperCase()} Plan — ${modalCycle}`,
-                theme: { color: "#e84118" },
-                prefill: { contact: "", email: "" },
-                handler: async (response: {
-                    razorpay_order_id: string;
-                    razorpay_payment_id: string;
-                    razorpay_signature: string;
-                }) => {
-                    // 3. Verify on backend
-                    const verifyData = await apiFetch<SubData>("/subscription/verify-payment", {
-                        method: "POST",
-                        body: JSON.stringify({
-                            ...response,
-                            plan: upgradePlan,
-                            billingCycle: modalCycle,
-                            paymentMethod: "Razorpay Checkout",
-                        }),
-                    });
-
-                    setTxnId(response.razorpay_payment_id);
-                    setSub(verifyData);
-                    setPayStep(4);
-                    setPaying(false);
-                    setShowConfetti(true);
-                    setTimeout(() => setShowConfetti(false), 4000);
-
-                    // Refresh history
-                    const h = await apiFetch<PaymentRecord[]>("/subscription/billing-history");
-                    setHistory(h);
-
-                    setTimeout(() => {
-                        setShowModal(false);
-                        setPopup("success");
-                        setTimeout(() => setPopup(null), 4000);
-                    }, 3000);
+            // 2. Open Paytm popup
+            const config = {
+                root: "",
+                flow: "DEFAULT",
+                data: {
+                    orderId: orderData.orderId,
+                    token: orderData.txnToken,
+                    tokenType: "TXN_TOKEN",
+                    amount: (orderData.amount / 100).toFixed(2),
                 },
-                modal: {
-                    ondismiss: () => setPaying(false),
-                },
+                handler: {
+                    notifyMerchant: function(eventName: string, data: any) {
+                        console.log("notifyMerchant handler function called", eventName, data);
+                    },
+                    transactionStatus: async function(paymentStatus: any) {
+                        // @ts-ignore
+                        window.Paytm.CheckoutJS.close();
+                        
+                        if (paymentStatus.STATUS === "TXN_SUCCESS") {
+                            // 3. Verify on backend
+                            const verifyData = await apiFetch<SubData>("/subscription/verify-payment", {
+                                method: "POST",
+                                body: JSON.stringify({
+                                    paytm_order_id: paymentStatus.ORDERID,
+                                    paytm_transaction_id: paymentStatus.TXNID,
+                                    plan: upgradePlan,
+                                    paymentMethod: "Paytm Checkout",
+                                }),
+                            });
+
+                            setTxnId(paymentStatus.TXNID);
+                            setSub(verifyData);
+                            setPayStep(4);
+                            setPaying(false);
+                            setShowConfetti(true);
+                            setTimeout(() => setShowConfetti(false), 4000);
+
+                            // Refresh history
+                            const h = await apiFetch<PaymentRecord[]>("/subscription/billing-history");
+                            setHistory(h);
+
+                            setTimeout(() => {
+                                setShowModal(false);
+                                setPopup("success");
+                                setTimeout(() => setPopup(null), 4000);
+                            }, 3000);
+                        } else {
+                            setPaying(false);
+                            setPopup("failed");
+                        }
+                    }
+                }
             };
 
-            // @ts-ignore — Razorpay is loaded via CDN
-            new window.Razorpay(options).open();
+            // @ts-ignore
+            if (window.Paytm && window.Paytm.CheckoutJS) {
+                // @ts-ignore
+                window.Paytm.CheckoutJS.init(config).then(function onSuccess() {
+                    // @ts-ignore
+                    window.Paytm.CheckoutJS.invoke();
+                }).catch(function onError(error: any) {
+                    setPaying(false);
+                    setPopup("failed");
+                });
+            } else {
+                toast.error("Paytm script not loaded");
+                setPaying(false);
+            }
         } catch (err: any) {
             setPaying(false);
             setPopup("failed");
         }
-    }, [upgradePlan, modalCycle, coupon]);
+    }, [upgradePlan, coupon]);
 
     // ─── Cancel subscription ─────────────────────────────────────────────────
     const cancelSub = async () => {
@@ -269,18 +283,18 @@ export default function SubscriptionPage() {
         end.setMonth(end.getMonth() + 1);
         setSub({
             plan, status: "active",
-            billingCycle: "monthly",
+            billingCycle: plan,
             startDate: now.toLocaleDateString("en-IN"),
             endDate: end.toLocaleDateString("en-IN"),
             paymentMethod: "Visa •••• 4242",
-            amount: plan === "pro" ? 99 : 199,
+            amount: plan === "weekly" ? 15 : plan === "monthly" ? 99 : 399,
             daysLeft: 30,
         });
     };
 
     // ─── Price helpers ───────────────────────────────────────────────────────
-    const basePrice = upgradePlan === "free" ? 0 : PLAN_PRICES[upgradePlan][modalCycle];
-    const finalPrice = calcFinal(upgradePlan, modalCycle, coupon);
+    const basePrice = upgradePlan === "free" ? 0 : PLAN_PRICES[upgradePlan];
+    const finalPrice = calcFinal(upgradePlan, coupon);
     const discount = basePrice - finalPrice;
 
     // ─── Render ──────────────────────────────────────────────────────────────
@@ -388,92 +402,72 @@ export default function SubscriptionPage() {
                             }`}>Active</span>
                     </div>
 
-                    {/* ── Billing toggle ── */}
-                    <div className="flex justify-center mb-8">
-                        <div className="flex bg-[#1a1a1a] p-1 rounded-xl gap-1">
-                            {(["monthly", "yearly"] as Cycle[]).map(c => (
-                                <button key={c} onClick={() => setCycle(c)}
-                                    className={`px-5 py-2 rounded-lg text-sm font-semibold transition-all ${cycle === c ? "bg-[#e84118] text-white" : "text-gray-400 hover:text-white"
-                                        }`}>
-                                    {c.charAt(0).toUpperCase() + c.slice(1)}
-                                    {c === "yearly" && (
-                                        <span className="ml-2 bg-green-700 text-green-200 text-[10px] px-2 py-0.5 rounded-full">-20%</span>
-                                    )}
-                                </button>
-                            ))}
-                        </div>
-                    </div>
-
                     {/* ── Plan cards ── */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-8">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 mb-8 mt-4">
 
                         {/* Free */}
-                        <div className={`bg-[#1a1a1a] rounded-2xl p-6 border transition-all hover:scale-[1.02] ${sub.plan === "free" ? "border-gray-500" : "border-[#2a2a2a]"
-                            }`}>
+                        <div className={`bg-[#1a1a1a] rounded-2xl p-6 border transition-all hover:scale-[1.02] flex flex-col ${sub.plan === "free" ? "border-gray-500" : "border-[#2a2a2a]"}`}>
                             <span className="text-3xl">⭐</span>
                             <h3 className="text-2xl font-bold mt-3 mb-2">Free</h3>
                             <p className="text-4xl font-bold mb-5">₹0 <span className="text-sm font-normal text-gray-400">/forever</span></p>
-                            {["Latest news updates", "Basic reels feed", "5 categories only", "Standard notifications", "Web access only"].map(f => (
-                                <p key={f} className="text-sm mb-2"><span className="text-green-400 mr-2">✓</span>{f}</p>
-                            ))}
-                            {["Ad-free experience", "Premium articles", "Offline reading", "Priority support"].map(f => (
-                                <p key={f} className="text-sm mb-2 line-through text-gray-600"><span className="mr-2">✓</span>{f}</p>
-                            ))}
+                            <div className="flex-1">
+                                {["Latest news updates", "Basic reels feed", "5 categories only", "Standard ads"].map(f => (
+                                    <p key={f} className="text-sm mb-2"><span className="text-green-400 mr-2">✓</span>{f}</p>
+                                ))}
+                                {["Ad-free experience", "Premium articles", "All categories (15+)"].map(f => (
+                                    <p key={f} className="text-sm mb-2 line-through text-gray-600"><span className="mr-2">✓</span>{f}</p>
+                                ))}
+                            </div>
                             <button disabled className="w-full mt-5 bg-[#333] text-gray-500 py-3 rounded-xl font-semibold cursor-default">
                                 {sub.plan === "free" ? "Current Plan" : "Free Tier"}
                             </button>
                         </div>
 
-                        {/* Pro */}
-                        <div className="bg-[#1a1a1a] rounded-2xl p-6 border border-[#e84118] shadow-[0_0_20px_rgba(232,65,24,0.15)] hover:shadow-[0_0_30px_rgba(232,65,24,0.3)] hover:scale-[1.02] transition-all relative">
-                            <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-[#e84118] text-white text-xs px-3 py-1 rounded-full font-semibold">Most Popular</div>
-                            <span className="text-3xl">⚡</span>
-                            <h3 className="text-2xl font-bold mt-3 mb-1 text-[#e84118]">Pro</h3>
-                            <p className="text-4xl font-bold text-[#e84118]">₹{PLAN_PRICES.pro[cycle]} <span className="text-sm font-normal text-gray-400">/month</span></p>
-                            {cycle === "yearly" && (
-                                <p className="text-xs text-green-400 mb-3">Billed ₹{PLAN_YEARLY_BILLED.pro}/year · Save ₹{PLAN_SAVINGS.pro}</p>
-                            )}
-                            <div className="mt-4">
-                                {["Everything in Free", "Ad-free experience", "All categories (15+)", "Breaking news alerts", "Premium articles", "HD reels", "Mobile + Web"].map(f => (
+                        {/* Weekly */}
+                        <div className={`bg-[#1a1a1a] rounded-2xl p-6 border transition-all hover:scale-[1.02] flex flex-col relative ${sub.plan === "weekly" ? "border-[#3498db] shadow-[0_0_20px_rgba(52,152,219,0.15)]" : "border-[#2a2a2a] hover:border-[#3498db]"}`}>
+                            <span className="text-3xl">🚀</span>
+                            <h3 className="text-2xl font-bold mt-3 mb-1 text-[#3498db]">Weekly Pass</h3>
+                            <p className="text-4xl font-bold text-[#3498db]">₹{PLAN_PRICES.weekly} <span className="text-sm font-normal text-gray-400">/week</span></p>
+                            <div className="mt-4 flex-1">
+                                {["Ad-free experience", "All categories (15+)", "Premium articles", "Great for short trials"].map(f => (
                                     <p key={f} className="text-sm mb-2"><span className="text-green-400 mr-2">✓</span>{f}</p>
                                 ))}
-                                {["Offline reading", "Priority support"].map(f => (
-                                    <p key={f} className="text-sm mb-2 line-through text-gray-600"><span className="mr-2">✓</span>{f}</p>
-                                ))}
                             </div>
-                            <button
-                                onClick={() => openModal("pro")}
-                                disabled={sub.plan === "pro" || sub.plan === "premium"}
-                                className={`w-full mt-4 py-3 rounded-xl font-semibold transition-all ${sub.plan === "pro" || sub.plan === "premium"
-                                        ? "bg-[#333] text-gray-500 cursor-default"
-                                        : "bg-[#e84118] hover:bg-[#c73510] text-white"
-                                    }`}>
-                                {sub.plan === "pro" ? "Current Plan" : sub.plan === "premium" ? "Current Plan" : "Upgrade to Pro"}
+                            <button onClick={() => openModal("weekly")} disabled={sub.plan === "weekly" || sub.plan === "monthly" || sub.plan === "yearly"} className={`w-full mt-4 py-3 rounded-xl font-semibold transition-all ${sub.plan === "weekly" || sub.plan === "monthly" || sub.plan === "yearly" ? "bg-[#333] text-gray-500 cursor-default" : "bg-[#3498db] hover:bg-[#2980b9] text-white"}`}>
+                                {sub.plan === "weekly" ? "Current Plan" : sub.plan === "monthly" || sub.plan === "yearly" ? "Included in Plan" : "Get Weekly Pass"}
                             </button>
                         </div>
 
-                        {/* Premium */}
-                        <div className="bg-[#1a1a1a] rounded-2xl p-6 border border-yellow-500/60 shadow-[0_0_20px_rgba(240,165,0,0.12)] hover:shadow-[0_0_30px_rgba(240,165,0,0.3)] hover:scale-[1.02] transition-all relative">
-                            <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-[#f0a500] text-black text-xs px-3 py-1 rounded-full font-semibold">Best Value</div>
-                            <span className="text-3xl">👑</span>
-                            <h3 className="text-2xl font-bold mt-3 mb-1 text-[#f0a500]">Premium</h3>
-                            <p className="text-4xl font-bold text-[#f0a500]">₹{PLAN_PRICES.premium[cycle]} <span className="text-sm font-normal text-gray-400">/month</span></p>
-                            {cycle === "yearly" && (
-                                <p className="text-xs text-green-400 mb-3">Billed ₹{PLAN_YEARLY_BILLED.premium}/year · Save ₹{PLAN_SAVINGS.premium}</p>
-                            )}
-                            <div className="mt-4">
-                                {["Everything in Pro", "Offline reading", "Early access to features", "Priority customer support", "Custom news digest email", "No ads ever", "Multi-device sync"].map(f => (
+                        {/* Monthly */}
+                        <div className="bg-[#1a1a1a] rounded-2xl p-6 border border-[#e84118] shadow-[0_0_20px_rgba(232,65,24,0.15)] hover:shadow-[0_0_30px_rgba(232,65,24,0.3)] hover:scale-[1.02] transition-all flex flex-col relative">
+                            <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-[#e84118] text-white text-xs px-3 py-1 rounded-full font-semibold">Most Popular</div>
+                            <span className="text-3xl">⚡</span>
+                            <h3 className="text-2xl font-bold mt-3 mb-1 text-[#e84118]">Monthly Pro</h3>
+                            <p className="text-4xl font-bold text-[#e84118]">₹{PLAN_PRICES.monthly} <span className="text-sm font-normal text-gray-400">/month</span></p>
+                            <div className="mt-4 flex-1">
+                                {["Everything in Weekly", "Billed Monthly", "Cancel anytime"].map(f => (
                                     <p key={f} className="text-sm mb-2"><span className="text-green-400 mr-2">✓</span>{f}</p>
                                 ))}
                             </div>
-                            <button
-                                onClick={() => openModal("premium")}
-                                disabled={sub.plan === "premium"}
-                                className={`w-full mt-4 py-3 rounded-xl font-semibold transition-all ${sub.plan === "premium"
-                                        ? "bg-[#333] text-gray-500 cursor-default"
-                                        : "bg-[#f0a500] hover:bg-[#d99200] text-black"
-                                    }`}>
-                                {sub.plan === "premium" ? "Current Plan" : "Upgrade to Premium"}
+                            <button onClick={() => openModal("monthly")} disabled={sub.plan === "monthly" || sub.plan === "yearly"} className={`w-full mt-4 py-3 rounded-xl font-semibold transition-all ${sub.plan === "monthly" || sub.plan === "yearly" ? "bg-[#333] text-gray-500 cursor-default" : "bg-[#e84118] hover:bg-[#c73510] text-white"}`}>
+                                {sub.plan === "monthly" ? "Current Plan" : sub.plan === "yearly" ? "Included in Plan" : "Upgrade to Monthly"}
+                            </button>
+                        </div>
+
+                        {/* Yearly */}
+                        <div className="bg-[#1a1a1a] rounded-2xl p-6 border border-yellow-500/60 shadow-[0_0_20px_rgba(240,165,0,0.12)] hover:shadow-[0_0_30px_rgba(240,165,0,0.3)] hover:scale-[1.02] transition-all flex flex-col relative">
+                            <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-[#f0a500] text-black text-xs px-3 py-1 rounded-full font-semibold">Best Value</div>
+                            <span className="text-3xl">👑</span>
+                            <h3 className="text-2xl font-bold mt-3 mb-1 text-[#f0a500]">Yearly Premium</h3>
+                            <p className="text-4xl font-bold text-[#f0a500]">₹{PLAN_PRICES.yearly} <span className="text-sm font-normal text-gray-400">/year</span></p>
+                            <p className="text-xs text-green-400 mb-3">Save ₹789 compared to monthly!</p>
+                            <div className="mt-4 flex-1">
+                                {["Everything in Monthly", "Best Value", "Billed Yearly", "No ads ever"].map(f => (
+                                    <p key={f} className="text-sm mb-2"><span className="text-green-400 mr-2">✓</span>{f}</p>
+                                ))}
+                            </div>
+                            <button onClick={() => openModal("yearly")} disabled={sub.plan === "yearly"} className={`w-full mt-4 py-3 rounded-xl font-semibold transition-all ${sub.plan === "yearly" ? "bg-[#333] text-gray-500 cursor-default" : "bg-[#f0a500] hover:bg-[#d99200] text-black"}`}>
+                                {sub.plan === "yearly" ? "Current Plan" : "Upgrade to Yearly"}
                             </button>
                         </div>
                     </div>
@@ -487,24 +481,21 @@ export default function SubscriptionPage() {
                                     <tr className="text-gray-500">
                                         <th className="text-left py-2 pr-4">Feature</th>
                                         <th className="text-center py-2 px-3">Free</th>
-                                        <th className="text-center py-2 px-3 text-[#e84118]">Pro</th>
-                                        <th className="text-center py-2 px-3 text-[#f0a500]">Premium</th>
+                                        <th className="text-center py-2 px-3 text-[#3498db]">Weekly</th>
+                                        <th className="text-center py-2 px-3 text-[#e84118]">Monthly</th>
+                                        <th className="text-center py-2 px-3 text-[#f0a500]">Yearly</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     {[
-                                        ["Categories", "5 only", "All 15+", "All 15+"],
-                                        ["Breaking News", false, true, true],
-                                        ["Premium Articles", false, true, true],
-                                        ["HD Reels", false, true, true],
-                                        ["Offline Reading", false, false, true],
-                                        ["Custom Digest", false, false, true],
-                                        ["Multi-device", false, false, true],
-                                    ].map(([label, f, p, pm]) => (
+                                        ["Categories", "5 only", "All 15+", "All 15+", "All 15+"],
+                                        ["Ad-Free", false, true, true, true],
+                                        ["Premium Articles", false, true, true, true],
+                                    ].map(([label, f, w, m, y]) => (
                                         <tr key={String(label)} className="border-t border-[#222]">
                                             <td className="py-2 pr-4 text-gray-300">{label}</td>
-                                            {[f, p, pm].map((v, i) => (
-                                                <td key={i} className={`text-center py-2 px-3 ${[sub.plan === "free", sub.plan === "pro", sub.plan === "premium"][i]
+                                            {[f, w, m, y].map((v, i) => (
+                                                <td key={i} className={`text-center py-2 px-3 ${[sub.plan === "free", sub.plan === "weekly", sub.plan === "monthly", sub.plan === "yearly"][i]
                                                         ? "bg-white/5 rounded"
                                                         : ""
                                                     }`}>
@@ -700,16 +691,9 @@ export default function SubscriptionPage() {
                                 <h3 className="text-xl font-bold mb-5">Confirm Plan</h3>
                                 <div className="bg-[#222] rounded-xl p-4 mb-4">
                                     <div className="flex justify-between items-center mb-3">
-                                        <span className={`text-lg font-bold ${upgradePlan === "premium" ? "text-[#f0a500]" : "text-[#e84118]"}`}>
-                                            {upgradePlan === "premium" ? "👑" : "⚡"} {upgradePlan.charAt(0).toUpperCase() + upgradePlan.slice(1)} Plan
+                                        <span className={`text-lg font-bold ${upgradePlan === "yearly" ? "text-[#f0a500]" : upgradePlan === "weekly" ? "text-[#3498db]" : "text-[#e84118]"}`}>
+                                            {upgradePlan === "yearly" ? "👑" : upgradePlan === "weekly" ? "🚀" : "⚡"} {upgradePlan.charAt(0).toUpperCase() + upgradePlan.slice(1)} Plan
                                         </span>
-                                        <div className="flex gap-1">
-                                            {(["monthly", "yearly"] as Cycle[]).map(c => (
-                                                <button key={c} onClick={() => setModalCycle(c)}
-                                                    className={`text-xs px-3 py-1 rounded-lg font-semibold transition-all ${modalCycle === c ? "bg-[#e84118] text-white" : "bg-[#333] text-gray-400"
-                                                        }`}>{c}</button>
-                                            ))}
-                                        </div>
                                     </div>
                                 </div>
 
@@ -730,7 +714,7 @@ export default function SubscriptionPage() {
                                 {/* Price breakdown */}
                                 <div className="bg-[#222] rounded-xl p-4 mb-5">
                                     <div className="flex justify-between text-sm text-gray-400 mb-2">
-                                        <span>Base Price</span><span>₹{basePrice}/mo</span>
+                                        <span>Base Price</span><span>₹{basePrice}/{upgradePlan === "weekly" ? "wk" : upgradePlan === "yearly" ? "yr" : "mo"}</span>
                                     </div>
                                     {discount > 0 && (
                                         <div className="flex justify-between text-sm text-green-400 mb-2">
@@ -739,7 +723,7 @@ export default function SubscriptionPage() {
                                     )}
                                     <div className="flex justify-between font-bold text-base border-t border-[#333] pt-2 mt-2">
                                         <span>Total</span>
-                                        <span className={upgradePlan === "premium" ? "text-[#f0a500]" : "text-[#e84118]"}>₹{finalPrice}/mo</span>
+                                        <span className={upgradePlan === "yearly" ? "text-[#f0a500]" : upgradePlan === "weekly" ? "text-[#3498db]" : "text-[#e84118]"}>₹{finalPrice}/{upgradePlan === "weekly" ? "wk" : upgradePlan === "yearly" ? "yr" : "mo"}</span>
                                     </div>
                                 </div>
 

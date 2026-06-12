@@ -100,15 +100,32 @@ export default function TermsPage() {
             <p>
               You are solely responsible for maintaining the confidentiality of your account credentials, including your password. You agree to immediately notify us at <strong className="text-red-500">factflow1819@gmail.com</strong> of any unauthorized use of your account or any other security breach. Fact Flow will not be liable for any loss or damage arising from your failure to safeguard your account.
             </p>
-            <p className="font-semibold text-foreground mt-4 mb-2">4.3 Account Termination</p>
+            <p className="font-semibold text-foreground mt-4 mb-2">4.3 Account Ban & Termination Policy</p>
             <p>
-              Fact Flow reserves the right, at its sole discretion, to suspend or permanently terminate your account without notice if you are found to be in violation of these Terms, applicable laws, or community guidelines. Upon termination, your right to access the Platform ceases immediately. You may also delete your account at any time through your account settings.
+              Fact Flow reserves the right, at its sole discretion, to suspend or permanently ban your account without notice if you are found to be in violation of these Terms, applicable laws, or community guidelines. Upon being banned, your right to access the Platform ceases immediately.
+            </p>
+            <p className="mt-3">
+              <strong>Ban Appeals:</strong> A banned account cannot be reactivated or accessed by the user. If you believe your account was banned in error, you must submit an appeal via email to <strong className="text-red-500">support@factflow.com</strong>. Your appeal must include a valid reason and any supporting proof. Fact Flow administrators hold the sole authority to review appeals and unban accounts from the administrative dashboard.
             </p>
           </section>
 
-          {/* 5. Content Aggregation & Fair Use */}
+          {/* 5. Account Verification Policy */}
           <section>
-            <h2 className="text-xl font-bold text-foreground mb-3">5. Content Aggregation, Embedded Media & Fair Use</h2>
+            <h2 className="text-xl font-bold text-foreground mb-3">5. Account Verification Policy</h2>
+            <p>
+              Fact Flow offers an account verification feature ("Verified Badge" or "Blue Tick") to authenticate prominent users and establish trust within the community.
+            </p>
+            <ul className="list-disc pl-6 mt-2 space-y-1">
+              <li><strong>Default Status:</strong> New user accounts are created as "Unverified" by default. A verified badge is not automatically granted upon sign-up.</li>
+              <li><strong>Verification Criteria:</strong> To apply for verification, users must have a complete profile (including a name, an avatar, and a minimum bio length). However, meeting the technical criteria does not guarantee approval.</li>
+              <li><strong>Approval Discretion:</strong> The granting of a Verified Badge is at the sole and absolute discretion of Fact Flow Administrators. We review profiles for authenticity, community compliance, and notability before approving requests.</li>
+              <li><strong>Revocation:</strong> Fact Flow reserves the right to reject verification requests or revoke an existing Verified Badge at any time, without prior notice, if a user violates these Terms, engages in deceptive practices, or alters their account purpose post-verification.</li>
+            </ul>
+          </section>
+
+          {/* 6. Content Aggregation & Fair Use */}
+          <section>
+            <h2 className="text-xl font-bold text-foreground mb-3">6. Content Aggregation, Embedded Media & Fair Use</h2>
             <p className="font-semibold text-foreground mb-2">5.1 News Aggregation</p>
             <p>
               Fact Flow operates primarily as a news aggregator and intermediary under Section 79 of the Information Technology Act, 2000. We curate, summarize, and link to news articles, images, and headlines from third-party publishers. All third-party content, trademarks, and copyrights remain the exclusive property of their respective owners. Fact Flow does not claim ownership over aggregated third-party news content.
@@ -133,9 +150,9 @@ export default function TermsPage() {
             </p>
           </section>
 
-          {/* 6. UGC */}
+          {/* 7. UGC */}
           <section>
-            <h2 className="text-xl font-bold text-foreground mb-3">6. User-Generated Content</h2>
+            <h2 className="text-xl font-bold text-foreground mb-3">7. User-Generated Content</h2>
             <p>
               The Platform may allow you to submit, post, or share content including comments, opinions, ideas, and social interactions ("User Content"). By submitting User Content, you represent that you own or have the necessary rights to such content and that it does not infringe any third-party rights.
             </p>
@@ -147,9 +164,9 @@ export default function TermsPage() {
             </p>
           </section>
 
-          {/* 7. Third-Party Links */}
+          {/* 8. Third-Party Links */}
           <section>
-            <h2 className="text-xl font-bold text-foreground mb-3">7. Third-Party Links & External Sites</h2>
+            <h2 className="text-xl font-bold text-foreground mb-3">8. Third-Party Links & External Sites</h2>
             <p>
               The Platform contains hyperlinks to third-party websites, news sources, and online platforms. These links are provided solely for informational and navigational convenience. Fact Flow does not endorse, control, or take responsibility for the content, privacy practices, or accuracy of any third-party website.
             </p>
@@ -158,9 +175,9 @@ export default function TermsPage() {
             </p>
           </section>
 
-          {/* 8. Disclaimer */}
+          {/* 9. Disclaimer */}
           <section>
-            <h2 className="text-xl font-bold text-foreground mb-3">8. Disclaimer of Warranties</h2>
+            <h2 className="text-xl font-bold text-foreground mb-3">9. Disclaimer of Warranties</h2>
             <p className="uppercase font-semibold text-foreground text-xs mb-2">Please read this section carefully.</p>
             <p>
               THE PLATFORM AND ALL CONTENT, SERVICES, AND FEATURES THEREIN ARE PROVIDED ON AN "AS IS" AND "AS AVAILABLE" BASIS WITHOUT ANY WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED. FACT FLOW EXPRESSLY DISCLAIMS ALL WARRANTIES, INCLUDING BUT NOT LIMITED TO IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, ACCURACY, AND NON-INFRINGEMENT.
@@ -173,9 +190,9 @@ export default function TermsPage() {
             </p>
           </section>
 
-          {/* 9. Liability */}
+          {/* 10. Liability */}
           <section>
-            <h2 className="text-xl font-bold text-foreground mb-3">9. Limitation of Liability</h2>
+            <h2 className="text-xl font-bold text-foreground mb-3">10. Limitation of Liability</h2>
             <p className="uppercase font-semibold text-foreground text-xs mb-2">Please read this section carefully.</p>
             <p>
               TO THE MAXIMUM EXTENT PERMITTED BY APPLICABLE INDIAN LAW, IN NO EVENT SHALL FACT FLOW, ITS DIRECTORS, OFFICERS, EMPLOYEES, AFFILIATES, AGENTS, CONTRACTORS, OR LICENSORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, CONSEQUENTIAL, PUNITIVE, OR EXEMPLARY DAMAGES WHATSOEVER, INCLUDING WITHOUT LIMITATION:
@@ -191,9 +208,9 @@ export default function TermsPage() {
             </p>
           </section>
 
-          {/* 10. Modifications */}
+          {/* 11. Modifications */}
           <section>
-            <h2 className="text-xl font-bold text-foreground mb-3">10. Modifications to Terms</h2>
+            <h2 className="text-xl font-bold text-foreground mb-3">11. Modifications to Terms</h2>
             <p>
               Fact Flow reserves the right to modify, update, or replace these Terms at any time at its sole discretion. When changes are made, we will update the "Last Updated" date at the top of this page and, where appropriate, notify registered users via email or an in-app notification.
             </p>
@@ -202,9 +219,9 @@ export default function TermsPage() {
             </p>
           </section>
 
-          {/* 11. Governing Law */}
+          {/* 12. Governing Law */}
           <section>
-            <h2 className="text-xl font-bold text-foreground mb-3">11. Governing Law & Jurisdiction</h2>
+            <h2 className="text-xl font-bold text-foreground mb-3">12. Governing Law & Jurisdiction</h2>
             <p>
               These Terms shall be governed by and construed in accordance with the laws of the Republic of India, without regard to its conflict of law principles. The following Indian laws are specifically applicable:
             </p>
@@ -219,9 +236,9 @@ export default function TermsPage() {
             </p>
           </section>
 
-          {/* 12. Contact */}
+          {/* 13. Contact */}
           <section>
-            <h2 className="text-xl font-bold text-foreground mb-3">12. Contact Us</h2>
+            <h2 className="text-xl font-bold text-foreground mb-3">13. Contact Us</h2>
             <p>
               For any questions, concerns, or legal notices regarding these Terms of Use, please contact our legal team:
             </p>

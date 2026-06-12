@@ -7,7 +7,7 @@ import { useRouter } from "next/navigation"
 import { auth, googleProvider } from "@/lib/firebase"
 import { 
   signInWithPopup, signInWithEmailAndPassword, createUserWithEmailAndPassword, 
-  updateProfile, sendSignInLinkToEmail, isSignInWithEmailLink, signInWithEmailLink 
+  updateProfile, sendSignInLinkToEmail, isSignInWithEmailLink, signInWithEmailLink, sendPasswordResetEmail
 } from "firebase/auth"
 import { useAuthStore } from "@/store/auth-store"
 import { useTheme } from "@/components/theme-provider"
@@ -18,7 +18,7 @@ const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api"
 export default function LoginPage() {
   // Common
   const [isSignUp, setIsSignUp] = useState(false)
-  const [loginMethod, setLoginMethod] = useState<"standard" | "magic">("standard")
+  const [loginMethod, setLoginMethod] = useState<"standard" | "magic" | "forgot">("standard")
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState("")
   const [showPassword, setShowPassword] = useState(false)
@@ -53,6 +53,9 @@ export default function LoginPage() {
   // Magic Link Auth
   const [magicEmail, setMagicEmail] = useState("")
   const [magicSent, setMagicSent] = useState(false)
+
+  // Forgot Password Auth
+  const [resetEmail, setResetEmail] = useState("")
 
   const router = useRouter()
   const setUser = useAuthStore((state) => state.setUser)
@@ -127,7 +130,7 @@ export default function LoginPage() {
   }
 
   const handleUsernameChange = (val: string) => {
-    let cleaned = val.replace(/[^A-Za-z0-9]/g, '')
+    let cleaned = val.replace(/[^A-Za-z0-9_]/g, '')
     if (cleaned.length > 0) {
       cleaned = cleaned.charAt(0).toUpperCase() + cleaned.slice(1).toLowerCase()
     }
@@ -295,6 +298,22 @@ export default function LoginPage() {
     }
   }
 
+  // --- FORGOT PASSWORD ---
+  const handleResetPassword = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!resetEmail) return setError("Please enter your email")
+    setIsLoading(true); setError("")
+    try {
+      await sendPasswordResetEmail(auth, resetEmail)
+      setLoginMethod("standard")
+      alert("Password reset link sent! Check your email.")
+    } catch (err: any) {
+      setError("Failed to send reset link: " + err.message)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
   return (
     <div className={`min-h-screen relative overflow-hidden flex items-center justify-center ${isDark ? "bg-black" : "bg-gray-50"}`}>
       
@@ -356,7 +375,7 @@ export default function LoginPage() {
             )}
 
             <h2 className={`text-2xl font-bold mb-2 ${isDark ? "text-white" : "text-gray-900"}`}>
-              {isSignUp ? "Create an Account" : (loginMethod === "standard" ? "Log In" : "Passwordless Login")}
+              {isSignUp ? "Create an Account" : (loginMethod === "standard" ? "Log In" : loginMethod === "magic" ? "Passwordless Login" : "Reset Password")}
             </h2>
             <p className={`text-sm mb-6 ${isDark ? "text-white/[0.85]" : "text-gray-500"}`}>
               {isSignUp ? "Join the Fact Flow network" : "Access your personalized AI dashboard"}
@@ -369,7 +388,7 @@ export default function LoginPage() {
             )}
 
             {/* Login Method Tabs (Only show during Login) */}
-            {!isSignUp && (
+            {!isSignUp && loginMethod !== "forgot" && (
               <div className={`flex p-1 mb-6 rounded-xl ${isDark ? "bg-white/5" : "bg-gray-100"}`}>
                 <button
                   onClick={() => setLoginMethod("standard")}
@@ -431,7 +450,7 @@ export default function LoginPage() {
                         </div>
                         {usernameStatus === "taken" && <p className="text-xs text-red-500 mt-1">This username is already taken.</p>}
                         {usernameStatus === "available" && <p className="text-xs text-green-500 mt-1">Username is available!</p>}
-                        <p className={`text-[11px] mt-1 ${isDark ? "text-white/[0.85]" : "text-gray-500"}`}>First letter will be capital. Letters and numbers only.</p>
+                        <p className={`text-[11px] mt-1 ${isDark ? "text-white/[0.85]" : "text-gray-500"}`}>First letter will be capital. Letters, numbers and underscores only.</p>
                         
                         {usernameSuggestions.length > 0 && (
                           <div className="flex flex-wrap gap-2 mt-2">
@@ -563,6 +582,17 @@ export default function LoginPage() {
                         </button>
                       )}
                     </div>
+                    {!isSignUp && (
+                      <div className="flex justify-end mt-1">
+                        <button 
+                          type="button" 
+                          onClick={() => { setLoginMethod("forgot"); setError(""); }} 
+                          className={`text-xs font-medium hover:underline transition-colors ${isDark ? "text-blue-400 hover:text-blue-300" : "text-blue-600 hover:text-blue-700"}`}
+                        >
+                          Forgot password?
+                        </button>
+                      </div>
+                    )}
                     {isSignUp && (
                       <>
                         <p className={`text-[11px] mt-1.5 ${isDark ? "text-white/[0.85]" : "text-gray-500"}`}>
@@ -627,7 +657,7 @@ export default function LoginPage() {
                   </button>
                 </div>
               </>
-            ) : (
+            ) : loginMethod === "magic" ? (
               <>
                 {/* Magic Link Auth Form */}
                 {!magicSent ? (
@@ -676,6 +706,40 @@ export default function LoginPage() {
                     </button>
                   </div>
                 )}
+              </>
+            ) : (
+              <>
+                {/* Forgot Password Form */}
+                <form onSubmit={handleResetPassword} className="space-y-4 mb-6">
+                  <div className="space-y-1">
+                    <label className={`text-sm font-medium ${isDark ? "text-white/[0.85]" : "text-gray-700"}`}>Email Address</label>
+                    <div className="relative">
+                      <Mail className={`absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 ${isDark ? "text-white/[0.85]" : "text-gray-400"}`} />
+                      <input
+                        type="email" value={resetEmail} onChange={(e) => setResetEmail(e.target.value)} required
+                        placeholder="john@example.com"
+                        className={`w-full pl-10 pr-4 py-3 rounded-xl outline-none border transition-all ${
+                          isDark ? "bg-white/5 border-white/10 focus:border-blue-500 text-white" : "bg-gray-50 border-gray-200 focus:border-blue-500 text-gray-900"
+                        }`}
+                      />
+                    </div>
+                    <p className={`text-xs mt-2 ${isDark ? "text-white/[0.85]" : "text-gray-500"}`}>Enter your email to receive a password reset link.</p>
+                  </div>
+                  <button
+                    type="submit" disabled={isLoading}
+                    className="btn w-full mt-2"
+                  >
+                    <span>
+                      {isLoading ? <div className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin" /> : "Reset Password"}
+                    </span>
+                  </button>
+                  <button 
+                    type="button" onClick={() => setLoginMethod("standard")}
+                    className={`mt-4 w-full py-2 text-sm ${isDark ? "text-white/[0.85] hover:text-white" : "text-gray-500 hover:text-gray-900"}`}
+                  >
+                    Back to Login
+                  </button>
+                </form>
               </>
             )}
 

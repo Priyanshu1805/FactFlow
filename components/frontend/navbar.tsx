@@ -43,11 +43,12 @@ export function Navbar() {
   const router = useRouter()
   const searchInputRef = useRef<HTMLInputElement>(null)
   const { user, isAuthenticated } = useAuthStore()
-  const { subscription } = useSubscription()
+  const { subscription, canAccess, loading: subLoading } = useSubscription()
   const [hasActiveStory, setHasActiveStory] = useState(false)
   const [hasUnreadSocial, setHasUnreadSocial] = useState(false)
   const [unreadDMCount, setUnreadDMCount] = useState(0)
   const [trendingCount, setTrendingCount] = useState(0)
+  const [dbUser, setDbUser] = useState<any>(null)
 
   const isDark = theme !== "light"
 
@@ -56,6 +57,20 @@ export function Navbar() {
   useEffect(() => {
     setMounted(true)
   }, [])
+
+  useEffect(() => {
+    if (!isAuthenticated || !user?.uid) return
+    const fetchDbProfile = async () => {
+      try {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api"}/users/profile?firebaseUid=${user.uid}&email=${user.email}`)
+        const data = await res.json()
+        if (data.success) {
+          setDbUser(data.user)
+        }
+      } catch (err) {}
+    }
+    fetchDbProfile()
+  }, [isAuthenticated, user])
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -204,10 +219,11 @@ export function Navbar() {
           : "bg-white/95 border-gray-200 shadow-sm text-gray-900"
       }`}
     >
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16">
+      <div className="max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-8 xl:px-12">
+        <div className="flex items-center justify-between h-16 sm:h-20">
           {/* Left Side: Logo */}
-          <Link href="/" className="flex items-center shrink-0 py-1">
+          <div className="flex-1 flex justify-start items-center">
+            <Link href="/" className="flex items-center shrink-0 py-1">
             <div className="flex items-center gap-3.5 cursor-pointer group">
               {/* Logo Vector Container with Premium border */}
               <div className="relative p-[1px] bg-gradient-to-tr from-red-500/30 via-purple-500/30 to-blue-500/30 rounded-xl shadow-sm">
@@ -253,20 +269,31 @@ export function Navbar() {
                 </div>
                 <p className="text-gray-500 dark:text-gray-400 text-[9px] sm:text-[10px] mt-0 leading-none hidden sm:block">Digital News Platform</p>
               </div>
-            </div>
-          </Link>
+              </div>
+            </Link>
+          </div>
 
           {/* Center Side: Navigation Links (hidden on mobile) */}
-          <div className="hidden lg:flex items-center gap-0.5 xl:gap-1.5">
-            {navLinks.map((link) => (
+          <div className="hidden lg:flex items-center justify-center gap-1 xl:gap-2">
+            {navLinks.map((link) => {
+              const isLocked = !subLoading && !canAccess("weekly") && ["Politics", "Lifestyle", "Sports", "Tech", "Art"].includes(link.name);
+              return (
               <Link
                 key={link.name}
-                href={link.href}
-                onClick={(e) => handleNavClick(e, link.href)}
-                className={`relative group flex items-center gap-1 px-2 xl:px-3 py-2 text-[11px] xl:text-sm font-bold transition-colors duration-300 ${isDark ? "text-gray-300 hover:text-white" : "text-gray-600 hover:text-red-500"}`}
+                href={isLocked ? "/subscription" : link.href}
+                onClick={(e) => {
+                  if (isLocked) {
+                    e.preventDefault();
+                    router.push("/subscription");
+                    return;
+                  }
+                  handleNavClick(e, link.href);
+                }}
+                className={`relative group flex items-center gap-1 px-2 xl:px-3 py-2 text-[11px] xl:text-sm font-bold transition-colors duration-300 ${isDark ? "text-gray-300 hover:text-white" : "text-gray-600 hover:text-red-500"} ${isLocked ? "opacity-60" : ""}`}
               >
                 <link.icon className="w-4 h-4 opacity-75 group-hover:opacity-100 transition-opacity" />
                 {t(link.tKey)}
+                {isLocked && <span className="ml-1 text-[10px]" title="Upgrade to Weekly Pass to unlock">🔒</span>}
                 {link.name === "Live" && (
                   <span className="w-1.5 h-1.5 bg-red-500 rounded-full animate-pulse shadow-[0_0_8px_rgba(239,68,68,0.8)]" />
                 )}
@@ -278,11 +305,11 @@ export function Navbar() {
                 {/* Sliding underline effect */}
                 <span className="absolute -bottom-1 left-3 right-3 h-0.5 bg-gradient-to-r from-red-650 to-red-500 bg-red-600 scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left rounded-full" />
               </Link>
-            ))}
+            )})}
           </div>
 
             {/* Right Side: Search & Login & Hamburger */}
-          <div className="flex items-center gap-2 sm:gap-3">
+          <div className="flex-1 flex items-center justify-end gap-2 sm:gap-4">
             
             {/* AI Search Trigger */}
             <button
@@ -324,9 +351,11 @@ export function Navbar() {
                       <Link href="/settings" className={`flex items-center gap-2 px-3 py-2 text-sm rounded-lg ${isDark ? "hover:bg-white/10" : "hover:bg-gray-50"}`}>
                         <Settings className="w-4 h-4" /> {t("preferences")}
                       </Link>
-                      <Link href="/admin" className={`flex items-center gap-2 px-3 py-2 text-sm rounded-lg ${isDark ? "hover:bg-white/10" : "hover:bg-gray-50"}`}>
-                        <ShieldCheck className="w-4 h-4" /> {t("adminDashboard")}
-                      </Link>
+                      {(dbUser?.role === "admin" || user?.role === "admin") && (
+                        <Link href="/admin" className={`flex items-center gap-2 px-3 py-2 text-sm rounded-lg ${isDark ? "hover:bg-white/10" : "hover:bg-gray-50"}`}>
+                          <ShieldCheck className="w-4 h-4" /> {t("adminDashboard")}
+                        </Link>
+                      )}
                     </div>
                   </motion.div>
                 )}
@@ -345,15 +374,17 @@ export function Navbar() {
                 <div className="relative" ref={profileRef}>
                   <button
                     onClick={() => setProfileOpen(!profileOpen)}
-                    className={`p-2 rounded-full transition-colors ${
+                    className={`p-1 sm:p-1.5 rounded-full transition-colors ${
                       isDark ? "hover:bg-white/10 text-gray-300 hover:text-white" : "hover:bg-gray-100 text-gray-600 hover:text-gray-900"
                     }`}
                     title="Profile"
                   >
-                    {user?.photoURL ? (
-                      <img src={user.photoURL} alt="Profile" className="w-6 h-6 rounded-full object-cover border border-white/20" />
+                    {dbUser?.avatar || user?.photoURL ? (
+                      <img src={dbUser?.avatar || user?.photoURL} alt="Profile" className="w-7 h-7 sm:w-8 sm:h-8 rounded-full object-cover border border-gray-200 dark:border-white/20" />
                     ) : (
-                      <User className="w-5 h-5" />
+                      <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center bg-red-500 text-white font-bold text-xs uppercase border border-red-600">
+                        {(dbUser?.name || user?.displayName || "U").charAt(0)}
+                      </div>
                     )}
                   </button>
                   <AnimatePresence>
@@ -368,12 +399,12 @@ export function Navbar() {
                         }`}
                       >
                         <div className="p-3 border-b border-white/5">
-                          <p className="text-sm font-medium truncate">{user?.displayName || "User"}</p>
+                          <p className="text-sm font-medium truncate">{dbUser?.name || user?.displayName || "User"}</p>
                           <p className={`text-xs truncate ${isDark ? "text-gray-400" : "text-gray-500"}`}>{user?.email}</p>
                         </div>
                         <div className="p-1">
                           <Link 
-                            href={`/u/${(user as any)?.username || user?.uid}`}
+                            href={`/u/${dbUser?.username || (user as any)?.username || user?.uid}`}
                             onClick={() => setProfileOpen(false)}
                             className={`flex items-center gap-2 px-3 py-2 text-sm rounded-lg ${isDark ? "hover:bg-white/10" : "hover:bg-gray-50"}`}
                           >
@@ -482,16 +513,18 @@ export function Navbar() {
                     <div className="flex items-center gap-3">
                       <div className={`shrink-0 w-11 h-11 rounded-full flex items-center justify-center p-[2px] ${hasActiveStory ? "bg-gradient-to-tr from-yellow-400 via-red-500 to-fuchsia-600" : "bg-white/10"}`}>
                         <div className="w-full h-full rounded-full overflow-hidden bg-black flex items-center justify-center">
-                          {user.photoURL ? (
-                            <img src={user.photoURL} alt="Profile" className="w-full h-full object-cover" />
+                          {dbUser?.avatar || user?.photoURL ? (
+                            <img src={dbUser?.avatar || user?.photoURL} alt="Profile" className="w-full h-full object-cover" />
                           ) : (
-                            <User className="w-5 h-5 text-white/70" />
+                            <div className="w-full h-full flex items-center justify-center bg-red-500 text-white font-bold text-lg uppercase">
+                              {(dbUser?.name || user?.displayName || "U").charAt(0)}
+                            </div>
                           )}
                         </div>
                       </div>
                       <div className="min-w-0 flex-1">
-                        <h4 className="text-sm font-bold truncate text-white">{user.displayName || "FactFlow User"}</h4>
-                        <p className="text-xs text-gray-400 truncate">@{ (user as any).username || "user" }</p>
+                        <h4 className="text-sm font-bold truncate text-white">{dbUser?.name || user.displayName || "FactFlow User"}</h4>
+                        <p className="text-xs text-gray-400 truncate">@{ dbUser?.username || (user as any).username || "user" }</p>
                       </div>
                     </div>
                     <div className="mt-3 pt-3 border-t border-white/5 flex justify-between items-center">
@@ -534,23 +567,32 @@ export function Navbar() {
 
                 {/* Primary Nav Links */}
                 <div className="mt-6 space-y-1">
-                  {navLinks.map((link) => (
+                  {navLinks.map((link) => {
+                    const isLocked = !subLoading && !canAccess("weekly") && ["Politics", "Lifestyle", "Sports", "Tech", "Art"].includes(link.name);
+                    return (
                     <Link
                       key={link.name}
-                      href={link.href}
+                      href={isLocked ? "/subscription" : link.href}
                       onClick={(e) => {
+                        if (isLocked) {
+                          e.preventDefault();
+                          setIsOpen(false);
+                          router.push("/subscription");
+                          return;
+                        }
                         handleNavClick(e, link.href)
                         setIsOpen(false)
                       }}
-                      className="flex items-center gap-3.5 px-4 py-3 rounded-xl text-sm font-bold text-gray-300 hover:text-white hover:bg-white/5 transition-colors"
+                      className={`flex items-center gap-3.5 px-4 py-3 rounded-xl text-sm font-bold text-gray-300 hover:text-white hover:bg-white/5 transition-colors ${isLocked ? "opacity-60" : ""}`}
                     >
                       <link.icon className="w-5 h-5 opacity-70" />
                       {t(link.tKey)}
+                      {isLocked && <span className="ml-auto text-[12px]" title="Upgrade to Weekly Pass to unlock">🔒</span>}
                       {link.name === "Live" && (
                         <span className="w-2 h-2 bg-red-500 rounded-full animate-pulse ml-auto" />
                       )}
                     </Link>
-                  ))}
+                  )})}
                   
                   {/* Secondary App Links */}
                   <div className="pt-4 mt-4 border-t border-white/10 space-y-1">
@@ -580,14 +622,16 @@ export function Navbar() {
                       {t("settings")}
                     </Link>
 
-                    <Link
-                      href="/admin"
-                      onClick={() => setIsOpen(false)}
-                      className="flex items-center gap-3.5 px-4 py-3 rounded-xl text-sm font-bold text-gray-300 hover:text-white hover:bg-white/5 transition-colors"
-                    >
-                      <ShieldCheck className="w-5 h-5 opacity-70" />
-                      {t("adminDashboard")}
-                    </Link>
+                    {user?.role === "admin" && (
+                      <Link
+                        href="/admin"
+                        onClick={() => setIsOpen(false)}
+                        className="flex items-center gap-3.5 px-4 py-3 rounded-xl text-sm font-bold text-gray-300 hover:text-white hover:bg-white/5 transition-colors"
+                      >
+                        <ShieldCheck className="w-5 h-5 opacity-70" />
+                        {t("adminDashboard")}
+                      </Link>
+                    )}
                   </div>
                 </div>
 

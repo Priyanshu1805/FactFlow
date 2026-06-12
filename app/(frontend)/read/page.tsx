@@ -2,6 +2,7 @@
 
 import { useSearchParams } from "next/navigation"
 import Link from "next/link"
+import { useSocket } from "@/hooks/use-socket"
 import { Suspense, useEffect, useState, useRef } from "react"
 import { Share2, Clock, Globe, ChevronLeft, Bookmark, Heart, MoreHorizontal, Copy, ExternalLink, Headphones, Square, ThumbsUp, ThumbsDown } from "lucide-react"
 import { motion } from "framer-motion"
@@ -64,6 +65,28 @@ function ReadArticleContent() {
 ];
 const getRandomFallback = () => fallbacks[Math.floor(Math.random() * fallbacks.length)];
   const [stats, setStats] = useState({ likes: 0, dislikes: 0, saves: 0, shares: 0 })
+  const { socket } = useSocket()
+
+  useEffect(() => {
+    if (!socket) return
+
+    const handleUpdate = (payload: { url: string, stats: any }) => {
+      if (payload.url === url) {
+        setStats(prev => ({
+          ...prev,
+          likes: payload.stats.likes,
+          dislikes: payload.stats.dislikes,
+          saves: payload.stats.saves,
+          shares: payload.stats.shares
+        }))
+      }
+    }
+
+    socket.on("external_article_stats_update", handleUpdate)
+    return () => {
+      socket.off("external_article_stats_update", handleUpdate)
+    }
+  }, [socket, url])
 
   // Reading progress bar
   const containerRef = useRef<HTMLDivElement>(null)

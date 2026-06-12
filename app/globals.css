@@ -840,3 +840,69 @@ html, body {
 #google_translate_element, .skiptranslate { display: none !important; }
 body { top: 0px !important; }
 
+/* --- CROSS-BROWSER COMPATIBILITY FIXES --- */
+
+/* Custom Scrollbars (Webkit/Blink for Chrome, Safari, Edge, Opera) */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.05);
+}
+.dark ::-webkit-scrollbar-track,
+.glass ::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.02);
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.3);
+}
+.dark ::-webkit-scrollbar-thumb,
+.glass ::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+}
+.dark ::-webkit-scrollbar-thumb:hover,
+.glass ::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.25);
+}
+
+/* Firefox compatibility scrollbar styles */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0, 0, 0, 0.2) rgba(0, 0, 0, 0.05);
+}
+.dark *,
+.glass * {
+  scrollbar-color: rgba(255, 255, 255, 0.15) rgba(255, 255, 255, 0.02);
+}
+
+/* Remove grey selection highlights on mobile Safari / iOS browsers */
+a, button, input, select, textarea, [role="button"] {
+  -webkit-tap-highlight-color: transparent !important;
+}
+
+/* Fix iOS Safari input borders & shadows */
+input, textarea, select {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+}
+
+/* IE/Edge clear button reset */
+input::-ms-clear,
+input::-ms-reveal {
+  display: none;
+  width: 0;
+  height: 0;
+}
+
+/* Selection background styling (consistent on all browsers) */
+::selection {
+  background-color: rgba(239, 68, 68, 0.3);
+  color: inherit;
+}
+

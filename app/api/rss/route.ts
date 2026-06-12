@@ -9,8 +9,10 @@ const parser = new Parser({
 
 async function translateText(text: string) {
   if (!text) return text;
-  // Fast path for ASCII (English)
-  if (/^[\x00-\x7F]*$/.test(text)) return text;
+  // Fast path: Only translate if it contains Indic scripts (Hindi, Bengali, Tamil, etc.)
+  // This prevents translating English text that happens to have smart quotes or emojis
+  if (!/[\u0900-\u0DFF]/.test(text)) return text;
+  
   try {
     const res = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=en&dt=t&q=${encodeURIComponent(text)}`);
     const data = await res.json();
@@ -51,7 +53,7 @@ export async function GET(request: NextRequest) {
     }))
 
     // Translate items sequentially to avoid Google Translate rate limits
-    const items = [];
+    const items: any[] = [];
     for (const item of rawItems) {
       const translatedTitle = await translateText(item.title);
       // Skip item completely if title translation fails

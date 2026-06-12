@@ -44,15 +44,16 @@ export function PostOptionsMenu({ isOpen, onClose, post, isDark, onEdit }: PostO
           toast.success(data.hasSaved ? "Saved successfully" : "Removed from saved")
         } else throw new Error(data.error)
       } else if (actionType === "follow") {
-        const res = await fetch(`${API}/users/follow`, {
+        if (!post.author?._id) throw new Error("Author not found")
+        const res = await fetch(`${API}/users/${post.author._id}/toggle-follow`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ firebaseUid: user.uid, targetUsername: post.author?.username })
+          body: JSON.stringify({ viewerUid: user.uid })
         })
         if (!res.ok) throw new Error("Fetch failed")
         const data = await res.json()
         if (data.success) {
-          toast.success(data.isFollowing ? `Followed @${post.author?.username}` : `Unfollowed @${post.author?.username}`)
+          toast.success(data.message)
         } else throw new Error(data.error)
       } else if (actionType === "delete") {
         const res = await fetch(`${API}/posts/${post._id}?firebaseUid=${user.uid}`, { method: "DELETE" })

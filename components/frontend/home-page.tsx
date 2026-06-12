@@ -10,21 +10,24 @@ import { useFeedStore } from "@/lib/store/feed-store"
 
 import { Navbar } from "@/components/frontend/navbar"
 import { HeroContent } from "@/components/frontend/hero-content"
-import BackgroundScene from "@/components/ui/cybercore-section-hero"
+// BackgroundScene is now dynamically imported below with ssr:false
 import { Footer } from "@/components/frontend/footer"
 import { BreakingNewsHero } from "@/components/frontend/breaking-news-hero"
+import { useSubscription } from "@/lib/use-subscription"
 import { NewsTicker } from "@/components/frontend/news-ticker"
+import { AdBanner } from "@/components/frontend/ad-banner"
 
 import dynamic from "next/dynamic"
 
-const NewspaperSection = dynamic(() => import("@/components/frontend/newspaper-section").then(m => m.NewspaperSection))
-const PoliticsSection = dynamic(() => import("@/components/frontend/politics-section").then(m => m.PoliticsSection))
-const TrendingSection = dynamic(() => import("@/components/frontend/trending-section").then(m => m.TrendingSection))
-const SportsSection = dynamic(() => import("@/components/frontend/sports-section").then(m => m.SportsSection))
-const LifestyleSection = dynamic(() => import("@/components/frontend/lifestyle-section").then(m => m.LifestyleSection))
-const TechSection = dynamic(() => import("@/components/frontend/tech-section").then(m => m.TechSection))
-const ArtSection = dynamic(() => import("@/components/frontend/art-section").then(m => m.ArtSection))
-const InternationalTopNews = dynamic(() => import("@/components/frontend/international-top-news").then(m => m.InternationalTopNews))
+const BackgroundScene = dynamic(() => import("@/components/ui/cybercore-section-hero"), { ssr: false })
+const NewspaperSection = dynamic(() => import("@/components/frontend/newspaper-section").then(m => m.NewspaperSection), { ssr: false })
+const PoliticsSection = dynamic(() => import("@/components/frontend/politics-section").then(m => m.PoliticsSection), { ssr: false })
+const TrendingSection = dynamic(() => import("@/components/frontend/trending-section").then(m => m.TrendingSection), { ssr: false })
+const SportsSection = dynamic(() => import("@/components/frontend/sports-section").then(m => m.SportsSection), { ssr: false })
+const LifestyleSection = dynamic(() => import("@/components/frontend/lifestyle-section").then(m => m.LifestyleSection), { ssr: false })
+const TechSection = dynamic(() => import("@/components/frontend/tech-section").then(m => m.TechSection), { ssr: false })
+const ArtSection = dynamic(() => import("@/components/frontend/art-section").then(m => m.ArtSection), { ssr: false })
+const InternationalTopNews = dynamic(() => import("@/components/frontend/international-top-news").then(m => m.InternationalTopNews), { ssr: false })
 
 function SectionLoader() {
   return <div className="w-full h-64 flex items-center justify-center"><div className="w-8 h-8 border-2 border-red-500 border-t-transparent rounded-full animate-spin" /></div>
@@ -38,6 +41,7 @@ export default function HomePage() {
   const { theme } = useTheme()
   const { region } = useRegion()
   const { followedTopics } = useFeedStore()
+  const { canAccess } = useSubscription()
 
   useEffect(() => {
     // Fetch RSS feeds on mount or region change
@@ -93,37 +97,41 @@ export default function HomePage() {
         <NewspaperSection />
       </Suspense>
 
-      {hasCat("politics") && (
+      <Suspense fallback={null}>
+        <AdBanner className="my-4" />
+      </Suspense>
+
+      {canAccess("weekly") && hasCat("politics") && (
         <Suspense fallback={<SectionLoader />}>
           <PoliticsSection />
         </Suspense>
       )}
 
-      {hasCat("trending") && (
+      {canAccess("weekly") && hasCat("trending") && (
         <Suspense fallback={<SectionLoader />}>
           <TrendingSection />
         </Suspense>
       )}
 
-      {hasCat("lifestyle") && (
+      {canAccess("weekly") && hasCat("lifestyle") && (
         <Suspense fallback={<SectionLoader />}>
           <LifestyleSection />
         </Suspense>
       )}
 
-      {hasCat("sports") && (
+      {canAccess("weekly") && hasCat("sports") && (
         <Suspense fallback={<SectionLoader />}>
           <SportsSection />
         </Suspense>
       )}
 
-      {hasCat("tech") && (
+      {canAccess("weekly") && hasCat("tech") && (
         <Suspense fallback={<SectionLoader />}>
           <TechSection />
         </Suspense>
       )}
 
-      {hasCat("art") && (
+      {canAccess("weekly") && hasCat("art") && (
         <Suspense fallback={<SectionLoader />}>
           <ArtSection />
         </Suspense>

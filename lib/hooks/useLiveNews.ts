@@ -40,6 +40,7 @@ export function useLiveNews(categoryFilter: string) {
         country: item.location || "GLOBAL",
         language: item.language || "english",
         category: item.category || "General",
+        sections: (item.sections && item.sections.length > 0) ? item.sections : [item.category || "General"],
         published: new Date(item.publishedAt || Date.now()),
         isPremium: item.isPremium || false
       }))

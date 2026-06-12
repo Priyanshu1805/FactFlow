@@ -4,8 +4,9 @@ import { useState, useEffect } from "react"
 import { useParams, useSearchParams } from "next/navigation"
 import { SafeImage as Image } from "@/components/frontend/safe-image"
 import Link from "next/link"
-import { io, Socket } from "socket.io-client"
-import { ArrowLeft, Clock, MapPin, Share2, Heart, Tag, BookOpen, Eye, ThumbsUp, ThumbsDown, Sparkles, ChevronDown, ChevronUp, Bookmark } from "lucide-react"
+import { useSocket } from "@/hooks/use-socket"
+import { Socket } from "socket.io-client"
+import { ArrowLeft, Clock, MapPin, Share2, Heart, Tag, BookOpen, Eye, ThumbsUp, ThumbsDown, Sparkles, ChevronDown, ChevronUp, Bookmark, DownloadCloud } from "lucide-react"
 import { useTheme } from "@/components/theme-provider"
 import { Navbar } from "@/components/frontend/navbar"
 import { Footer } from "@/components/frontend/footer"
@@ -18,6 +19,7 @@ import { PremiumBadge } from "@/components/frontend/premium-badge"
 import { PaywallOverlay } from "@/components/frontend/paywall-overlay"
 import { useSubscription } from "@/lib/use-subscription"
 import { AISummaryButton } from "@/components/frontend/article/ai-summary-button"
+import { AdBanner } from "@/components/frontend/ad-banner"
 
 const ReactPlayer = dynamic(() => import("react-player")) as any
 
@@ -38,6 +40,36 @@ export default function ArticlePage() {
   const [isLiked, setIsLiked] = useState(false)
   const [isDisliked, setIsDisliked] = useState(false)
   const [isSaved, setIsSaved] = useState(false)
+  const [mounted, setMounted] = useState(false)
+
+  const { socket } = useSocket()
+
+  useEffect(() => {
+    if (!socket || !article) return
+
+    socket.emit("join_article", article._id)
+
+    const handleUpdate = (payload: { likes: number, dislikes: number }) => {
+      setStats(prev => ({
+        ...prev,
+        likes: payload.likes,
+        dislikes: payload.dislikes
+      }))
+    }
+
+    const handleViewUpdate = (data: { views: number }) => {
+      setArticle((prev: any) => prev ? { ...prev, views: data.views } : prev);
+    }
+
+    socket.on("stats_update", handleUpdate)
+    socket.on("view_update", handleViewUpdate)
+
+    return () => {
+      socket.emit("leave_article", article._id)
+      socket.off("stats_update", handleUpdate)
+      socket.off("view_update", handleViewUpdate)
+    }
+  }, [socket, article])
 
   // Share toast
   const [shareToast, setShareToast] = useState(false)
@@ -126,37 +158,7 @@ export default function ArticlePage() {
     fetchArticle()
   }, [slug, user])
 
-  useEffect(() => {
-    if (!article?._id) return;
-
-    const socketUrl = process.env.NEXT_PUBLIC_API_URL?.replace("/api/backend", "").replace("/api", "") || "http://localhost:5000";
-    if (!socket) {
-      socket = io(socketUrl, {
-        transports: ["websocket", "polling"],
-      });
-    }
-
-    socket.emit("join_article", article._id);
-
-    const handleViewUpdate = (data: { views: number }) => {
-      setArticle((prev: any) => prev ? { ...prev, views: data.views } : prev);
-    };
-
-    const handleStatsUpdate = (data: { likes: number, dislikes: number }) => {
-      setStats({ likes: data.likes, dislikes: data.dislikes });
-    };
-
-    socket.on("view_update", handleViewUpdate);
-    socket.on("stats_update", handleStatsUpdate);
-
-    return () => {
-      if (socket) {
-        socket.emit("leave_article", article._id);
-        socket.off("view_update", handleViewUpdate);
-        socket.off("stats_update", handleStatsUpdate);
-      }
-    };
-  }, [article?._id]);
+  // Removed old socket assignment block to prevent reassignment error
 
   const handleLike = async () => {
     if (!article) return
@@ -167,7 +169,7 @@ export default function ArticlePage() {
     
     setStats(prev => ({
       ...prev,
-      likes: prev.likes + (newLiked ? 1 : -1),
+      likes: Math.max(0, prev.likes + (newLiked ? 1 : -1)),
       dislikes: isDisliked ? Math.max(0, prev.dislikes - 1) : prev.dislikes
     }))
 
@@ -207,7 +209,7 @@ export default function ArticlePage() {
     
     setStats(prev => ({
       ...prev,
-      dislikes: prev.dislikes + (newDisliked ? 1 : -1),
+      dislikes: Math.max(0, prev.dislikes + (newDisliked ? 1 : -1)),
       likes: isLiked ? Math.max(0, prev.likes - 1) : prev.likes
     }))
 
@@ -280,6 +282,22 @@ export default function ArticlePage() {
     }
     setShareToast(true)
     setTimeout(() => setShareToast(false), 3000)
+  }
+
+  const handleOfflineSave = () => {
+    if (!canAccess("monthly")) {
+      toast.error("Offline reading is available on Monthly Pro plan. Upgrade now!")
+      setTimeout(() => window.location.href = "/subscription", 1500)
+      return
+    }
+    
+    // Simulate caching the article to local storage
+    const offlineArticles = JSON.parse(localStorage.getItem("ff_offline_articles") || "[]")
+    if (!offlineArticles.find((a: any) => a._id === article._id)) {
+      offlineArticles.push(article)
+      localStorage.setItem("ff_offline_articles", JSON.stringify(offlineArticles))
+    }
+    toast.success("Article saved for Offline Reading!")
   }
 
   if (loading) {
@@ -360,6 +378,11 @@ export default function ArticlePage() {
               </span>
             )}
             {article.isPremium && <PremiumBadge size="md" />}
+            {article.isSponsored && (
+              <span className="px-3 py-1 bg-blue-500/20 text-blue-500 border border-blue-500/30 text-[11px] font-black rounded uppercase tracking-widest">
+                Sponsored
+              </span>
+            )}
             {article.location && article.location !== "Global" && (
               <span className={`flex items-center gap-1 px-3 py-1 rounded-full text-[11px] font-bold border ${
                 isDark ? "border-white/20 text-white/70 bg-white/5" : "border-gray-300 text-gray-600 bg-gray-50"
@@ -381,6 +404,8 @@ export default function ArticlePage() {
           }`}>
             {article.excerpt}
           </p>
+
+          <AdBanner className="mb-6" />
 
           <AISummaryButton articleText={article.content} />
 
@@ -432,7 +457,7 @@ export default function ArticlePage() {
             </figure>
           )}
 
-          {article.isPremium && !canAccess("pro") ? (
+          {article.isPremium && !canAccess("weekly") ? (
             <PaywallOverlay />
           ) : (
             <div className={`mb-8 space-y-6 relative ${
@@ -577,6 +602,17 @@ export default function ArticlePage() {
                 aria-label="Save Article"
               >
                 <Bookmark className={`w-5 h-5 ${isSaved ? "fill-current" : ""}`} />
+              </button>
+
+              {/* Offline Read */}
+              <button 
+                onClick={handleOfflineSave}
+                className={`w-10 h-10 rounded-full flex items-center justify-center transition-transform active:scale-95 ${
+                  isDark ? "bg-white/10 hover:bg-white/20" : "bg-gray-100 hover:bg-gray-200"
+                }`}
+                aria-label="Save for Offline"
+              >
+                <DownloadCloud className={`w-5 h-5 ${canAccess("monthly") ? "text-blue-500" : "text-gray-400"}`} />
               </button>
 
               {/* Share Circle */}

@@ -7,8 +7,10 @@ import { useTheme } from "@/components/theme-provider"
 import { AccessibleImage as Image } from "@/components/frontend/accessible-image"
 import Link from "next/link"
 import { useSocket } from "@/hooks/use-socket"
+import { useSubscription } from "@/lib/use-subscription"
 
 export function ReelsSection() {
+  const { canAccess } = useSubscription()
   const { theme } = useTheme()
   const isDark = theme !== "light"
   const [reels, setReels] = useState<any[]>([])
@@ -121,8 +123,17 @@ export function ReelsSection() {
                   </span>
                 </div>
 
-                {/* Duration */}
-                <div className="absolute top-3 right-3">
+                {/* Duration & Quality */}
+                <div className="absolute top-3 right-3 flex flex-col gap-1 items-end">
+                  {canAccess("monthly") ? (
+                    <span className="px-2 py-0.5 text-[10px] font-bold rounded bg-blue-600 text-white shadow-sm border border-blue-400/50">
+                      HD 1080p
+                    </span>
+                  ) : (
+                    <span className="px-2 py-0.5 text-[10px] font-bold rounded bg-gray-600 text-white shadow-sm border border-gray-400/50">
+                      SD 480p
+                    </span>
+                  )}
                   <span className={`px-2 py-0.5 text-xs font-medium rounded-md bg-black/60 text-white`}>
                     {reel.duration}
                   </span>
@@ -166,9 +177,17 @@ export function ReelsSection() {
             >
               ✕
             </button>
+            {!canAccess("monthly") && (
+              <div className="absolute top-4 left-4 z-10 bg-black/70 backdrop-blur-md px-3 py-1.5 rounded-lg border border-white/10 flex flex-col">
+                <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Quality: Standard</span>
+                <Link href="/subscription" className="text-xs text-blue-400 hover:text-blue-300 font-semibold mt-0.5">
+                  Upgrade to Monthly for HD ⚡
+                </Link>
+              </div>
+            )}
             <iframe 
               src={activeReel.replace('shorts/', 'embed/')} 
-              className="w-full h-full" 
+              className={`w-full h-full ${!canAccess("monthly") ? "blur-[0.5px] contrast-75 brightness-90" : ""}`} 
               allow="autoplay; encrypted-media; picture-in-picture" 
               allowFullScreen
             />

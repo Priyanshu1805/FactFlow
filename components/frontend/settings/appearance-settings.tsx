@@ -1,7 +1,7 @@
 "use client"
 
 import { useTheme } from "@/components/theme-provider"
-import { Moon, Sun, Layers, Type, Monitor, ChevronDown, Check } from "lucide-react"
+import { Moon, Sun, Layers, Type, Monitor, ChevronDown, Check, Layout, AlignJustify, AlignLeft, Rows } from "lucide-react"
 import { useSettings } from "@/lib/use-settings"
 import { useEffect, useState, useRef } from "react"
 
@@ -47,9 +47,9 @@ const FONT_STYLES = [
 ] as const
 
 const LAYOUTS = [
-  { id: "compact", label: "Compact" },
-  { id: "comfortable", label: "Comfortable" },
-  { id: "spacious", label: "Spacious" }
+  { id: "compact", label: "Compact", icon: AlignJustify, desc: "More news, less scrolling" },
+  { id: "comfortable", label: "Comfortable", icon: AlignLeft, desc: "Balanced visual reading" },
+  { id: "spacious", label: "Spacious", icon: Rows, desc: "Large images & relaxed" }
 ] as const
 
 const DISPLAY_OPTIONS_MAP = [
@@ -265,20 +265,25 @@ export function AppearanceSettings() {
       </div>
 
       {/* Layout Density */}
-      <div className="space-y-3 mt-10">
-        <h3 className="text-gray-900 dark:text-white font-semibold text-sm px-2">News Feed Layout</h3>
-        <div className="flex flex-wrap gap-2 mt-3">
+      <div className="space-y-4 mt-10">
+        <h3 className="text-gray-900 dark:text-white font-semibold text-sm flex items-center gap-2 px-2">
+          <Layout className="w-4 h-4 text-red-400" />
+          News Feed Layout
+        </h3>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           {LAYOUTS.map((layout) => {
+            const Icon = layout.icon
             const isActive = currentLayout === layout.id
             return (
               <label 
                 key={layout.id} 
-                className={`cursor-pointer px-5 py-2.5 rounded-xl border text-sm font-semibold transition-all duration-200 ${
+                className={`group cursor-pointer relative overflow-hidden flex flex-col p-4 rounded-xl border-2 transition-all duration-300 ${
                   isActive 
-                    ? 'border-red-500 bg-red-50 dark:bg-red-500/10 text-red-600 dark:text-red-400 shadow-sm' 
-                    : 'border-gray-200 dark:border-white/10 hover:border-gray-300 dark:hover:border-white/20 bg-white dark:bg-white/5 text-gray-700 dark:text-gray-300'
+                    ? 'border-red-500 bg-gradient-to-br from-red-50 to-white dark:from-red-500/10 dark:to-zinc-900/50 text-red-600 dark:text-red-400 shadow-md transform scale-[1.02]' 
+                    : 'border-gray-200 dark:border-white/10 hover:border-gray-300 dark:hover:border-white/20 bg-white dark:bg-white/5 text-gray-700 dark:text-gray-300 hover:-translate-y-0.5'
                 }`}
               >
+                <div className={`absolute top-0 right-0 w-16 h-16 bg-gradient-to-br from-red-500/10 to-transparent dark:from-red-500/20 rounded-bl-full transition-opacity duration-300 ${isActive ? 'opacity-100' : 'opacity-0 group-hover:opacity-50'}`} />
                 <input 
                   className="sr-only" 
                   type="radio" 
@@ -287,7 +292,14 @@ export function AppearanceSettings() {
                   checked={isActive}
                   onChange={() => handleLayoutChange(layout.id)}
                 />
-                {layout.label}
+                <Icon className={`w-6 h-6 mb-3 transition-colors ${isActive ? 'text-red-500' : 'text-gray-400 dark:text-gray-500 group-hover:text-red-400'}`} />
+                <span className="font-bold text-sm mb-1 z-10 relative">{layout.label}</span>
+                <span className="text-xs text-gray-500 dark:text-white/50 z-10 relative">{layout.desc}</span>
+                {isActive && (
+                  <div className="absolute top-3 right-3 bg-red-500 text-white rounded-full p-0.5 shadow-sm animate-in zoom-in duration-200">
+                    <Check className="w-3 h-3" />
+                  </div>
+                )}
               </label>
             )
           })}

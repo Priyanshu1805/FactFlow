@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion"
 import { Search, Sparkles, Sun, Moon, LayoutDashboard, Newspaper, MonitorPlay, Settings, ShieldCheck, CornerDownLeft, ArrowRight, Bot } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useTheme } from "@/components/theme-provider"
+import { useAuthStore } from "@/store/auth-store"
 
 // Removed mock function as we use real AI backend now
 
@@ -16,6 +17,7 @@ export function CommandPalette() {
   const inputRef = useRef<HTMLInputElement>(null)
   const router = useRouter()
   const { theme, setTheme } = useTheme()
+  const { user } = useAuthStore()
   const isDark = theme !== "light"
 
   // Open/Close Hotkeys
@@ -57,7 +59,7 @@ export function CommandPalette() {
     { id: "nav-dash", title: "Go to Dashboard", icon: LayoutDashboard, color: "text-blue-400", bg: "bg-blue-500/10", action: () => routeTo("/") },
     { id: "nav-news", title: "Read Newspaper", icon: Newspaper, color: "text-green-400", bg: "bg-green-500/10", action: () => routeTo("/newspaper") },
     { id: "nav-reels", title: "Watch Reels", icon: MonitorPlay, color: "text-red-400", bg: "bg-red-500/10", action: () => routeTo("/reels") },
-    { id: "nav-admin", title: "Admin Panel", icon: ShieldCheck, color: "text-orange-400", bg: "bg-orange-500/10", action: () => routeTo("/admin") },
+    ...(user?.role === "admin" ? [{ id: "nav-admin", title: "Admin Panel", icon: ShieldCheck, color: "text-orange-400", bg: "bg-orange-500/10", action: () => routeTo("/admin") }] : []),
     { id: "nav-settings", title: "Settings", icon: Settings, color: "text-gray-400", bg: "bg-gray-500/10", action: () => routeTo("/settings") },
     { id: "theme-dark", title: "Switch to Dark Theme", icon: Moon, color: "text-indigo-400", bg: "bg-indigo-500/10", action: () => { setTheme("dark"); setIsOpen(false) } },
     { id: "theme-light", title: "Switch to Light Theme", icon: Sun, color: "text-yellow-400", bg: "bg-yellow-500/10", action: () => { setTheme("light"); setIsOpen(false) } },

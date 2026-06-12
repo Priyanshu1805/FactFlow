@@ -65,7 +65,7 @@ Write a comprehensive report in English containing at least 4-5 detailed paragra
           let cleanHtml = generatedText.trim()
           
           // Remove any markdown fencing if the model ignored instructions
-          cleanHtml = cleanHtml.replace(/^```html\s*/i, "").replace(/```$/s, "")
+          cleanHtml = cleanHtml.replace(/^```html\s*/i, "").replace(/```\s*$/, "")
           
           if (!cleanHtml.includes("<p>")) {
             // Split by double line breaks and wrap in paragraphs

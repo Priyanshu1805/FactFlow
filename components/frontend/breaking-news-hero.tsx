@@ -19,6 +19,7 @@ interface Article {
   source?: string
   tags?: string[]
   isPremium?: boolean
+  isSponsored?: boolean
 }
 
 function SocialUpdateCard({ article }: { article: Article }) {
@@ -144,6 +145,11 @@ function ArticleHeroCard({ article }: { article: Article }) {
             LIVE UPDATE
           </span>
           {article.isPremium && <PremiumBadge size="sm" />}
+          {article.isSponsored && (
+            <span className="px-2 py-0.5 rounded text-[10px] font-bold tracking-wider uppercase bg-blue-500/20 text-blue-300 border border-blue-500/30 backdrop-blur-sm">
+              Sponsored
+            </span>
+          )}
         </div>
       </div>
 

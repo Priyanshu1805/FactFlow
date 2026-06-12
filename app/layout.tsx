@@ -75,6 +75,9 @@ export default function RootLayout({
             }, { capture: true });
           `}
         </Script>
+        
+        {/* Google AdSense Global Script */}
+        <Script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-XXXXXXXXXXXXXXXX" crossOrigin="anonymous" strategy="afterInteractive" />
         <GoogleTranslate />
         <AuthProvider>
           <SocketProvider>
