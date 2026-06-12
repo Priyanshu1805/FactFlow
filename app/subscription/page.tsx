@@ -335,7 +335,7 @@ export default function SubscriptionPage() {
                         <div className="text-5xl mb-4">😔</div>
                         <h2 className="text-2xl font-bold mb-2">Subscription Expired</h2>
                         <p className="text-gray-400 text-sm mb-6">You've lost access to premium features</p>
-                        <button onClick={() => { setPopup(null); openModal("pro"); }}
+                        <button onClick={() => { setPopup(null); openModal("monthly"); }}
                             className="w-full bg-[#e84118] text-white py-3 rounded-xl font-semibold mb-3">Reactivate Plan</button>
                         <button onClick={() => setPopup(null)}
                             className="w-full bg-[#333] text-gray-400 py-2 rounded-xl text-sm">Continue with Free</button>
