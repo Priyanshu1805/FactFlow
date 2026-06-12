@@ -68,7 +68,7 @@ export function FeedSettings() {
             return match ? match.id : null
           }).filter((id): id is string => id !== null)
           
-          const uniqueIds = Array.from(new Set(mappedIds))
+          const uniqueIds = Array.from(new Set(mappedIds)) as string[]
           const finalIds = uniqueIds.length > 0 ? uniqueIds : DEFAULT_TOPICS
           setSelected(finalIds)
           // initFromBackend normalizes topics to IDs and updates the feed store

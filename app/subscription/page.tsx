@@ -380,19 +380,18 @@ export default function SubscriptionPage() {
                 <div className="max-w-5xl mx-auto px-4 py-8">
 
                     {/* ── Plan banner ── */}
-                    <div className={`rounded-xl px-5 py-4 mb-8 flex items-center justify-between border ${sub.plan === "premium" ? "border-yellow-600/40 bg-yellow-900/10"
-                            : sub.plan === "pro" ? "border-orange-600/40 bg-orange-900/10"
-                                : "border-gray-700 bg-gray-900/30"
+                    <div className={`rounded-xl px-5 py-4 mb-8 flex items-center justify-between border ${sub.plan !== "free" ? "border-yellow-600/40 bg-yellow-900/10"
+                            : "border-gray-700 bg-gray-900/30"
                         }`}>
                         <div className="flex items-center gap-3">
                             <span className="text-2xl">
-                                {sub.plan === "premium" ? "👑" : sub.plan === "pro" ? "⚡" : "⭐"}
+                                {sub.plan !== "free" ? "👑" : "⭐"}
                             </span>
                             <div>
                                 <p className="font-semibold">
                                     {sub.plan === "free" && "You are on the Free Plan — Upgrade to unlock premium features"}
-                                    {sub.plan === "pro" && `You are on the Pro Plan · Next billing: ${sub.endDate ?? "—"}`}
-                                    {sub.plan === "premium" && "You are on the Premium Plan ✨"}
+                                    {sub.plan === "monthly" && `You are on the Pro Plan · Next billing: ${sub.endDate ?? "—"}`}
+                                    {sub.plan === "yearly" && "You are on the Premium Plan ✨"}
                                 </p>
                                 {sub.plan !== "free" && (
                                     <p className="text-xs text-gray-400 mt-0.5">Started: {sub.startDate}</p>
@@ -522,7 +521,7 @@ export default function SubscriptionPage() {
                             <div className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-2xl p-6 mb-4">
                                 <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-5">
                                     {[
-                                        ["Plan", <span className={`text-xs px-2 py-0.5 rounded-full font-semibold ${sub.plan === "premium" ? "bg-yellow-900 text-yellow-400" : "bg-orange-900 text-orange-400"}`}>{sub.plan.toUpperCase()}</span>],
+                                        ["Plan", <span className={`text-xs px-2 py-0.5 rounded-full font-semibold ${sub.plan === "yearly" ? "bg-yellow-900 text-yellow-400" : "bg-orange-900 text-orange-400"}`}>{sub.plan.toUpperCase()}</span>],
                                         ["Billing Cycle", sub.billingCycle ?? "monthly"],
                                         ["Next Billing", sub.endDate ?? "—"],
                                         ["Amount", `₹${sub.amount ?? 0}`],
@@ -621,10 +620,10 @@ export default function SubscriptionPage() {
 
                         {[
                             { key: "morning" as const, label: "Daily Morning Digest", desc: "Top 10 stories every morning at 7 AM", minPlan: "free" },
-                            { key: "breaking" as const, label: "Breaking News Alerts", desc: "Instant alerts for major breaking stories", minPlan: "pro" },
-                            { key: "weekly" as const, label: "Weekly Trending Roundup", desc: "Best of the week, every Sunday", minPlan: "premium" },
+                            { key: "breaking" as const, label: "Breaking News Alerts", desc: "Instant alerts for major breaking stories", minPlan: "monthly" },
+                            { key: "weekly" as const, label: "Weekly Trending Roundup", desc: "Best of the week, every Sunday", minPlan: "yearly" },
                         ].map(({ key, label, desc, minPlan }) => {
-                            const planOrder = ["free", "pro", "premium"];
+                            const planOrder = ["free", "weekly", "monthly", "yearly"];
                             const locked = planOrder.indexOf(sub.plan) < planOrder.indexOf(minPlan);
                             return (
                                 <div
@@ -639,7 +638,7 @@ export default function SubscriptionPage() {
                                             {label}
                                             {locked && (
                                                 <span className="text-[10px] bg-[#333] text-gray-400 px-2 py-0.5 rounded-full">
-                                                    🔒 {minPlan === "pro" ? "Pro" : "Premium"}
+                                                    🔒 {minPlan === "monthly" ? "Monthly" : "Yearly"}
                                                 </span>
                                             )}
                                         </p>
@@ -660,13 +659,13 @@ export default function SubscriptionPage() {
                         {showDemo && (
                             <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mt-4">
                                 {[
-                                    ["⏰ Expiring Soon", () => { demoSetPlan("pro"); setPopup("expiring"); }],
+                                    ["⏰ Expiring Soon", () => { demoSetPlan("monthly"); setPopup("expiring"); }],
                                     ["😔 Expired", () => setPopup("expired")],
                                     ["❌ Payment Failed", () => setPopup("failed")],
                                     ["🎉 Success", () => { setShowConfetti(true); setPopup("success"); setTimeout(() => { setShowConfetti(false); setPopup(null); }, 4000); }],
                                     ["Reset → Free", () => setSub({ plan: "free", status: "inactive" })],
-                                    ["Set → Pro", () => demoSetPlan("pro")],
-                                    ["Set → Premium", () => demoSetPlan("premium")],
+                                    ["Set → Monthly", () => demoSetPlan("monthly")],
+                                    ["Set → Yearly", () => demoSetPlan("yearly")],
                                     ["Clear Popups", () => setPopup(null)],
                                 ].map(([label, fn]) => (
                                     <button key={String(label)} onClick={fn as () => void}

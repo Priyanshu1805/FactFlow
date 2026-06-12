@@ -199,7 +199,7 @@ export function PoliticsSection() {
                         <div className="flex items-center gap-1.5">
                           <Clock className="w-3.5 h-3.5" />
                           {featured.time}
-                      {settings?.enableAudioNews && (
+                      {((settings as any)?.enableAudioNews) && (
                         <button
                           onClick={(e) => {
                             e.preventDefault(); e.stopPropagation();
@@ -274,7 +274,7 @@ export function PoliticsSection() {
                         } ${isDark ? "text-white/40" : "text-gray-400"}`}>
                           <Clock className="w-3.5 h-3.5" />
                           {article.time}
-                      {settings?.enableAudioNews && (
+                      {((settings as any)?.enableAudioNews) && (
                         <button
                           onClick={(e) => {
                             e.preventDefault(); e.stopPropagation();

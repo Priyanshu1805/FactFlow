@@ -139,7 +139,7 @@ export function LifestyleSection() {
                         </div>
                       )}
                       <div className="flex items-center gap-1.5"><Clock className="w-3.5 h-3.5" />{featured.time}</div>
-                      {settings?.enableAudioNews && (
+                      {((settings as any)?.enableAudioNews) && (
                         <button
                           onClick={(e) => {
                             e.preventDefault(); e.stopPropagation();
@@ -185,7 +185,7 @@ export function LifestyleSection() {
                     <div className="mt-auto flex items-center justify-between">
                       <div className={`flex items-center gap-1.5 text-xs font-medium ${isDark ? "text-white/40" : "text-gray-400"}`}>
                         <Clock className="w-3.5 h-3.5" />{article.time}
-                      {settings?.enableAudioNews && (
+                      {((settings as any)?.enableAudioNews) && (
                         <button
                           onClick={(e) => {
                             e.preventDefault(); e.stopPropagation();
