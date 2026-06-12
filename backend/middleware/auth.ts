@@ -6,6 +6,7 @@ import { requireAuth, requireRole as newRequireRole } from "./authProtection"
 // Alias for backwards compatibility with other routes
 export interface AuthRequest extends Request {
   user?: IUser;
+  body: any;
 }
 
 export const authenticate = requireAuth;

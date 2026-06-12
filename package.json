@@ -4,10 +4,10 @@
   "private": true,
   "scripts": {
     "dev": "cross-env NODE_ENV=development nodemon --watch backend --ext ts --exec \"tsx backend/server.ts\"",
-    "build": "next build && tsc --project backend/tsconfig.json",
+    "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "start:server": "cross-env NODE_ENV=production node dist/server.js"
+    "start:server": "cross-env NODE_ENV=production npx tsx backend/server.ts"
   },
   "dependencies": {
     "@mozilla/readability": "^0.6.0",
