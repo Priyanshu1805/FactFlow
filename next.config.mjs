@@ -55,16 +55,29 @@ const nextConfig = {
     },
   ],
   async rewrites() {
-    return [
-      {
-        source: "/api/backend/:path*",
-        destination: "http://127.0.0.1:5000/api/:path*",
-      },
-      {
-        source: "/socket.io/:path*",
-        destination: "http://127.0.0.1:5000/socket.io/:path*",
-      },
-    ]
+    return {
+      beforeFiles: [],
+      afterFiles: [
+        {
+          source: "/api/backend/:path*",
+          destination: "http://127.0.0.1:5000/api/:path*",
+        },
+        {
+          source: "/socket.io/:path*",
+          destination: "http://127.0.0.1:5000/socket.io/:path*",
+        },
+      ],
+      fallback: [
+        {
+          source: "/api/:path*",
+          destination: "https://factflow-backend.onrender.com/api/:path*",
+        },
+        {
+          source: "/socket.io/:path*",
+          destination: "https://factflow-backend.onrender.com/socket.io/:path*",
+        }
+      ]
+    }
   },
 }
 

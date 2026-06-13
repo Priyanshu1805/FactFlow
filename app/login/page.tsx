@@ -241,7 +241,17 @@ export default function LoginPage() {
             method: "POST", headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ identifier })
           })
-          if (!lookupRes.ok) throw new Error("Fetch failed")
+          if (!lookupRes.ok) {
+            let errorText = "User not found"
+            try {
+              const errData = await lookupRes.json()
+              if (errData.error) errorText = errData.error
+            } catch (e) {
+              errorText = `Server returned ${lookupRes.status}`
+            }
+            throw new Error(`Lookup failed: ${errorText}`)
+          }
+          
           const lookupData = await lookupRes.json()
           if (!lookupData.success || !lookupData.email) {
             throw new Error("No account found for this username/phone.")
