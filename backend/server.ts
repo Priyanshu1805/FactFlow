@@ -320,11 +320,15 @@ async function start(): Promise<void> {
   await nextApp.prepare()
   console.log("Next.js app prepared!")
 
-  httpServer.listen(PORT, () => {
+  // Render specific timeouts to prevent 502 errors
+  httpServer.keepAliveTimeout = 120000; // 120 seconds
+  httpServer.headersTimeout = 120000; // 120 seconds
+
+  httpServer.listen(PORT, "0.0.0.0", () => {
     console.log("\n╔══════════════════════════════════════╗")
     console.log("║     🔥 FACT FLOW BACKEND RUNNING     ║")
     console.log("╠══════════════════════════════════════╣")
-    console.log(`║  URL  : http://localhost:${PORT}         ║`)
+    console.log(`║  URL  : http://0.0.0.0:${PORT}         ║`)
     console.log(`║  Mode : ${(process.env.NODE_ENV || "development").padEnd(28)}║`)
     console.log("╚══════════════════════════════════════╝\n")
   })
