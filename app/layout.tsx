@@ -24,20 +24,13 @@ export const metadata: Metadata = {
     template: "%s | Fact Flow"
   },
   description: "Fast. Accurate. Entertaining. Breaking news, trending stories, and viral reels — all in one place.",
-  keywords: ["news", "breaking news", "trending", "reels", "sports", "entertainment", "journalism", "live updates"],
+  keywords: "news, breaking news, trending, reels, sports, entertainment, journalism, live updates",
   openGraph: {
     title: "Fact Flow",
     description: "Your Daily Pulse Of Global News",
     url: "https://factflow.news",
     siteName: "Fact Flow",
-    images: [
-      {
-        url: "/og-image.jpg", // Make sure this exists in public folder
-        width: 1200,
-        height: 630,
-        alt: "Fact Flow - Daily News Pulse"
-      }
-    ],
+    images: "/og-image.jpg",
     locale: "en_US",
     type: "website",
   },
