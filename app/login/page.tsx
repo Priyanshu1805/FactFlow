@@ -314,9 +314,15 @@ export default function LoginPage() {
         const result = await signInWithEmailAndPassword(auth, loginEmail, password)
         
         // Fetch MongoDB Profile during standard login
-        const profileRes = await fetch(`${API}/users/profile?firebaseUid=${result.user.uid}`)
+        const profileRes = await fetch(`${API}/users/profile?firebaseUid=${result.user.uid}&email=${result.user.email}`)
         const profileData = await profileRes.json()
-        const mongoUser = profileData.success ? profileData.user : {}
+        
+        if (!profileRes.ok || !profileData.success) {
+          // Sign out from Firebase if Mongo profile is missing/corrupted to prevent glitches
+          await auth.signOut()
+          throw new Error("Profile synchronization failed. If you just signed up, your username or phone might already be in use by another account.")
+        }
+        const mongoUser = profileData.user
 
         setUser({
           uid: result.user.uid,
