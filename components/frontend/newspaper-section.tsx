@@ -265,98 +265,118 @@ export function NewspaperSection() {
           </div>
         )}
 
-        {/* ═══ MOBILE FRONT PAGE SEQUENCE (under md) ═══ */}
-        <div className="md:hidden flex flex-col gap-0 text-[#111]">
+        {/* ═══ MOBILE FRONT PAGE SEQUENCE (under md) - SMART WIDGET DESIGN ═══ */}
+        <div className="md:hidden flex flex-col gap-5 px-1 py-2 font-sans">
           
-          {/* Main Featured Story */}
+          {/* Main Featured Story - Hero Widget */}
           {featured && (
-            <Link href={`/article/${featured.id}`} className="block group pb-6 mb-6 border-b-2 border-double border-[#111]">
-              <article className="flex flex-col">
-                <div className="text-center mb-3">
-                  <span className="font-newspaper-body text-[10px] font-black uppercase tracking-widest text-red-800 border border-red-800/40 px-2.5 py-0.5 rounded">
-                    LATE CITY BULLETINS
-                  </span>
-                </div>
-                
-                <h1 className="font-newspaper-headline text-3xl font-bold text-center leading-tight mb-4 text-[#111] group-hover:underline">
-                  {featured.title}
-                </h1>
+            <Link href={`/article/${featured.id}`} className="block group">
+              <article className="flex flex-col bg-white rounded-2xl shadow-[0_2px_12px_-4px_rgba(0,0,0,0.1)] border border-gray-100 overflow-hidden relative active:scale-[0.98] transition-transform duration-200">
                 
                 {displayOptions.thumbnails !== false && (
-                  <div className="w-full mb-4 p-1.5 bg-white border border-[#ddd]">
-                    <div className="relative w-full aspect-[16/10] overflow-hidden grayscale">
-                      <Image src={featured.image || "https://images.unsplash.com/photo-1504711434969-e33886168f5c"} alt={featured.title} fill className="object-cover" />
-                    </div>
-                    <div className="font-newspaper-body text-[9px] text-[#222] mt-1.5 text-center italic">
-                      By {featured.authorName} — Dispatch for The Fact Flow Times
+                  <div className="relative w-full aspect-[4/3] overflow-hidden">
+                    <Image 
+                      src={featured.image || "https://images.unsplash.com/photo-1504711434969-e33886168f5c"} 
+                      alt={featured.title} 
+                      fill 
+                      className="object-cover transition-transform duration-500 group-hover:scale-105" 
+                    />
+                    <div className="absolute top-3 left-3 bg-red-600/90 backdrop-blur-sm text-white px-2.5 py-1 rounded-full font-bold text-[10px] uppercase tracking-wider shadow-sm">
+                      Top Story
                     </div>
                   </div>
                 )}
                 
-                <p className="font-newspaper-body text-sm leading-relaxed text-justify newspaper-dropcap text-[#111] px-1 line-clamp-6">
-                  {featured.excerpt}
-                </p>
+                <div className="p-5 flex flex-col gap-2">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="w-1.5 h-1.5 rounded-full bg-red-600"></span>
+                    <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                      {featured.tag || "Breaking"}
+                    </span>
+                  </div>
+                  
+                  <h1 className="text-2xl font-bold leading-tight text-gray-900 group-hover:text-blue-600 transition-colors">
+                    {featured.title}
+                  </h1>
+                  
+                  <p className="text-sm text-gray-600 line-clamp-3 mt-1 leading-relaxed">
+                    {featured.excerpt}
+                  </p>
+                  
+                  <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-100 text-xs font-medium text-gray-500">
+                    <span className="flex items-center gap-1.5">
+                      <div className="w-5 h-5 rounded-full bg-gray-200 overflow-hidden relative">
+                        <Image src={`https://api.dicebear.com/7.x/initials/svg?seed=${featured.authorName}&backgroundColor=111`} alt="Author" fill />
+                      </div>
+                      {featured.authorName}
+                    </span>
+                    <span>{featured.time}</span>
+                  </div>
+                </div>
               </article>
             </Link>
           )}
 
-          {/* 2-Column Print Style Layout (6 stories) */}
-          <div className="grid grid-cols-2 gap-x-4 gap-y-0">
-            {newspaperNews.slice(1, 7).map((article, idx) => {
-              const isLeftCol = idx % 2 === 0;
-              return (
-                <Link 
-                  href={`/article/${article.id}`} 
-                  key={article.id} 
-                  className={`block group ${
-                    isLeftCol 
-                      ? "pr-4 border-r border-[#111]/15" 
-                      : "pl-1"
-                  } ${
-                    idx < 4 ? "border-b border-dotted border-[#111]/20 pb-4 mb-4" : "pb-4"
-                  }`}
-                >
-                  <article className="flex flex-col justify-between h-full">
-                    <div>
-                      <div className="font-newspaper-body text-[8px] font-bold uppercase tracking-wider text-red-800 mb-1">
-                        {article.tag || "Dispatch"}
-                      </div>
-                      <h3 className="font-newspaper-headline text-base font-bold leading-tight mb-2 text-[#111] group-hover:underline line-clamp-3">
-                        {article.title}
-                      </h3>
-                      <p className="font-newspaper-body text-[11px] leading-snug text-justify text-[#222] line-clamp-4">
-                        {article.excerpt}
-                      </p>
+          {/* Smart List Widget (Next 6 stories) */}
+          <div className="flex flex-col gap-4 mt-2">
+            {newspaperNews.slice(1, 7).map((article, idx) => (
+              <Link 
+                href={`/article/${article.id}`} 
+                key={article.id} 
+                className="block group"
+              >
+                <article className="flex items-stretch gap-4 bg-white p-3 rounded-xl shadow-[0_2px_8px_-4px_rgba(0,0,0,0.08)] border border-gray-100 active:bg-gray-50 transition-colors">
+                  <div className="flex-1 flex flex-col justify-center py-1">
+                    <div className="text-[10px] font-bold uppercase tracking-wider text-blue-600 mb-1.5">
+                      {article.tag || "Latest"}
                     </div>
-                    <div className="font-newspaper-body text-[8px] text-[#555] uppercase mt-2 pt-1 border-t border-dotted border-[#111]/10">
+                    <h3 className="text-base font-bold leading-snug text-gray-900 line-clamp-3 group-hover:text-blue-600 transition-colors">
+                      {article.title}
+                    </h3>
+                    <div className="text-[10px] text-gray-500 font-medium mt-2 flex items-center gap-1.5">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
                       {article.time}
                     </div>
-                  </article>
-                </Link>
-              )
-            })}
+                  </div>
+                  
+                  {displayOptions.thumbnails !== false && (
+                    <div className="relative w-[100px] h-[100px] shrink-0 rounded-lg overflow-hidden bg-gray-100">
+                      <Image 
+                        src={article.image || "https://images.unsplash.com/photo-1504711434969-e33886168f5c"} 
+                        alt={article.title} 
+                        fill 
+                        className="object-cover"
+                      />
+                    </div>
+                  )}
+                </article>
+              </Link>
+            ))}
           </div>
 
-          {/* Late News Dispatch Index */}
+          {/* Late News Dispatch Index - Clean Accordion-like List */}
           {newspaperNews.length > 7 && (
-            <div className="border-t-4 border-double border-[#111] mt-6 pt-5">
-              <div className="bg-[#111]/3 p-4 rounded-xl border border-[#111]/10">
-                <h4 className="font-newspaper-headline text-sm font-black uppercase tracking-wider text-center mb-3 text-[#111]">
-                  - LATE NEWS DISPATCH INDEX -
+            <div className="mt-4 bg-white rounded-2xl shadow-[0_2px_12px_-4px_rgba(0,0,0,0.08)] border border-gray-100 overflow-hidden">
+              <div className="bg-gray-50 px-5 py-3 border-b border-gray-100">
+                <h4 className="text-sm font-bold uppercase tracking-widest text-gray-800 flex items-center gap-2">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-red-600"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg>
+                  More Top Stories
                 </h4>
-                <div className="space-y-2.5">
-                  {newspaperNews.slice(7, 120).map((article, idx) => (
-                    <Link href={`/article/${article.id}`} key={article.id} className="block group">
-                      <div className="flex justify-between items-baseline font-newspaper-body text-xs text-[#111] group-hover:underline gap-2">
-                        <span className="font-bold uppercase text-[9px] text-red-800 shrink-0">{article.tag || "BULLETIN"}</span>
-                        <span className="truncate flex-1 font-serif text-justify leading-none">{article.title}</span>
-                        <span className="shrink-0 font-newspaper-body text-[10px] text-right font-bold pl-2 border-l border-dashed border-[#111]/20">
-                          P. {idx + 4}
-                        </span>
-                      </div>
-                    </Link>
-                  ))}
-                </div>
+              </div>
+              <div className="flex flex-col divide-y divide-gray-100">
+                {newspaperNews.slice(7, 120).map((article, idx) => (
+                  <Link href={`/article/${article.id}`} key={article.id} className="block group px-5 py-4 active:bg-gray-50 transition-colors">
+                    <div className="flex flex-col gap-1.5">
+                      <span className="font-bold uppercase text-[10px] tracking-wider text-red-600">{article.tag || "Update"}</span>
+                      <h4 className="text-sm font-semibold text-gray-900 group-hover:text-blue-600 leading-snug line-clamp-2">
+                        {article.title}
+                      </h4>
+                      <span className="text-[10px] text-gray-500 font-medium">
+                        {article.time} • By {article.authorName}
+                      </span>
+                    </div>
+                  </Link>
+                ))}
               </div>
             </div>
           )}
