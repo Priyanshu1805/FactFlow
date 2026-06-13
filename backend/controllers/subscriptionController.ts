@@ -37,64 +37,51 @@ export async function createOrder(req: AuthRequest, res: Response) {
     const { plan, coupon } = req.body;
     const userId = req.user?.id;
 
-    if (!plan) {
-      res.status(400).json({ success: false, error: "plan required" });
+    if (!plan || !PRICES[plan]) {
+      res.status(400).json({ success: false, error: "Invalid plan" });
       return;
     }
-    if (!PRICES[plan]) {
-      res.status(400).json({ success: false, error: "Invalid plan" });
+
+    const { User } = await import("../models/User");
+    const user = await User.findById(userId);
+    if (!user) {
+      res.status(404).json({ success: false, error: "User not found" });
       return;
     }
 
     const amount = calcAmount(plan, coupon);
     const orderId = `ff_${String(userId).slice(-8)}_${Date.now()}`;
 
-    const paytmParams: any = {};
-    paytmParams.body = {
-      requestType: "Payment",
-      mid: process.env.PAYTM_MID,
-      websiteName: process.env.PAYTM_WEBSITE || "WEBSTAGING",
-      orderId: orderId,
-      callbackUrl: `${process.env.FRONTEND_URL}/api/paytm-callback`,
-      txnAmount: {
-        value: (amount / 100).toFixed(2),
-        currency: "INR",
+    // Load Cashfree SDK
+    const { Cashfree } = await import("cashfree-pg");
+    Cashfree.XClientId = process.env.CASHFREE_APP_ID!;
+    Cashfree.XClientSecret = process.env.CASHFREE_SECRET_KEY!;
+    Cashfree.XEnvironment = process.env.CASHFREE_ENVIRONMENT === "PRODUCTION" 
+        ? Cashfree.Environment.PRODUCTION 
+        : Cashfree.Environment.SANDBOX;
+
+    const request = {
+      order_amount: amount / 100, // Cashfree takes amount in INR
+      order_currency: "INR",
+      order_id: orderId,
+      customer_details: {
+        customer_id: String(userId),
+        customer_phone: user.phone || "9999999999",
+        customer_email: user.email || "user@example.com",
+        customer_name: user.name || "FactFlow User"
       },
-      userInfo: {
-        custId: userId,
-      },
+      order_meta: {
+        return_url: `${process.env.FRONTEND_URL}/subscription?order_id={order_id}`
+      }
     };
 
-    const checksum = await PaytmChecksum.generateSignature(JSON.stringify(paytmParams.body), process.env.PAYTM_MERCHANT_KEY!);
-    paytmParams.head = { signature: checksum };
-    const post_data = JSON.stringify(paytmParams);
+    const response = await Cashfree.PGCreateOrder("2023-08-01", request);
+    const cfData = response.data;
 
-    const options = {
-      hostname: process.env.PAYTM_ENVIRONMENT === "PRODUCTION" ? "securegw.paytm.in" : "securegw-stage.paytm.in",
-      port: 443,
-      path: `/theia/api/v1/initiateTransaction?mid=${process.env.PAYTM_MID}&orderId=${orderId}`,
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Content-Length": post_data.length,
-      },
-    };
-
-    const response = await new Promise<any>((resolve, reject) => {
-      const post_req = https.request(options, (post_res) => {
-        let chunkData = "";
-        post_res.on("data", (chunk) => { chunkData += chunk; });
-        post_res.on("end", () => resolve(JSON.parse(chunkData)));
-      });
-      post_req.on("error", reject);
-      post_req.write(post_data);
-      post_req.end();
-    });
-
-    if (response.body.resultInfo.resultStatus === "S") {
+    if (cfData && cfData.payment_session_id) {
       const payment = await Payment.create({
         userId,
-        paytmOrderId: orderId,
+        gatewayOrderId: orderId,
         amount: amount / 100, // store in rupees
         status: "created",
         plan,
@@ -105,42 +92,59 @@ export async function createOrder(req: AuthRequest, res: Response) {
         success: true,
         data: {
           orderId,
-          txnToken: response.body.txnToken,
+          paymentSessionId: cfData.payment_session_id,
           amount,
-          mid: process.env.PAYTM_MID,
           paymentId: payment._id,
         },
       });
     } else {
-      res.status(500).json({ success: false, error: "Paytm token generation failed" });
+      res.status(500).json({ success: false, error: "Cashfree session generation failed" });
     }
   } catch (err: any) {
-    console.error("createOrder error:", err.message);
+    console.error("createOrder error:", err.message, err.response?.data);
     res.status(500).json({ success: false, error: "Could not create payment order" });
   }
 }
 
 // ─── POST /api/subscription/verify-payment ─────────────────────────────────
-// Called after Razorpay popup closes with success
+// Called after Cashfree popup closes with success
 export async function verifyPayment(req: AuthRequest, res: Response) {
   try {
-    const {
-      paytm_order_id,
-      paytm_transaction_id,
-      plan,
-      paymentMethod,
-    } = req.body;
-
+    const { orderId, plan, paymentMethod } = req.body;
     const userId = req.user?.id;
 
-    // 2. Calculate subscription end date
-    const now    = new Date();
+    if (!orderId) {
+      res.status(400).json({ success: false, error: "Order ID missing" });
+      return;
+    }
+
+    // Verify payment with Cashfree
+    const { Cashfree } = await import("cashfree-pg");
+    Cashfree.XClientId = process.env.CASHFREE_APP_ID!;
+    Cashfree.XClientSecret = process.env.CASHFREE_SECRET_KEY!;
+    Cashfree.XEnvironment = process.env.CASHFREE_ENVIRONMENT === "PRODUCTION" 
+        ? Cashfree.Environment.PRODUCTION 
+        : Cashfree.Environment.SANDBOX;
+
+    const cfResponse = await Cashfree.PGOrderFetchPayments("2023-08-01", orderId);
+    const payments = cfResponse.data;
+    
+    // Check if any payment for this order is SUCCESS
+    const successfulPayment = payments?.find((p: any) => p.payment_status === "SUCCESS");
+
+    if (!successfulPayment) {
+      res.status(400).json({ success: false, error: "Payment verification failed or not successful" });
+      return;
+    }
+
+    // Calculate subscription end date
+    const now = new Date();
     const endDate = new Date(now);
     if (plan === "yearly") endDate.setFullYear(endDate.getFullYear() + 1);
     else if (plan === "monthly") endDate.setMonth(endDate.getMonth() + 1);
     else if (plan === "weekly") endDate.setDate(endDate.getDate() + 7);
 
-    // 3. Upsert subscription
+    // Upsert subscription
     const subscription = await Subscription.findOneAndUpdate(
       { userId },
       {
@@ -150,25 +154,25 @@ export async function verifyPayment(req: AuthRequest, res: Response) {
         status:          "active",
         startDate:       now,
         endDate,
-        paytmOrderId:    paytm_order_id,
-        paymentMethod:   paymentMethod || "Paytm",
+        gatewayOrderId:  orderId,
+        paymentMethod:   paymentMethod || "Cashfree",
         amount:          calcAmount(plan) / 100,
       },
       { upsert: true, new: true }
     );
 
-    // 4. Mark payment as paid
+    // Mark payment as paid
     await Payment.findOneAndUpdate(
-      { paytmOrderId: paytm_order_id },
+      { gatewayOrderId: orderId },
       {
-        paytmTransactionId: paytm_transaction_id,
-        status:            "paid",
-        subscriptionId:    subscription._id,
-        method:            paymentMethod,
+        gatewayPaymentId: String(successfulPayment.cf_payment_id),
+        status:           "paid",
+        subscriptionId:   subscription._id,
+        method:           paymentMethod || "Cashfree",
       }
     );
 
-    // 5. Update user plan in User model
+    // Update user plan in User model
     const { User } = await import("../models/User");
     await User.findByIdAndUpdate(userId, { plan, subscriptionId: subscription._id });
 
@@ -178,7 +182,7 @@ export async function verifyPayment(req: AuthRequest, res: Response) {
       data: { subscription },
     });
   } catch (err: any) {
-    console.error("verifyPayment error:", err.message);
+    console.error("verifyPayment error:", err.message, err.response?.data);
     res.status(500).json({ success: false, error: "Payment verification failed" });
   }
 }

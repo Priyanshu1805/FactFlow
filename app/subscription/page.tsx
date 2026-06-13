@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { load } from "@cashfreepayments/cashfree-js";
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 type Plan = "free" | "weekly" | "monthly" | "yearly";
@@ -147,13 +148,12 @@ export default function SubscriptionPage() {
         }
     }, [sub.plan]);
 
-    // ─── Load Razorpay script ────────────────────────────────────────────────
+    // ─── Initialize Cashfree ──────────────────────────────────────────────────
+    let cashfree: any = null;
     useEffect(() => {
-        const s = document.createElement("script");
-        // Using staging script. To go live, remove "-stage"
-        s.src = "https://securegw-stage.paytm.in/merchantpgpui/checkoutjs/merchants/" + (process.env.NEXT_PUBLIC_PAYTM_MID || "YOUR_TEST_MID") + ".js";
-        document.body.appendChild(s);
-        return () => { document.body.removeChild(s); };
+        load({ mode: "sandbox" }).then((cf) => {
+            cashfree = cf;
+        });
     }, []);
 
     // ─── Open upgrade modal ──────────────────────────────────────────────────
@@ -171,87 +171,70 @@ export default function SubscriptionPage() {
         else setCouponState("invalid");
     };
 
-    // ─── Handle payment via Paytm ─────────────────────────────────────────
+    // ─── Handle payment via Cashfree ─────────────────────────────────────────
     const handlePay = useCallback(async () => {
         setPaying(true);
         try {
+            if (!cashfree) {
+                cashfree = await load({ mode: "sandbox" }); // Ensure it's loaded
+            }
+
             // 1. Create order on backend
             const orderData = await apiFetch<{
-                orderId: string; txnToken: string; amount: number; mid: string;
+                orderId: string; paymentSessionId: string; amount: number;
             }>("/subscription/create-order", {
                 method: "POST",
                 body: JSON.stringify({ plan: upgradePlan, coupon }),
             });
 
-            // 2. Open Paytm popup
-            const config = {
-                root: "",
-                flow: "DEFAULT",
-                data: {
-                    orderId: orderData.orderId,
-                    token: orderData.txnToken,
-                    tokenType: "TXN_TOKEN",
-                    amount: (orderData.amount / 100).toFixed(2),
-                },
-                handler: {
-                    notifyMerchant: function(eventName: string, data: any) {
-                        console.log("notifyMerchant handler function called", eventName, data);
-                    },
-                    transactionStatus: async function(paymentStatus: any) {
-                        // @ts-ignore
-                        window.Paytm.CheckoutJS.close();
-                        
-                        if (paymentStatus.STATUS === "TXN_SUCCESS") {
-                            // 3. Verify on backend
-                            const verifyData = await apiFetch<SubData>("/subscription/verify-payment", {
-                                method: "POST",
-                                body: JSON.stringify({
-                                    paytm_order_id: paymentStatus.ORDERID,
-                                    paytm_transaction_id: paymentStatus.TXNID,
-                                    plan: upgradePlan,
-                                    paymentMethod: "Paytm Checkout",
-                                }),
-                            });
-
-                            setTxnId(paymentStatus.TXNID);
-                            setSub(verifyData);
-                            setPayStep(4);
-                            setPaying(false);
-                            setShowConfetti(true);
-                            setTimeout(() => setShowConfetti(false), 4000);
-
-                            // Refresh history
-                            const h = await apiFetch<PaymentRecord[]>("/subscription/billing-history");
-                            setHistory(h);
-
-                            setTimeout(() => {
-                                setShowModal(false);
-                                setPopup("success");
-                                setTimeout(() => setPopup(null), 4000);
-                            }, 3000);
-                        } else {
-                            setPaying(false);
-                            setPopup("failed");
-                        }
-                    }
-                }
+            // 2. Open Cashfree Drop-in checkout
+            let checkoutOptions = {
+                paymentSessionId: orderData.paymentSessionId,
+                redirectTarget: "_modal", // Opens as a popup modal
             };
 
-            // @ts-ignore
-            if (window.Paytm && window.Paytm.CheckoutJS) {
-                // @ts-ignore
-                window.Paytm.CheckoutJS.init(config).then(function onSuccess() {
-                    // @ts-ignore
-                    window.Paytm.CheckoutJS.invoke();
-                }).catch(function onError(error: any) {
+            cashfree.checkout(checkoutOptions).then(async (result: any) => {
+                if (result.error) {
+                    console.error("Cashfree Error:", result.error);
                     setPaying(false);
                     setPopup("failed");
-                });
-            } else {
-                toast.error("Paytm script not loaded");
-                setPaying(false);
-            }
+                }
+                if (result.paymentDetails) {
+                    // 3. Verify on backend after successful payment
+                    try {
+                        const verifyData = await apiFetch<SubData>("/subscription/verify-payment", {
+                            method: "POST",
+                            body: JSON.stringify({
+                                orderId: orderData.orderId,
+                                plan: upgradePlan,
+                                paymentMethod: "Cashfree",
+                            }),
+                        });
+
+                        setTxnId(orderData.orderId);
+                        setSub(verifyData);
+                        setPayStep(4);
+                        setPaying(false);
+                        setShowConfetti(true);
+                        setTimeout(() => setShowConfetti(false), 4000);
+
+                        // Refresh history
+                        const h = await apiFetch<PaymentRecord[]>("/subscription/billing-history");
+                        setHistory(h);
+
+                        setTimeout(() => {
+                            setShowModal(false);
+                            setPopup("success");
+                            setTimeout(() => setPopup(null), 4000);
+                        }, 3000);
+                    } catch (err: any) {
+                        setPaying(false);
+                        setPopup("failed");
+                    }
+                }
+            });
         } catch (err: any) {
+            console.error(err);
             setPaying(false);
             setPopup("failed");
         }

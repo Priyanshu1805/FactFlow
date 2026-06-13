@@ -11,7 +11,7 @@ export interface ISubscription extends Document {
   status: SubStatus;
   startDate: Date;
   endDate: Date;
-  paytmOrderId?: string;
+  gatewayOrderId?: string;
   paymentMethod?: string;
   amount: number;
 }
@@ -24,7 +24,7 @@ const SubscriptionSchema = new Schema<ISubscription>(
     status: { type: String, enum: ["active", "inactive", "expired", "cancelled"], default: "inactive" },
     startDate: { type: Date },
     endDate: { type: Date },
-    paytmOrderId: { type: String },
+    gatewayOrderId: { type: String },
     paymentMethod: { type: String },
     amount: { type: Number, default: 0 },
   },
