@@ -555,7 +555,7 @@ export default function LoginPage() {
                             <button
                               type="button"
                               onClick={() => setShowCountryMenu(!showCountryMenu)}
-                              className={`w-[90px] h-full flex items-center justify-between px-3 rounded-xl outline-none border transition-all ${
+                              className={`w-[90px] h-full py-3 flex items-center justify-between px-3 rounded-xl outline-none border transition-all ${
                                 isDark ? "bg-white/5 border-white/10 hover:bg-white/10 text-white" : "bg-gray-50 border-gray-200 hover:bg-gray-100 text-gray-900"
                               }`}
                             >
@@ -631,13 +631,13 @@ export default function LoginPage() {
                     <div className="relative">
                       <Lock className={`absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 ${isDark ? "text-white/[0.85]" : "text-gray-400"}`} />
                       <input
-                        type={isSignUp ? "text" : (showPassword ? "text" : "password")} value={password} onChange={(e) => setPassword(e.target.value)} required
+                        type={showPassword ? "text" : "password"} value={password} onChange={(e) => setPassword(e.target.value)} required
                         placeholder={isSignUp ? "Abcxyz@1234" : "••••••••"}
-                        className={`w-full pl-10 ${isSignUp ? 'pr-4' : 'pr-12'} py-3 rounded-xl outline-none border transition-all ${
+                        className={`w-full pl-10 pr-12 py-3 rounded-xl outline-none border transition-all ${
                           isDark ? "bg-white/5 border-white/10 focus:border-blue-500 text-white" : "bg-gray-50 border-gray-200 focus:border-blue-500 text-gray-900"
                         }`}
                       />
-                      {!isSignUp && password.length > 0 && (
+                      {password.length > 0 && (
                         <button
                           type="button"
                           onClick={() => setShowPassword(!showPassword)}
