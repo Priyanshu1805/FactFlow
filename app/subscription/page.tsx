@@ -150,11 +150,12 @@ export default function SubscriptionPage() {
 
     // ─── Initialize Cashfree ──────────────────────────────────────────────────
     let cashfree: any = null;
+    const cfMode = process.env.NEXT_PUBLIC_CASHFREE_ENVIRONMENT === "PRODUCTION" ? "production" : "sandbox";
     useEffect(() => {
-        load({ mode: "sandbox" }).then((cf) => {
+        load({ mode: cfMode }).then((cf) => {
             cashfree = cf;
         });
-    }, []);
+    }, [cfMode]);
 
     // ─── Open upgrade modal ──────────────────────────────────────────────────
     const openModal = (plan: Plan) => {
@@ -176,7 +177,8 @@ export default function SubscriptionPage() {
         setPaying(true);
         try {
             if (!cashfree) {
-                cashfree = await load({ mode: "sandbox" }); // Ensure it's loaded
+                const mode = process.env.NEXT_PUBLIC_CASHFREE_ENVIRONMENT === "PRODUCTION" ? "production" : "sandbox";
+                cashfree = await load({ mode }); // Ensure it's loaded
             }
 
             // 1. Create order on backend

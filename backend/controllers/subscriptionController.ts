@@ -56,7 +56,7 @@ export async function createOrder(req: AuthRequest, res: Response) {
     const { Cashfree } = await import("cashfree-pg");
     Cashfree.XClientId = process.env.CASHFREE_APP_ID!;
     Cashfree.XClientSecret = process.env.CASHFREE_SECRET_KEY!;
-    Cashfree.XEnvironment = process.env.CASHFREE_ENVIRONMENT === "PRODUCTION" 
+    Cashfree.XEnvironment = process.env.NEXT_PUBLIC_CASHFREE_ENVIRONMENT === "PRODUCTION" 
         ? Cashfree.Environment.PRODUCTION 
         : Cashfree.Environment.SANDBOX;
 
@@ -122,7 +122,7 @@ export async function verifyPayment(req: AuthRequest, res: Response) {
     const { Cashfree } = await import("cashfree-pg");
     Cashfree.XClientId = process.env.CASHFREE_APP_ID!;
     Cashfree.XClientSecret = process.env.CASHFREE_SECRET_KEY!;
-    Cashfree.XEnvironment = process.env.CASHFREE_ENVIRONMENT === "PRODUCTION" 
+    Cashfree.XEnvironment = process.env.NEXT_PUBLIC_CASHFREE_ENVIRONMENT === "PRODUCTION" 
         ? Cashfree.Environment.PRODUCTION 
         : Cashfree.Environment.SANDBOX;
 
