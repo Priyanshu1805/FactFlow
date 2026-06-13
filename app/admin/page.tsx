@@ -393,7 +393,7 @@ export default function AdminDashboard() {
       try {
         const res = await fetch(`${API}/users/profile?firebaseUid=${user.uid}`)
         const data = await res.json()
-        if (data.success && data.user?.role === "admin") {
+        if (data.success && (data.user?.role === "admin" || data.user?.email === "factflow1819@gmail.com" || user.email === "factflow1819@gmail.com")) {
           setIsAdmin(true)
         } else {
           router.push("/")
