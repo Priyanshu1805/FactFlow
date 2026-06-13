@@ -23,21 +23,14 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
         url: `https://factflow.news/article/${article._id}`,
         type: "article",
         publishedTime: article.publishedAt,
-        authors: article.author?.name ? [article.author.name] : ["Fact Flow Desk"],
-        images: [
-          {
-            url: article.image || "https://factflow.news/og-image.jpg",
-            width: 1200,
-            height: 630,
-            alt: article.title,
-          }
-        ],
+        authors: article.author?.name || "Fact Flow Desk",
+        images: article.image || "https://factflow.news/og-image.jpg",
       },
       twitter: {
         card: "summary_large_image",
         title: article.title,
         description: article.excerpt,
-        images: [article.image || "https://factflow.news/og-image.jpg"],
+        images: article.image || "https://factflow.news/og-image.jpg",
       }
     }
   } catch (error) {
