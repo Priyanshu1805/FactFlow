@@ -6,7 +6,7 @@ import { Sparkles, Mail, Lock, ArrowRight, User as UserIcon, Eye, EyeOff, CheckC
 import { useRouter } from "next/navigation"
 import { auth, googleProvider } from "@/lib/firebase"
 import { 
-  signInWithPopup, signInWithEmailAndPassword, createUserWithEmailAndPassword, 
+  signInWithPopup, signInWithRedirect, getRedirectResult, signInWithEmailAndPassword, createUserWithEmailAndPassword, 
   updateProfile, sendSignInLinkToEmail, isSignInWithEmailLink, signInWithEmailLink, sendPasswordResetEmail
 } from "firebase/auth"
 import { useAuthStore } from "@/store/auth-store"
@@ -62,8 +62,39 @@ export default function LoginPage() {
   const { theme } = useTheme()
   const isDark = theme !== "light"
 
-  // Check for Magic Link on Mount
+  // Check for Magic Link and Google Redirect on Mount
   useEffect(() => {
+    // 1. Handle Google Redirect Result
+    getRedirectResult(auth).then(async (result) => {
+      if (result && result.user) {
+        setIsLoading(true)
+        try {
+          const profileRes = await fetch(`${API}/users/profile?firebaseUid=${result.user.uid}&email=${result.user.email}&name=${encodeURIComponent(result.user.displayName || "")}`)
+          const profileData = await profileRes.json()
+          const mongoUser = profileData.success ? profileData.user : {}
+
+          setUser({
+            uid: result.user.uid,
+            email: result.user.email,
+            displayName: result.user.displayName || mongoUser.name || "",
+            photoURL: result.user.photoURL || mongoUser.avatar || "",
+            _id: mongoUser._id,
+            id: mongoUser._id,
+            username: mongoUser.username,
+            role: mongoUser.role
+          })
+          router.push("/")
+        } catch (err: any) {
+          setError("Google login redirect failed: " + err.message)
+        } finally {
+          setIsLoading(false)
+        }
+      }
+    }).catch(err => {
+      setError("Google sign in failed: " + err.message)
+    })
+
+    // 2. Handle Magic Link
     if (isSignInWithEmailLink(auth, window.location.href)) {
       let savedEmail = window.localStorage.getItem("emailForSignIn")
       if (!savedEmail) {
@@ -151,6 +182,14 @@ export default function LoginPage() {
   const handleGoogleLogin = async () => {
     setIsLoading(true); setError("")
     try {
+      // Use redirect on mobile to avoid PWA popup blockers, use popup on desktop
+      const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
+      if (isMobile || window.matchMedia('(display-mode: standalone)').matches) {
+        await signInWithRedirect(auth, googleProvider)
+        // Execution stops here because page redirects
+        return
+      }
+
       const result = await signInWithPopup(auth, googleProvider)
       const profileRes = await fetch(`${API}/users/profile?firebaseUid=${result.user.uid}&email=${result.user.email}&name=${encodeURIComponent(result.user.displayName || "")}`)
       const profileData = await profileRes.json()
@@ -169,8 +208,11 @@ export default function LoginPage() {
       router.push("/")
     } catch (err: any) {
       if (err.code === "auth/invalid-api-key") setError("Firebase API Key is missing!")
+      else if (err.code === "auth/popup-blocked" || err.code === "auth/popup-closed-by-user" || err.code === "auth/internal-error") {
+        // Fallback to redirect if popup fails for any reason
+        await signInWithRedirect(auth, googleProvider)
+      }
       else setError("Google login failed. " + err.message)
-    } finally {
       setIsLoading(false)
     }
   }
@@ -290,7 +332,7 @@ export default function LoginPage() {
       }
     } catch (err: any) {
       if (err.code === "auth/email-already-in-use") setError("Email already in use. Try logging in.")
-      else if (err.code === "auth/invalid-credential") setError("Invalid credentials.")
+      else if (err.code === "auth/invalid-credential") setError("Invalid credentials: The email/username or password you entered is incorrect, or you haven't signed up yet.")
       else setError("Authentication failed: " + err.message)
     } finally {
       setIsLoading(false)
