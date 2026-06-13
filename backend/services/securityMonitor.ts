@@ -73,8 +73,8 @@ export const detectIntrusion = (req: any): boolean => {
     JSON.stringify(req.query || {})
   ].join(" ").toLowerCase()
 
-  // 1. SQL Injection Patterns
-  const sqlPatterns = /(' or 1=1|drop table|union select|--|; waitfor delay)/i
+  // 1. SQL Injection Patterns (Removed '--' to prevent banning normal article slugs)
+  const sqlPatterns = /(' or 1=1|drop table|union select|; waitfor delay)/i
   // 2. NoSQL Injection Patterns
   const noSqlPatterns = /(\$gt:|\$where:|{\s*\$ne)/i
   // 3. XSS Patterns
