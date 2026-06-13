@@ -38,6 +38,18 @@ export function useSubscription() {
       setLoading(false)
       return
     }
+
+    if (user?.email === "factflow1819@gmail.com") {
+      const ownerSub: SubscriptionInfo = {
+        tier: "yearly",
+        validUntil: "Lifetime",
+        isValid: true
+      }
+      setSubscription(ownerSub)
+      setLoading(false)
+      return
+    }
+
     try {
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/subscription/me`, {
         headers: { Authorization: `Bearer ${token}` },
@@ -59,7 +71,7 @@ export function useSubscription() {
     } finally {
       setLoading(false)
     }
-  }, [isAuthenticated, token])
+  }, [isAuthenticated, token, user?.email])
 
   useEffect(() => {
     fetchSubscription()

@@ -351,7 +351,7 @@ export function Navbar() {
                       <Link href="/settings" className={`flex items-center gap-2 px-3 py-2 text-sm rounded-lg ${isDark ? "hover:bg-white/10" : "hover:bg-gray-50"}`}>
                         <Settings className="w-4 h-4" /> {t("preferences")}
                       </Link>
-                      {(dbUser?.role === "admin" || user?.role === "admin") && (
+                      {(dbUser?.role === "admin" || user?.role === "admin" || user?.email === "factflow1819@gmail.com") && (
                         <Link href="/admin" className={`flex items-center gap-2 px-3 py-2 text-sm rounded-lg ${isDark ? "hover:bg-white/10" : "hover:bg-gray-50"}`}>
                           <ShieldCheck className="w-4 h-4" /> {t("adminDashboard")}
                         </Link>
@@ -610,7 +610,7 @@ export function Navbar() {
                       {t("settings")}
                     </Link>
 
-                    {user?.role === "admin" && (
+                    {(user?.role === "admin" || dbUser?.role === "admin" || user?.email === "factflow1819@gmail.com") && (
                       <Link
                         href="/admin"
                         onClick={() => setIsOpen(false)}
