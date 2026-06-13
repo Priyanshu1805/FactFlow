@@ -53,12 +53,12 @@ export async function createOrder(req: AuthRequest, res: Response) {
     const orderId = `ff_${String(userId).slice(-8)}_${Date.now()}`;
 
     // Load Cashfree SDK
-    const { Cashfree } = await import("cashfree-pg");
+    const { Cashfree, CFEnvironment } = await import("cashfree-pg");
     Cashfree.XClientId = process.env.CASHFREE_APP_ID!;
     Cashfree.XClientSecret = process.env.CASHFREE_SECRET_KEY!;
     Cashfree.XEnvironment = process.env.NEXT_PUBLIC_CASHFREE_ENVIRONMENT === "PRODUCTION" 
-        ? Cashfree.Environment.PRODUCTION 
-        : Cashfree.Environment.SANDBOX;
+        ? CFEnvironment.PRODUCTION 
+        : CFEnvironment.SANDBOX;
 
     const request = {
       order_amount: amount / 100, // Cashfree takes amount in INR
@@ -119,12 +119,12 @@ export async function verifyPayment(req: AuthRequest, res: Response) {
     }
 
     // Verify payment with Cashfree
-    const { Cashfree } = await import("cashfree-pg");
+    const { Cashfree, CFEnvironment } = await import("cashfree-pg");
     Cashfree.XClientId = process.env.CASHFREE_APP_ID!;
     Cashfree.XClientSecret = process.env.CASHFREE_SECRET_KEY!;
     Cashfree.XEnvironment = process.env.NEXT_PUBLIC_CASHFREE_ENVIRONMENT === "PRODUCTION" 
-        ? Cashfree.Environment.PRODUCTION 
-        : Cashfree.Environment.SANDBOX;
+        ? CFEnvironment.PRODUCTION 
+        : CFEnvironment.SANDBOX;
 
     const cfResponse = await Cashfree.PGOrderFetchPayments("2023-08-01", orderId);
     const payments = cfResponse.data;
