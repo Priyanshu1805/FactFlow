@@ -591,6 +591,9 @@ export function Navbar() {
                       {link.name === "Live" && (
                         <span className="w-2 h-2 bg-red-500 rounded-full animate-pulse ml-auto" />
                       )}
+                      {link.name === "Social" && hasUnreadSocial && (
+                        <span className="w-1.5 h-1.5 bg-red-500 rounded-full animate-pulse ml-auto" />
+                      )}
                     </Link>
                   )})}
                   
@@ -598,21 +601,6 @@ export function Navbar() {
                   <div className="pt-4 mt-4 border-t border-white/10 space-y-1">
                     <span className="px-4 text-[10px] font-bold text-gray-500 uppercase tracking-wider block mb-2">More Options</span>
                     
-                    <Link
-                      href="/social"
-                      onClick={() => {
-                        markSocialRead()
-                        setIsOpen(false)
-                      }}
-                      className="flex items-center gap-3.5 px-4 py-3 rounded-xl text-sm font-bold text-gray-300 hover:text-white hover:bg-white/5 transition-colors"
-                    >
-                      <Globe className="w-5 h-5 opacity-70" />
-                      {t("navSocial")}
-                      {hasUnreadSocial && (
-                        <span className="w-1.5 h-1.5 bg-red-500 rounded-full animate-pulse ml-auto" />
-                      )}
-                    </Link>
-
                     <Link
                       href="/settings"
                       onClick={() => setIsOpen(false)}

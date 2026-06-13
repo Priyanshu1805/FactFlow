@@ -290,11 +290,11 @@ export default function PublicProfilePage() {
               </div>
 
               {/* Profile Details Container */}
-              <div className="px-6 pb-6 pt-20 md:pt-8 md:pl-52 relative flex flex-col md:flex-row gap-6 items-center md:items-start text-center md:text-left">
+              <div className="px-4 md:px-6 pb-6 pt-3 md:pt-8 md:pl-52 relative flex flex-col md:flex-row gap-4 md:gap-6 items-start text-left">
                 
                 {/* Profile Picture Overlaying Banner */}
-                <div className="absolute -top-16 left-1/2 -translate-x-1/2 md:left-10 md:-top-20 md:translate-x-0 z-10">
-                  <div className="relative w-28 h-28 sm:w-36 sm:h-36">
+                <div className="absolute -top-12 left-4 md:left-10 md:-top-20 z-10">
+                  <div className="relative w-24 h-24 md:w-36 md:h-36">
                     {(() => {
                       const userStoryGroup = stories.find((g: any) => g.user.username === profile.username)
                       return (
@@ -304,10 +304,10 @@ export default function PublicProfilePage() {
                               setActiveStoryGroup([userStoryGroup])
                             }
                           }}
-                          className={`w-full h-full rounded-full flex items-center justify-center text-4xl font-black text-white shrink-0 transition-transform shadow-xl ${
+                          className={`w-full h-full rounded-full flex items-center justify-center text-3xl md:text-4xl font-black text-white shrink-0 transition-transform shadow-xl ${
                             userStoryGroup 
-                              ? "bg-gradient-to-tr from-yellow-400 via-red-500 to-fuchsia-600 p-[4px] cursor-pointer hover:scale-105" 
-                              : "bg-gradient-to-br from-red-500 to-purple-600 p-[3px]"
+                              ? "bg-gradient-to-tr from-yellow-400 via-red-500 to-fuchsia-600 p-[3px] md:p-[4px] cursor-pointer hover:scale-105" 
+                              : "bg-gradient-to-br from-red-500 to-purple-600 p-[2px] md:p-[3px]"
                           }`}
                         >
                           <div className="w-full h-full rounded-full overflow-hidden bg-black border-4 border-black flex items-center justify-center">
@@ -323,31 +323,59 @@ export default function PublicProfilePage() {
                     {isOwnProfile && (
                       <button 
                         onClick={() => setIsMenuOpen(true)}
-                        className="absolute bottom-0 right-0 sm:bottom-1 sm:right-1 w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center border-4 border-white dark:border-black hover:scale-110 transition-transform shadow-lg z-20"
+                        className="absolute bottom-0 right-0 sm:bottom-1 sm:right-1 w-7 h-7 md:w-8 md:h-8 bg-blue-500 rounded-full flex items-center justify-center border-2 md:border-4 border-white dark:border-black hover:scale-110 transition-transform shadow-lg z-20"
                       >
-                        <Plus className="w-5 h-5 text-white" strokeWidth={3} />
+                        <Plus className="w-4 h-4 md:w-5 md:h-5 text-white" strokeWidth={3} />
                       </button>
                     )}
                   </div>
                 </div>
 
                 {/* Profile Info details */}
-                <div className="flex-1 space-y-4 pt-4 md:pt-0">
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div className="flex-1 w-full space-y-3 pt-0 md:pt-0">
+                  {/* Mobile Action Buttons (Right Aligned) */}
+                  <div className="flex justify-end md:hidden h-10 mb-2">
+                      {isOwnProfile ? (
+                        <button 
+                          onClick={() => setIsEditProfileOpen(true)} 
+                          className={`flex items-center gap-1.5 px-4 py-1.5 text-xs font-bold rounded-full border transition-all shadow-sm active:scale-95 ${
+                            isDark ? "bg-white/10 hover:bg-white/15 border-white/10 text-white" : "bg-gray-100 hover:bg-gray-200 border-gray-200 text-gray-900"
+                          }`}
+                        >
+                          <Sparkles className="w-3.5 h-3.5 text-purple-400" /> Edit Profile
+                        </button>
+                      ) : (
+                        <button 
+                          onClick={handleFollowToggle}
+                          disabled={followLoading}
+                          className={`px-5 py-1.5 text-xs font-bold rounded-full transition-all shadow-md active:scale-95 flex items-center gap-1.5 ${
+                            isFollowing 
+                              ? isDark ? "bg-white/5 border border-white/10 text-white hover:bg-white/10" : "bg-gray-100 border border-gray-200 text-gray-700 hover:bg-gray-200" 
+                              : "bg-gradient-to-r from-red-600 to-pink-600 text-white hover:opacity-95 shadow-red-500/10"
+                          }`}
+                        >
+                          <Users className="w-3.5 h-3.5" />
+                          {isFollowing ? "Following" : "Follow"}
+                        </button>
+                      )}
+                  </div>
+
+                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mt-2 md:mt-0">
                     <div>
-                      <div className="flex items-center justify-center md:justify-start gap-2">
-                        <h1 className="text-2xl font-black tracking-tight">{profile.name}</h1>
+                      <div className="flex items-center gap-2">
+                        <h1 className="text-xl md:text-2xl font-black tracking-tight">{profile.name}</h1>
                         {profile.isVerified && (
-                          <CheckCircle className="w-5 h-5 text-blue-400 fill-blue-400/20" aria-label="Verified Creator" />
+                          <CheckCircle className="w-4 h-4 md:w-5 md:h-5 text-blue-400 fill-blue-400/20" aria-label="Verified Creator" />
                         )}
                         {profile.role === "admin" && (
-                          <span className="text-[10px] px-2.5 py-0.5 rounded-full bg-red-500/10 text-red-500 border border-red-500/20 font-bold uppercase tracking-wider">Admin</span>
+                          <span className="text-[9px] md:text-[10px] px-2 py-0.5 rounded-full bg-red-500/10 text-red-500 border border-red-500/20 font-bold uppercase tracking-wider">Admin</span>
                         )}
                       </div>
-                      <p className="text-red-400 text-sm font-semibold mt-0.5">@{profile.username}</p>
+                      <p className="text-red-400 text-xs md:text-sm font-semibold mt-0.5">@{profile.username}</p>
                     </div>
 
-                    <div className="flex gap-3 justify-center">
+                    {/* Desktop Action Buttons */}
+                    <div className="hidden md:flex gap-3 justify-center">
                       {isOwnProfile ? (
                         <button 
                           onClick={() => setIsEditProfileOpen(true)} 
@@ -375,29 +403,29 @@ export default function PublicProfilePage() {
                   </div>
 
                   {/* Follow stats bar */}
-                  <div className={`flex flex-wrap items-center justify-center md:justify-start gap-6 text-sm font-medium p-4 rounded-2xl ${isDark ? "bg-white/5 border border-white/10" : "bg-gray-100 border border-gray-200"}`}>
-                    <div className="flex flex-col items-center">
-                      <span className={`font-black text-xl ${isDark ? "text-white" : "text-gray-900"}`}>{stats.posts || 0}</span>
-                      <span className={`${isDark ? "text-white/50" : "text-gray-500"} text-[10px] uppercase tracking-wider font-bold`}>posts</span>
+                  <div className={`flex items-center gap-4 md:gap-6 text-sm font-medium p-3 md:p-4 rounded-xl md:rounded-2xl ${isDark ? "bg-white/5 border border-white/10" : "bg-gray-100 border border-gray-200"}`}>
+                    <div className="flex flex-col items-center md:items-start">
+                      <span className={`font-black text-lg md:text-xl ${isDark ? "text-white" : "text-gray-900"}`}>{stats.posts || 0}</span>
+                      <span className={`${isDark ? "text-white/50" : "text-gray-500"} text-[9px] md:text-[10px] uppercase tracking-wider font-bold`}>posts</span>
                     </div>
-                    <div className={`w-px h-8 ${isDark ? "bg-white/10" : "bg-gray-300"}`} />
-                    <div className="flex flex-col items-center">
-                      <span className={`font-black text-xl ${isDark ? "text-white" : "text-gray-900"}`}>{stats.followers || 0}</span>
-                      <span className={`${isDark ? "text-white/50" : "text-gray-500"} text-[10px] uppercase tracking-wider font-bold`}>followers</span>
+                    <div className={`w-px h-6 md:h-8 ${isDark ? "bg-white/10" : "bg-gray-300"}`} />
+                    <div className="flex flex-col items-center md:items-start">
+                      <span className={`font-black text-lg md:text-xl ${isDark ? "text-white" : "text-gray-900"}`}>{stats.followers || 0}</span>
+                      <span className={`${isDark ? "text-white/50" : "text-gray-500"} text-[9px] md:text-[10px] uppercase tracking-wider font-bold`}>followers</span>
                     </div>
-                    <div className={`w-px h-8 ${isDark ? "bg-white/10" : "bg-gray-300"}`} />
-                    <div className="flex flex-col items-center">
-                      <span className={`font-black text-xl ${isDark ? "text-white" : "text-gray-900"}`}>{stats.following || 0}</span>
-                      <span className={`${isDark ? "text-white/50" : "text-gray-500"} text-[10px] uppercase tracking-wider font-bold`}>following</span>
+                    <div className={`w-px h-6 md:h-8 ${isDark ? "bg-white/10" : "bg-gray-300"}`} />
+                    <div className="flex flex-col items-center md:items-start">
+                      <span className={`font-black text-lg md:text-xl ${isDark ? "text-white" : "text-gray-900"}`}>{stats.following || 0}</span>
+                      <span className={`${isDark ? "text-white/50" : "text-gray-500"} text-[9px] md:text-[10px] uppercase tracking-wider font-bold`}>following</span>
                     </div>
                   </div>
 
                   {/* Bio Description */}
-                  <p className="text-[15px] opacity-80 leading-relaxed max-w-xl whitespace-pre-wrap font-medium">
+                  <p className="text-sm md:text-[15px] opacity-80 leading-relaxed max-w-xl whitespace-pre-wrap font-medium">
                     {profile.bio || "This user hasn't added a bio yet."}
                   </p>
-                  <div className={`flex items-center justify-center md:justify-start gap-1.5 text-xs font-semibold ${isDark ? "text-white/40" : "text-gray-400"} pt-2`}>
-                    <Calendar className="w-3.5 h-3.5" /> Joined {profile.createdAt ? new Date(profile.createdAt).toLocaleDateString("en-US", { month: "long", year: "numeric" }) : "recently"}
+                  <div className={`flex items-center gap-1.5 text-[11px] md:text-xs font-semibold ${isDark ? "text-white/40" : "text-gray-400"}`}>
+                    <Calendar className="w-3 h-3 md:w-3.5 md:h-3.5" /> Joined {profile.createdAt ? new Date(profile.createdAt).toLocaleDateString("en-US", { month: "long", year: "numeric" }) : "recently"}
                   </div>
                 </div>
               </div>

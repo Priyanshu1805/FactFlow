@@ -150,20 +150,22 @@ export function LiveWidgetsDashboard() {
           values={activeIds} 
           onReorder={setActiveIds}
           ref={containerRef}
-          className="flex gap-4 overflow-x-auto pb-4 snap-x snap-mandatory scrollbar-hide cursor-grab active:cursor-grabbing"
+          className="grid grid-cols-2 gap-3 sm:flex sm:flex-row sm:gap-4 sm:overflow-x-auto pb-4 sm:snap-x sm:snap-mandatory scrollbar-hide sm:cursor-grab sm:active:cursor-grabbing"
           style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
         >
           <AnimatePresence>
             {renderWidgets.map((widgetConfig: any) => {
               const { Component, props, id } = widgetConfig
+              const isMobile = typeof window !== 'undefined' && window.innerWidth < 640;
               return (
                 <Reorder.Item 
                   key={id}
                   value={id}
+                  dragListener={!isMobile}
                   initial={{ opacity: 0, scale: 0.8 }}
                   animate={{ opacity: 1, scale: 1 }}
                   exit={{ opacity: 0, scale: 0.5, width: 0 }}
-                  className="flex-none w-[85vw] sm:w-[calc(50%-0.5rem)] lg:w-[calc(25%-0.75rem)] snap-start"
+                  className="w-full h-auto sm:flex-none sm:w-[calc(50%-0.5rem)] lg:w-[calc(25%-0.75rem)] sm:snap-start"
                 >
                   <Component {...props} />
                 </Reorder.Item>
