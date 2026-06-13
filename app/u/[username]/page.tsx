@@ -290,7 +290,7 @@ export default function PublicProfilePage() {
               </div>
 
               {/* Profile Details Container */}
-              <div className="px-4 md:px-6 pb-6 pt-3 md:pt-8 md:pl-52 relative flex flex-col md:flex-row gap-4 md:gap-6 items-start text-left">
+              <div className="px-4 md:px-6 pb-6 pt-14 md:pt-8 md:pl-52 relative flex flex-col md:flex-row gap-4 md:gap-6 items-start text-left">
                 
                 {/* Profile Picture Overlaying Banner */}
                 <div className="absolute -top-12 left-4 md:left-10 md:-top-20 z-10">

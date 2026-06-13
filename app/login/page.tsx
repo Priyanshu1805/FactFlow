@@ -113,7 +113,10 @@ export default function LoginPage() {
           method: "POST", headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ username })
         })
-        if (!res.ok) throw new Error("Fetch failed")
+        if (!res.ok) {
+          const errData = await res.json().catch(() => ({}));
+          throw new Error(errData.error || "Profile check failed");
+        }
         const data = await res.json()
         setUsernameStatus(data.available ? "available" : "taken")
       } catch {
@@ -201,7 +204,10 @@ export default function LoginPage() {
           method: "POST", headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ username })
         })
-        if (!checkRes.ok) throw new Error("Fetch failed")
+        if (!checkRes.ok) {
+          const errData = await checkRes.json().catch(() => ({}));
+          throw new Error(errData.error || "Username check failed");
+        }
         const checkData = await checkRes.json()
         if (!checkData.success || !checkData.available) {
           throw new Error("Username is already taken.")
@@ -214,7 +220,10 @@ export default function LoginPage() {
         // 3. Create MongoDB Profile
         const fullPhone = countryCode + phone
         const profileRes = await fetch(`${API}/users/profile?firebaseUid=${result.user.uid}&email=${email}&name=${encodeURIComponent(name)}&username=${encodeURIComponent(username)}&phone=${encodeURIComponent(fullPhone)}`)
-        if (!profileRes.ok) throw new Error("Fetch failed")
+        if (!profileRes.ok) {
+          const errData = await profileRes.json().catch(() => ({}));
+          throw new Error(errData.error || "Profile setup failed");
+        }
         const profileData = await profileRes.json()
         if (!profileData.success) {
           throw new Error("Failed to create profile: " + profileData.error)

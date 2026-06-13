@@ -70,11 +70,11 @@ const nextConfig = {
       fallback: [
         {
           source: "/api/:path*",
-          destination: "https://factflow-backend.onrender.com/api/:path*",
+          destination: "https://factflow-frontend.onrender.com/api/:path*",
         },
         {
           source: "/socket.io/:path*",
-          destination: "https://factflow-backend.onrender.com/socket.io/:path*",
+          destination: "https://factflow-frontend.onrender.com/socket.io/:path*",
         }
       ]
     }
