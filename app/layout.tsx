@@ -14,10 +14,7 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
-  themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
-    { media: "(prefers-color-scheme: dark)", color: "#000000" }
-  ]
+  themeColor: "#000000"
 }
 
 export const metadata: Metadata = {
@@ -67,16 +64,20 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body>
-        <Script id="abort-error-suppressor" strategy="afterInteractive">
-          {`
-            window.addEventListener('unhandledrejection', function(event) {
-              if (event.reason && (event.reason.name === 'AbortError' || (event.reason.message && event.reason.message.includes('play()')))) {
-                event.preventDefault();
-                event.stopImmediatePropagation();
-              }
-            }, { capture: true });
-          `}
-        </Script>
+        <Script 
+          id="abort-error-suppressor" 
+          strategy="afterInteractive"
+          dangerouslySetInnerHTML={{
+            __html: `
+              window.addEventListener('unhandledrejection', function(event) {
+                if (event.reason && (event.reason.name === 'AbortError' || (event.reason.message && event.reason.message.includes('play()')))) {
+                  event.preventDefault();
+                  event.stopImmediatePropagation();
+                }
+              }, { capture: true });
+            `
+          }}
+        />
         
         {/* Google AdSense Global Script */}
         <Script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-XXXXXXXXXXXXXXXX" crossOrigin="anonymous" strategy="afterInteractive" />
