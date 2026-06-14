@@ -182,14 +182,8 @@ export default function LoginPage() {
   const handleGoogleLogin = async () => {
     setIsLoading(true); setError("")
     try {
-      // Use redirect on mobile to avoid PWA popup blockers, use popup on desktop
-      const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
-      if (isMobile || window.matchMedia('(display-mode: standalone)').matches) {
-        await signInWithRedirect(auth, googleProvider)
-        // Execution stops here because page redirects
-        return
-      }
-
+      // Always try popup first (even on mobile) to avoid cross-site tracking cookie drops which break signInWithRedirect
+      // Fallback to redirect is already handled in the catch block below if popup is blocked
       const result = await signInWithPopup(auth, googleProvider)
       const profileRes = await fetch(`${API}/users/profile?firebaseUid=${result.user.uid}&email=${result.user.email}&name=${encodeURIComponent(result.user.displayName || "")}`)
       const profileData = await profileRes.json()
