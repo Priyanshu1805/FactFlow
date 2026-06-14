@@ -24,7 +24,7 @@ export const metadata: Metadata = {
     template: "%s | Fact Flow"
   },
   description: "Fast. Accurate. Entertaining. Breaking news, trending stories, and viral reels — all in one place.",
-  keywords: "news, breaking news, trending, reels, sports, entertainment, journalism, live updates",
+  keywords: ["news", "breaking news", "trending", "reels", "sports", "entertainment", "journalism", "live updates"],
   openGraph: {
     title: "Fact Flow",
     description: "Your Daily Pulse Of Global News",
