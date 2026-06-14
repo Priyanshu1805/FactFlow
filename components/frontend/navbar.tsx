@@ -6,7 +6,7 @@ import { motion, AnimatePresence } from "framer-motion"
 import { Menu, X, Search, TrendingUp, Radio, Users, Gamepad2, Palette, Cpu, User, Settings, ShieldCheck, Sparkles, Globe, Bookmark, Bell, Clapperboard, Home } from "lucide-react"
 
 import Link from "next/link"
-import { useRouter } from "next/navigation"
+import { useRouter, usePathname } from "next/navigation"
 import { useTheme } from "@/components/theme-provider"
 import { useAuthStore } from "@/store/auth-store"
 import { auth } from "@/lib/firebase"
@@ -41,6 +41,7 @@ export function Navbar() {
 
   const { theme } = useTheme()
   const router = useRouter()
+  const pathname = usePathname()
   const searchInputRef = useRef<HTMLInputElement>(null)
   const { user, isAuthenticated } = useAuthStore()
   const { subscription, canAccess, loading: subLoading } = useSubscription()
@@ -222,37 +223,17 @@ export function Navbar() {
       <div className="max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-8 xl:px-12">
         <div className="flex items-center justify-between h-16 sm:h-20">
           {/* Left Side: Logo */}
-          <div className="flex-1 flex justify-start items-center">
+          <div className="flex-1 flex justify-start items-center min-w-0">
             <Link href="/" className="flex items-center shrink-0 py-1">
-            <div className="flex items-center gap-3.5 cursor-pointer group">
+            <div className="flex items-center gap-2 xl:gap-3.5 cursor-pointer group">
               {/* Logo Vector Container with Premium border */}
-              <div className="relative p-[1px] bg-gradient-to-tr from-red-500/30 via-purple-500/30 to-blue-500/30 rounded-xl shadow-sm">
+              <div className="relative p-[1px] bg-gradient-to-tr from-red-500/30 via-purple-500/30 to-blue-500/30 rounded-xl shadow-sm hidden sm:block">
                 {/* Vector SVG Emblem */}
-                <div className="relative z-10 w-9 h-9 sm:w-10 sm:h-10 rounded-[10px] overflow-hidden bg-black flex items-center justify-center border border-white/10">
+                <div className="relative z-10 w-8 h-8 sm:w-9 sm:h-9 rounded-[10px] overflow-hidden bg-black flex items-center justify-center border border-white/10">
                   <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full select-none">
-                    <text 
-                      x="30" 
-                      y="74" 
-                      fontFamily="Georgia, 'Times New Roman', serif" 
-                      fontWeight="bold" 
-                      fontSize="68" 
-                      fill="#FFFFFF"
-                      textAnchor="middle"
-                    >
-                      F
-                    </text>
+                    <text x="30" y="74" fontFamily="Georgia, 'Times New Roman', serif" fontWeight="bold" fontSize="68" fill="#FFFFFF" textAnchor="middle">F</text>
                     <circle cx="50" cy="74" r="6" fill="#a8152e" />
-                    <text 
-                      x="70" 
-                      y="74" 
-                      fontFamily="Georgia, 'Times New Roman', serif" 
-                      fontWeight="bold" 
-                      fontSize="68" 
-                      fill="#FFFFFF"
-                      textAnchor="middle"
-                    >
-                      F
-                    </text>
+                    <text x="70" y="74" fontFamily="Georgia, 'Times New Roman', serif" fontWeight="bold" fontSize="68" fill="#FFFFFF" textAnchor="middle">F</text>
                   </svg>
                 </div>
               </div>
@@ -260,23 +241,23 @@ export function Navbar() {
               {/* Elegant Professional Brand Name */}
               <div className="relative flex flex-col justify-center">
                 <div className="flex items-center notranslate">
-                  <span className={`font-black text-lg sm:text-xl tracking-tighter ${isDark ? "text-white" : "text-gray-900"}`} style={{ letterSpacing: "-0.05em" }}>
-                    FACT
-                  </span>
-                  <span className="font-black text-lg sm:text-xl tracking-tighter text-red-500 flex" style={{ letterSpacing: "-0.05em" }}>
-                    FLOW
-                  </span>
+                  <span className={`font-black text-base sm:text-lg xl:text-xl tracking-tighter ${isDark ? "text-white" : "text-gray-900"}`} style={{ letterSpacing: "-0.05em" }}>FACT</span>
+                  <span className="font-black text-base sm:text-lg xl:text-xl tracking-tighter text-red-500 flex" style={{ letterSpacing: "-0.05em" }}>FLOW</span>
                 </div>
-                <p className="text-gray-500 dark:text-gray-400 text-[9px] sm:text-[10px] mt-0 leading-none hidden sm:block">Digital News Platform</p>
+                <p className="text-gray-500 dark:text-gray-400 text-[8px] xl:text-[10px] mt-0 leading-none hidden md:block">Digital News Platform</p>
               </div>
               </div>
             </Link>
           </div>
 
           {/* Center Side: Navigation Links (hidden on mobile) */}
-          <div className="hidden lg:flex items-center justify-center gap-1 xl:gap-2">
+          <div className="hidden md:flex flex-none items-center justify-center gap-0.5 xl:gap-2 overflow-x-auto hide-scrollbar max-w-[55vw] lg:max-w-none">
             {navLinks.map((link) => {
-              const isLocked = !subLoading && !canAccess("weekly") && ["Politics", "Lifestyle", "Sports", "Tech", "Art"].includes(link.name);
+              // Force unlock for owner and admins
+              const isOwnerOrAdmin = user?.email?.toLowerCase().trim() === "factflow1819@gmail.com" || user?.role === "admin";
+              const isLocked = !isOwnerOrAdmin && !subLoading && !canAccess("weekly") && ["Politics", "Lifestyle", "Sports", "Tech", "Art"].includes(link.name);
+              const isActive = pathname === link.href || (link.href !== "/" && pathname?.startsWith(link.href));
+              
               return (
               <Link
                 key={link.name}
@@ -289,27 +270,33 @@ export function Navbar() {
                   }
                   handleNavClick(e, link.href);
                 }}
-                className={`relative group flex items-center gap-1 px-2 xl:px-3 py-2 text-[11px] xl:text-sm font-bold transition-colors duration-300 ${isDark ? "text-gray-300 hover:text-white" : "text-gray-600 hover:text-red-500"} ${isLocked ? "opacity-60" : ""}`}
+                className={`relative group flex items-center gap-1 px-1.5 xl:px-2 py-1.5 text-[10px] xl:text-[11px] 2xl:text-xs font-bold transition-all duration-300 ${
+                  isActive 
+                    ? "text-red-500" 
+                    : isDark 
+                      ? "text-gray-300 hover:text-white" 
+                      : "text-gray-600 hover:text-red-500"
+                } ${isLocked ? "opacity-60" : ""}`}
               >
-                <link.icon className="w-4 h-4 opacity-75 group-hover:opacity-100 transition-opacity" />
-                {t(link.tKey)}
-                {isLocked && <span className="ml-1 text-[10px]" title="Upgrade to Weekly Pass to unlock">🔒</span>}
+                <link.icon className={`w-3 h-3 xl:w-3.5 xl:h-3.5 transition-opacity ${isActive ? "opacity-100" : "opacity-75 group-hover:opacity-100"}`} />
+                <span className="whitespace-nowrap">{t(link.tKey)}</span>
+                {isLocked && <span className="ml-0.5 text-[9px]" title="Upgrade to Weekly Pass to unlock">🔒</span>}
                 {link.name === "Live" && (
                   <span className="w-1.5 h-1.5 bg-red-500 rounded-full animate-pulse shadow-[0_0_8px_rgba(239,68,68,0.8)]" />
                 )}
                 {link.name === "Trending" && trendingCount > 0 && (
-                  <span className="absolute -top-1 -right-1 min-w-[16px] h-[16px] px-1 flex items-center justify-center bg-orange-500 text-white text-[9px] font-bold rounded-full shadow-sm animate-pulse">
+                  <span className="absolute -top-1 -right-1 min-w-[14px] h-[14px] px-1 flex items-center justify-center bg-orange-500 text-white text-[8px] font-bold rounded-full shadow-sm animate-pulse">
                     {trendingCount > 99 ? "99+" : trendingCount}
                   </span>
                 )}
                 {/* Sliding underline effect */}
-                <span className="absolute -bottom-1 left-3 right-3 h-0.5 bg-gradient-to-r from-red-650 to-red-500 bg-red-600 scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left rounded-full" />
+                <span className={`absolute -bottom-1 left-1.5 right-1.5 h-[2px] bg-gradient-to-r from-red-600 to-orange-500 transition-transform duration-300 origin-left rounded-full ${isActive ? 'scale-x-100' : 'scale-x-0 group-hover:scale-x-100'}`} />
               </Link>
             )})}
           </div>
 
             {/* Right Side: Search & Login & Hamburger */}
-          <div className="flex-1 flex items-center justify-end gap-2 sm:gap-4">
+          <div className="flex-1 flex items-center justify-end gap-1.5 sm:gap-3 min-w-0">
             
             {/* AI Search Trigger */}
             <button
@@ -455,7 +442,7 @@ export function Navbar() {
             {/* Hamburger Mobile Menu Toggle */}
             <button
               onClick={() => setIsOpen(!isOpen)}
-              className={`lg:hidden p-2 rounded-lg font-bold transition-all ${
+              className={`md:hidden p-2 rounded-lg font-bold transition-all ${
                 isDark 
                   ? "text-white bg-white/10 hover:bg-white/20 border border-white/20 shadow-sm" 
                   : "text-gray-900 bg-gray-100 hover:bg-gray-200 border border-gray-300 shadow-sm"
@@ -479,7 +466,7 @@ export function Navbar() {
               animate={{ opacity: 0.5 }}
               exit={{ opacity: 0 }}
               onClick={() => setIsOpen(false)}
-              className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm lg:hidden"
+              className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm md:hidden"
             />
 
             {/* Sidebar Slide-in Drawer */}
@@ -488,7 +475,7 @@ export function Navbar() {
               animate={{ x: 0 }}
               exit={{ x: "100%" }}
               transition={{ type: "spring", damping: 25, stiffness: 220 }}
-              className="fixed inset-y-0 right-0 w-full sm:w-80 z-50 bg-slate-950 border-l border-white/10 shadow-2xl p-6 overflow-y-auto lg:hidden text-white"
+              className="fixed inset-y-0 right-0 w-full sm:w-80 z-50 bg-slate-950 border-l border-white/10 shadow-2xl p-6 overflow-y-auto md:hidden text-white"
               style={{ backgroundColor: '#050505' }}
             >
                 {/* Header */}
@@ -568,7 +555,9 @@ export function Navbar() {
                 {/* Primary Nav Links */}
                 <div className="mt-6 space-y-1">
                   {navLinks.map((link) => {
-                    const isLocked = !subLoading && !canAccess("weekly") && ["Politics", "Lifestyle", "Sports", "Tech", "Art"].includes(link.name);
+                    // Force unlock for owner and admins
+                    const isOwnerOrAdmin = user?.email?.toLowerCase().trim() === "factflow1819@gmail.com" || user?.role === "admin";
+                    const isLocked = !isOwnerOrAdmin && !subLoading && !canAccess("weekly") && ["Politics", "Lifestyle", "Sports", "Tech", "Art"].includes(link.name);
                     return (
                     <Link
                       key={link.name}

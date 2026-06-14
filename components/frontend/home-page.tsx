@@ -3,6 +3,7 @@
 
 import { useTheme } from "@/components/theme-provider"
 import Link from "next/link"
+import { useAuthStore } from "@/store/auth-store"
 import { Suspense, useEffect, useState } from "react"
 import { useRssStore } from "@/lib/rss/rssStore"
 import { useRegion } from "@/components/providers/region-provider"
@@ -42,6 +43,8 @@ export default function HomePage() {
   const { region } = useRegion()
   const { followedTopics } = useFeedStore()
   const { canAccess } = useSubscription()
+  const { user } = useAuthStore()
+  const isOwnerOrAdmin = user?.email?.toLowerCase().trim() === "factflow1819@gmail.com" || user?.role === "admin";
 
   useEffect(() => {
     // Fetch RSS feeds on mount or region change
@@ -101,37 +104,37 @@ export default function HomePage() {
         <AdBanner className="my-4" />
       </Suspense>
 
-      {canAccess("weekly") && hasCat("politics") && (
+      {(isOwnerOrAdmin || canAccess("weekly")) && hasCat("politics") && (
         <Suspense fallback={<SectionLoader />}>
           <PoliticsSection />
         </Suspense>
       )}
 
-      {canAccess("weekly") && hasCat("trending") && (
+      {(isOwnerOrAdmin || canAccess("weekly")) && hasCat("trending") && (
         <Suspense fallback={<SectionLoader />}>
           <TrendingSection />
         </Suspense>
       )}
 
-      {canAccess("weekly") && hasCat("lifestyle") && (
+      {(isOwnerOrAdmin || canAccess("weekly")) && hasCat("lifestyle") && (
         <Suspense fallback={<SectionLoader />}>
           <LifestyleSection />
         </Suspense>
       )}
 
-      {canAccess("weekly") && hasCat("sports") && (
+      {(isOwnerOrAdmin || canAccess("weekly")) && hasCat("sports") && (
         <Suspense fallback={<SectionLoader />}>
           <SportsSection />
         </Suspense>
       )}
 
-      {canAccess("weekly") && hasCat("tech") && (
+      {(isOwnerOrAdmin || canAccess("weekly")) && hasCat("tech") && (
         <Suspense fallback={<SectionLoader />}>
           <TechSection />
         </Suspense>
       )}
 
-      {canAccess("weekly") && hasCat("art") && (
+      {(isOwnerOrAdmin || canAccess("weekly")) && hasCat("art") && (
         <Suspense fallback={<SectionLoader />}>
           <ArtSection />
         </Suspense>

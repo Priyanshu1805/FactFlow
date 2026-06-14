@@ -39,13 +39,14 @@ export function useSubscription() {
       return
     }
 
-    if (user?.email === "factflow1819@gmail.com") {
+    if (user?.email?.toLowerCase() === "factflow1819@gmail.com") {
       const ownerSub: SubscriptionInfo = {
         tier: "yearly",
         validUntil: "Lifetime",
         isValid: true
       }
       setSubscription(ownerSub)
+      if (typeof window !== "undefined") localStorage.setItem("ff_sub_cache", JSON.stringify(ownerSub))
       setLoading(false)
       return
     }

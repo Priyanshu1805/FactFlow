@@ -189,7 +189,7 @@ export const useRssStore = create<RssState>((set, get) => ({
             dynamicFeeds.push({ url: s.url, source: s.name, category: s.category, lang: activeLang })
           }
         }
-        const finalFeeds = [...dynamicFeeds, ...GLOBAL_FALLBACK_FEEDS]
+        const finalFeeds = [...dynamicFeeds, ...GLOBAL_FALLBACK_FEEDS].sort(() => 0.5 - Math.random()).slice(0, 3)
 
         const fetchPromises = finalFeeds.map(async (feed) => {
           try {

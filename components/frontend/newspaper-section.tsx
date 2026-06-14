@@ -233,7 +233,7 @@ export function NewspaperSection() {
 
         {/* ═══ DESKTOP BOTTOM GRID ═══ */}
         {bottomStories.length > 0 && (
-          <div className="hidden md:grid md:grid-cols-4 gap-0 border-t border-[#111] mt-6 pt-6" style={{ gridAutoRows: 'min-content' }}>
+          <div className="hidden md:grid md:grid-cols-2 lg:grid-cols-4 gap-0 border-t border-[#111] mt-6 pt-6" style={{ gridAutoRows: 'min-content' }}>
             {bottomStories.map((article, idx) => (
               <Link href={`/article/${article.id}`} key={article.id} className="block group">
                 <motion.article

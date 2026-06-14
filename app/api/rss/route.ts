@@ -23,6 +23,9 @@ async function translateText(text: string) {
   }
 }
 
+const cache = new Map<string, { data: any, timestamp: number }>();
+const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url)
   const url = searchParams.get("url")
@@ -31,11 +34,17 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "url param required" }, { status: 400 })
   }
 
+  // Check cache first
+  const cached = cache.get(url);
+  if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
+    return NextResponse.json(cached.data, { status: 200 });
+  }
+
   try {
     const feed = await parser.parseURL(url)
     
-    // We process up to 15 items to avoid translation rate limits
-    const rawItems = feed.items.slice(0, 15).map((item: any) => ({
+    // We process up to 10 items to avoid translation rate limits
+    const rawItems = feed.items.slice(0, 10).map((item: any) => ({
       title: item.title || "",
       link: item.link || item.guid || "",
       description: item.contentSnippet || item.content || item.description || "",
@@ -73,7 +82,10 @@ export async function GET(request: NextRequest) {
       items.push(item);
     }
 
-    return NextResponse.json({ items, feedTitle: await translateText(feed.title || "") }, { status: 200 })
+    const responseData = { items, feedTitle: await translateText(feed.title || "") };
+    cache.set(url, { data: responseData, timestamp: Date.now() });
+
+    return NextResponse.json(responseData, { status: 200 })
   } catch (err: any) {
     return NextResponse.json({ error: err.message, items: [] }, { status: 200 })
   }

@@ -11,6 +11,7 @@ const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api"
 export function AdBanner({ className = "" }: { className?: string }) {
   const { user } = useAuthStore()
   const { canAccess, loading: subLoading } = useSubscription()
+  const isOwnerOrAdmin = user?.email?.toLowerCase().trim() === "factflow1819@gmail.com" || user?.role === "admin";
   const { theme } = useTheme()
   const isDark = theme !== "light"
   
@@ -19,7 +20,7 @@ export function AdBanner({ className = "" }: { className?: string }) {
 
   useEffect(() => {
     // Only fetch if user is on Free tier (subLoading finished, and canAccess is false)
-    if (subLoading || canAccess("weekly")) return
+    if (subLoading || isOwnerOrAdmin || canAccess("weekly")) return
 
     const fetchAds = async () => {
       try {
@@ -52,7 +53,7 @@ export function AdBanner({ className = "" }: { className?: string }) {
   }, [subLoading, canAccess])
 
   if (subLoading || loadingAd) return null
-  if (canAccess("weekly")) return null
+  if (isOwnerOrAdmin || canAccess("weekly")) return null
 
   const handleAdClick = (e: React.MouseEvent) => {
     if (ad && ad._id) {

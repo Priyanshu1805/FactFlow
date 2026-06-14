@@ -56,7 +56,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body>
+      <body className="overflow-x-hidden">
         <Script 
           id="abort-error-suppressor" 
           strategy="afterInteractive"

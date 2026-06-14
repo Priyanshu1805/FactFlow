@@ -107,7 +107,7 @@ export function ArtSection() {
         <div className={`grid transition-all duration-500 ${
           layout === "compact" ? "grid-cols-1 lg:grid-cols-6 gap-6" : 
           layout === "spacious" ? "grid-cols-1 max-w-4xl mx-auto gap-12" : 
-          "grid-cols-1 lg:grid-cols-4 gap-8 xl:gap-10"
+          "grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 xl:gap-10"
         }`}>
           
           {featured && (

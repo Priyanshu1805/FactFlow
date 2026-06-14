@@ -191,6 +191,18 @@ export async function verifyPayment(req: AuthRequest, res: Response) {
 export async function getMySubscription(req: AuthRequest, res: Response) {
   try {
     const userId = req.user?.id;
+    
+    // Check if user is owner or admin
+    const { User } = await import("../models/User");
+    const userDoc = await User.findById(userId);
+    if (userDoc?.role === "admin" || userDoc?.email?.toLowerCase() === "factflow1819@gmail.com") {
+      res.json({
+        success: true,
+        data: { plan: "yearly", status: "active", endDate: "Lifetime", daysLeft: 9999 }
+      });
+      return;
+    }
+
     const subscription = await Subscription.findOne({ userId }).sort({ createdAt: -1 });
 
     if (!subscription) {

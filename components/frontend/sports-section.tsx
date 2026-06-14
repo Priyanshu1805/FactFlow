@@ -136,7 +136,7 @@ export function SportsSection() {
         <div className={`grid transition-all duration-500 ${
           layout === "compact" ? "grid-cols-1 lg:grid-cols-6 gap-4" : 
           layout === "spacious" ? "grid-cols-1 max-w-4xl mx-auto gap-10" : 
-          "grid-cols-1 lg:grid-cols-4 gap-6 xl:gap-8"
+          "grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 xl:gap-8"
         }`}>
           
           {featured && (

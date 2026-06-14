@@ -104,7 +104,7 @@ export function TrendingSection() {
 
         {/* 1 Big + 4 Small Cards */}
         <div className={`grid transition-all duration-500 ${
-          layout === "compact" ? "grid-cols-1 lg:grid-cols-6 gap-4" : "grid-cols-1 lg:grid-cols-4 gap-6 xl:gap-8"
+          layout === "compact" ? "grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4" : "grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 xl:gap-8"
         }`}>
 
           {/* Featured Big Card */}

@@ -75,7 +75,20 @@ export function NotificationBell() {
   const [loading, setLoading] = useState(false)
   const [filter, setFilter] = useState<"all" | "news">("all")
   const [expanded, setExpanded] = useState(false)
+  const [prefs, setPrefs] = useState<any>(null)
   const panelRef = useRef<HTMLDivElement>(null)
+
+  // ── Fetch user preferences ───────────────────────────────────
+  useEffect(() => {
+    if (!isAuthenticated || !user) return
+    const token = localStorage.getItem("token") || ""
+    fetch(`${API}/notifications/prefs?firebaseUid=${user.uid}`, {
+      headers: { Authorization: `Bearer ${token}` }
+    })
+      .then(r => r.json())
+      .then(d => { if (d.success) setPrefs(d.data) })
+      .catch(() => {})
+  }, [user, isAuthenticated])
 
   // ── Close on outside click ──────────────────────────────────
   useEffect(() => {
@@ -143,18 +156,54 @@ export function NotificationBell() {
   useEffect(() => {
     if (!isAuthenticated || !user || !socket) return
 
+    // Helper to get text for toast
+    const getNotifText = (n: Notification): string => {
+      if (n.message) return n.message
+      const cfg = TYPE_CONFIG[n.type]
+      const sender = n.senderId?.name || n.senderId?.username || "Someone"
+      switch (n.type) {
+        case "like": return `${sender} liked your post`
+        case "comment": return `${sender} commented on your post`
+        case "mention": return `${sender} mentioned you`
+        case "follow": return `${sender} started following you`
+        case "breaking_news": return `🔴 BREAKING NEWS`
+        default: return cfg?.label || "New notification"
+      }
+    }
+
     const handleNewNotif = (notif: Notification) => {
+      // Check quiet hours
+      if (prefs?.quietHours?.enabled) {
+        const now = new Date()
+        const currentMins = now.getHours() * 60 + now.getMinutes()
+        const [fH, fM] = (prefs.quietHours.from || "22:00").split(":").map(Number)
+        const [tH, tM] = (prefs.quietHours.to || "07:00").split(":").map(Number)
+        const fromMins = fH * 60 + fM
+        const toMins = tH * 60 + tM
+        
+        let isQuiet = false
+        if (fromMins <= toMins) {
+          isQuiet = currentMins >= fromMins && currentMins <= toMins
+        } else {
+          isQuiet = currentMins >= fromMins || currentMins <= toMins
+        }
+        if (isQuiet) return; // Block toast, but maybe still add to list? We'll just block the toast.
+      }
+
       setNotifications(prev => {
         const isDuplicate = prev.some(n => n._id === notif._id);
         if (isDuplicate) return prev;
         return [notif, ...prev];
       });
       setUnreadCount(prev => prev + 1);
-      toast("New notification received!");
+      
+      const text = getNotifText(notif);
+      toast(text);
       window.dispatchEvent(new CustomEvent("global_new_notification"));
     }
 
     const handleNewArticle = (article?: any) => {
+      if (prefs?.liveUpdates === false) return; // Ignored via settings
       fetchCount()
       if (open) fetchNotifications()
       if (article && article.title) {
@@ -165,6 +214,7 @@ export function NotificationBell() {
     }
 
     const handleBreakingNews = (article?: any) => {
+      if (prefs?.breakingNews === false) return; // Ignored via settings
       fetchCount()
       if (open) fetchNotifications()
       if (article && article.title) {
@@ -195,7 +245,7 @@ export function NotificationBell() {
       socket.off("breaking_news", handleBreakingNews)
       socket.off("trending_story", handleTrendingStory)
     }
-  }, [user, isAuthenticated, open, fetchCount, fetchNotifications, socket])
+  }, [user, isAuthenticated, open, fetchCount, fetchNotifications, socket, prefs])
 
   // ── Mark single notification as read ─────────────────────────
   const markRead = async (id: string) => {

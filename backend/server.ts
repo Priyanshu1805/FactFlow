@@ -333,23 +333,30 @@ async function start(): Promise<void> {
     console.log("╚══════════════════════════════════════╝\n")
   })
 
-  // Start smart automated news pipeline
-  startNewsCycleManager()
+  // Only run heavy cron jobs in production or if explicitly enabled
+  const runCrons = process.env.NODE_ENV === "production" || process.env.ENABLE_CRON === "true";
   
-  // Start email digest cron jobs
-  startEmailCronJobs()
+  if (runCrons) {
+    // Start smart automated news pipeline
+    startNewsCycleManager()
+    
+    // Start email digest cron jobs
+    startEmailCronJobs()
 
-  // Start Live TV stream updater cron
-  startLiveStreamCron()
+    // Start Live TV stream updater cron
+    startLiveStreamCron()
 
-  // Sync YouTube reels on startup if token provided
-  if (process.env.YOUTUBE_API_KEY) {
-    console.log("📸 Syncing YouTube shorts...")
-    try {
-      await syncYoutubeReels()
-    } catch (syncError: any) {
-      console.error("❌ YouTube sync failed on startup:", syncError.message || syncError)
+    // Sync YouTube reels on startup if token provided
+    if (process.env.YOUTUBE_API_KEY) {
+      console.log("📸 Syncing YouTube shorts...")
+      try {
+        await syncYoutubeReels()
+      } catch (syncError: any) {
+        console.error("❌ YouTube sync failed on startup:", syncError.message || syncError)
+      }
     }
+  } else {
+    console.log("⚡ Skipping heavy cron jobs (dev mode). Set ENABLE_CRON=true to run them.");
   }
 }
 

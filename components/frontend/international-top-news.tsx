@@ -41,7 +41,7 @@ export function InternationalTopNews() {
         
         // Use english if available, otherwise first available
         const activeLang = sources["english"] ? "english" : Object.keys(sources)[0] || "english"
-        const activeSources = sources[activeLang] || []
+        const activeSources = (sources[activeLang] || []).sort(() => 0.5 - Math.random()).slice(0, 3)
 
         const fetchPromises = activeSources.map(async (feed) => {
           try {
