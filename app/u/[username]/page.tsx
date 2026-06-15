@@ -55,9 +55,11 @@ export default function PublicProfilePage() {
 
   // Socket state
   const { socket } = useSocket()
-
-  const isOwnProfile = user?.username === username || user?.uid === username
-
+  const isOwnProfile = Boolean(
+    (user?.username && username && user.username.toLowerCase() === (typeof username === 'string' ? username.toLowerCase() : username)) ||
+    user?.uid === username ||
+    (profile && user?.uid === profile.firebaseUid)
+  )
   // Fetch Profile Details
   const fetchProfileDetails = () => {
     const viewerParam = user?.uid ? `?viewerUid=${user.uid}` : ""
