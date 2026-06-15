@@ -136,19 +136,24 @@ export function LiveTvSection() {
     }
   }
 
-  // Generate robust video URL
+  // Generate robust video URL — with channel search fallback
   const getVideoUrl = () => {
     if (!activeChannel) return ""
-    
-    // Auto-play is tricky on mobile, but mute=1 & playsinline=1 helps it bypass restrictions
-    // We remove origin to avoid any webview CORS issues
-    const params = `autoplay=1&mute=1&playsinline=1&rel=0`
+    const originUrl = typeof window !== 'undefined' ? window.location.origin : 'https://factflow.news'
+    const params = `autoplay=1&mute=1&playsinline=1&rel=0&origin=${encodeURIComponent(originUrl)}`
 
-    // If backend found a direct video ID, use it with native embed
     if (activeChannel.currentVideoId) {
+      // Preferred: direct video embed
       return `https://www.youtube-nocookie.com/embed/${activeChannel.currentVideoId}?${params}`
     }
-    
+
+    // Fallback: search the channel's live stream via YouTube's channel search embed
+    // This works even if we don't know the exact video ID
+    const handle = activeChannel.youtubeHandle?.replace('@', '') || ''
+    if (handle) {
+      return `https://www.youtube-nocookie.com/embed?listType=search&list=${encodeURIComponent(handle + ' live')}&${params}`
+    }
+
     return ""
   }
 
@@ -192,17 +197,28 @@ export function LiveTvSection() {
               )}
             </AnimatePresence>
 
-            {activeChannel && getVideoUrl() && (
-              <iframe
-                key={activeChannel.id + (activeChannel.currentVideoId || '')}
-                className="absolute inset-0 w-full h-full border-none z-10"
-                src={getVideoUrl()}
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                allowFullScreen
-                onLoad={() => setIsLoading(false)}
-                onError={() => setIsLoading(false)}
-              />
-            )}
+            {activeChannel ? (
+              getVideoUrl() ? (
+                <iframe
+                  key={activeChannel.id + (activeChannel.currentVideoId || '')}
+                  className="absolute inset-0 w-full h-full border-none z-10"
+                  src={getVideoUrl()}
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                  allowFullScreen
+                  onLoad={() => setIsLoading(false)}
+                  onError={() => setIsLoading(false)}
+                />
+              ) : (
+                <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/80 z-10 gap-3">
+                  <div className="w-14 h-14 rounded-full bg-red-500/10 border border-red-500/20 flex items-center justify-center">
+                    <Radio className="w-7 h-7 text-red-400" />
+                  </div>
+                  <p className="text-white font-bold text-lg">{activeChannel.name}</p>
+                  <p className="text-red-400/80 text-sm font-semibold uppercase tracking-widest">Currently Offline</p>
+                  <p className="text-gray-500 text-xs mt-1">Please try another channel or check back later</p>
+                </div>
+              )
+            ) : null}
           </div>
 
           {activeChannel && (

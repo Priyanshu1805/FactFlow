@@ -36,7 +36,7 @@ export function ReelsSection() {
             likes: item.likes || 0,
             thumbnail: item.thumbnailUrl || "https://images.unsplash.com/photo-1620712943543-bcc4688e7485?w=300&h=500&fit=crop",
             duration: typeof item.duration === "number" ? `${Math.floor(item.duration / 60)}:${(item.duration % 60).toString().padStart(2, '0')}` : item.duration || "0:30",
-            tag: item.tags?.[0] || "Reel",
+            tag: Array.isArray(item.tags) ? (item.tags[0] || "Reel") : (item.tags || "Reel"),
             videoUrl: item.videoUrl,
           }))
           setReels(formatted)
@@ -190,9 +190,13 @@ export function ReelsSection() {
               </div>
             )}
             <iframe 
-              src={activeReel.replace('shorts/', 'embed/')} 
+              src={(() => {
+                const url = activeReel.replace('shorts/', 'embed/')
+                const params = 'autoplay=1&mute=0&rel=0&playsinline=1'
+                return url.includes('?') ? `${url}&${params}` : `${url}?${params}`
+              })()} 
               className={`w-full h-full ${!(isOwnerOrAdmin || canAccess("monthly")) ? "blur-[0.5px] contrast-75 brightness-90" : ""}`} 
-              allow="autoplay; encrypted-media; picture-in-picture" 
+              allow="autoplay; encrypted-media; picture-in-picture; web-share" 
               allowFullScreen
             />
           </div>
