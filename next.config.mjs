@@ -42,7 +42,9 @@ const nextConfig = {
       source: "/(.*)",
       headers: [
         { key: "X-Content-Type-Options", value: "nosniff" },
-        { key: "X-Frame-Options", value: "DENY" },
+        // X-Frame-Options REMOVED — it was blocking YouTube/external iframes on our own pages
+        // Instead use CSP frame-src to allow YouTube embeds
+        { key: "Content-Security-Policy", value: "frame-src 'self' https://www.youtube.com https://www.youtube-nocookie.com https://www.youtube.com/embed/ https://www.youtube-nocookie.com/embed/;" },
         { key: "X-XSS-Protection", value: "1; mode=block" },
         { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
         { key: "Cache-Control", value: "public, max-age=0, must-revalidate" },
