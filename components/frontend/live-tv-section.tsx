@@ -35,17 +35,11 @@ export function LiveTvSection() {
   const [activeCategory, setActiveCategory] = useState<Category>("All")
   const [isLoading, setIsLoading] = useState(true)
   const [isSaved, setIsSaved] = useState(false)
-  const [originUrl, setOriginUrl] = useState("")
-  
   const { user } = useAuthStore()
   const settings = useVideoSettings()
   const { isWifi } = useNetworkStatus()
 
   const API_URL = process.env.NEXT_PUBLIC_API_URL || "/api"
-
-  useEffect(() => {
-    setOriginUrl(window.location.origin)
-  }, [])
 
   // Auto-refresh mechanism
   const fetchChannels = async (silent = false) => {
@@ -144,15 +138,15 @@ export function LiveTvSection() {
 
   // Generate robust video URL
   const getVideoUrl = () => {
-    if (!activeChannel || !originUrl) return ""
+    if (!activeChannel) return ""
     
-    const autoplay = settings?.autoPlayVideos ? 1 : 1 // Force autoplay for Live TV
-    const mute = settings?.muteByDefault ? 1 : 1 // Mute required for autoplay to work reliably in browsers
-    const params = `autoplay=${autoplay}&mute=${mute}&playsinline=1&origin=${originUrl}`
+    // Auto-play is tricky on mobile, but mute=1 & playsinline=1 helps it bypass restrictions
+    // We remove origin to avoid any webview CORS issues
+    const params = `autoplay=1&mute=1&playsinline=1&rel=0`
 
     // If backend found a direct video ID, use it with native embed
     if (activeChannel.currentVideoId) {
-      return `https://www.youtube.com/embed/${activeChannel.currentVideoId}?${params}`
+      return `https://www.youtube-nocookie.com/embed/${activeChannel.currentVideoId}?${params}`
     }
     
     return ""
@@ -198,12 +192,12 @@ export function LiveTvSection() {
               )}
             </AnimatePresence>
 
-            {activeChannel && originUrl && getVideoUrl() && (
+            {activeChannel && getVideoUrl() && (
               <iframe
                 key={activeChannel.id + (activeChannel.currentVideoId || '')}
                 className="absolute inset-0 w-full h-full border-none z-10"
                 src={getVideoUrl()}
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                 allowFullScreen
                 onLoad={() => setIsLoading(false)}
                 onError={() => setIsLoading(false)}
