@@ -60,7 +60,7 @@ export function AppearanceSettings() {
   const { theme, setTheme } = useTheme()
   const { settings, updateSetting } = useSettings()
 
-  const currentTheme = settings?.appearance?.theme || 'light'
+  const currentTheme = theme || 'light'
   const currentFontSize = settings?.appearance?.fontSize || 'default'
   const currentFontStyle = settings?.appearance?.fontStyle || 'Inter'
   const currentLayout = settings?.layout || 'comfortable'
@@ -102,12 +102,6 @@ export function AppearanceSettings() {
       }
     }
   }, [previewFont, currentFontStyle])
-
-  useEffect(() => {
-    if (settings?.appearance?.theme && settings.appearance.theme !== theme && settings.appearance.theme !== 'system') {
-      setTheme(settings.appearance.theme as Parameters<typeof setTheme>[0])
-    }
-  }, [settings?.appearance?.theme, theme, setTheme])
 
   const handleThemeChange = (newTheme: string) => {
     setTheme(newTheme as Parameters<typeof setTheme>[0])

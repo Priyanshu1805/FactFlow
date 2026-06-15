@@ -94,10 +94,7 @@ export function NewsTicker() {
           .ticker-track {
             display: flex;
             width: max-content;
-            animation: ticker-scroll 45s linear infinite;
-          }
-          .ticker-track:hover {
-            animation-play-state: paused;
+            animation: ticker-scroll 25s linear infinite;
           }
         `}</style>
         <div className="ticker-track">

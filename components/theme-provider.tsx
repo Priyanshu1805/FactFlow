@@ -29,7 +29,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <ThemeContext.Provider value={{ theme, setTheme: handleSetTheme }}>
-      <div className={theme}>
+      <div className={theme === "glass" ? "dark glass" : theme}>
         {children}
       </div>
     </ThemeContext.Provider>
