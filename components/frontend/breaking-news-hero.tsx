@@ -202,14 +202,14 @@ export function BreakingNewsHero() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        let r = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/news?breaking=true&limit=20&region=global&${useAuthStore.getState().user?.uid ? 'firebaseUid=' + useAuthStore.getState().user?.uid : ''}`)
+        let r = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "/api"}/news?breaking=true&limit=20&region=global&${useAuthStore.getState().user?.uid ? 'firebaseUid=' + useAuthStore.getState().user?.uid : ''}`)
         let data = r.ok ? await r.json() : { success: false, data: [] }
         
         let allArticles = data.success && data.data ? data.data : []
 
         if (allArticles.length < 15) {
           // Fallback to top standard global news if we don't have enough breaking
-          const fbR = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/news?limit=20&region=global&${useAuthStore.getState().user?.uid ? 'firebaseUid=' + useAuthStore.getState().user?.uid : ''}`)
+          const fbR = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "/api"}/news?limit=20&region=global&${useAuthStore.getState().user?.uid ? 'firebaseUid=' + useAuthStore.getState().user?.uid : ''}`)
           const fbData = fbR.ok ? await fbR.json() : null
           if (fbData && fbData.success && fbData.data) {
              const existingIds = new Set(allArticles.map((a: any) => a._id))

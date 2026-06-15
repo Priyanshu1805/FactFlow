@@ -88,7 +88,7 @@ export function Navbar() {
 
   useEffect(() => {
     if (!isAuthenticated || !user) return
-    fetch(`${process.env.NEXT_PUBLIC_API_URL}/stories`)
+    fetch(`${process.env.NEXT_PUBLIC_API_URL || "/api"}/stories`)
       .then(res => {
         if (!res.ok) throw new Error("Fetch failed")
         return res.json()

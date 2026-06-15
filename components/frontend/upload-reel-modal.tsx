@@ -25,7 +25,7 @@ export function UploadReelModal({ isOpen, onClose, onUploadSuccess }: { isOpen: 
 
     try {
       const token = localStorage.getItem("token")
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/reels/upload`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "/api"}/reels/upload`, {
         method: "POST",
         headers: {
           "Authorization": `Bearer ${token}`,

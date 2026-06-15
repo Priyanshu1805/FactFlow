@@ -16,7 +16,7 @@ export default function NewspaperPage() {
   const sentinelRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    fetch(`${process.env.NEXT_PUBLIC_API_URL}/news?longform=true&limit=50&${useAuthStore.getState().user?.uid ? 'firebaseUid=' + useAuthStore.getState().user?.uid : ''}`)
+    fetch(`${process.env.NEXT_PUBLIC_API_URL || "/api"}/news?longform=true&limit=50&${useAuthStore.getState().user?.uid ? 'firebaseUid=' + useAuthStore.getState().user?.uid : ''}`)
       .then((res) => {
         if (!res.ok) throw new Error("Fetch failed")
         return res.json()

@@ -39,7 +39,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const fetchMe = async (currentToken: string) => {
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/me`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "/api"}/auth/me`, {
         headers: {
           Authorization: `Bearer ${currentToken}`,
         },

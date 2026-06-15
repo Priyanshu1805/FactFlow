@@ -52,7 +52,7 @@ export function PrivacySettings() {
 
     setClearing(true)
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/history?firebaseUid=${user.uid}`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "/api"}/users/history?firebaseUid=${user.uid}`, {
         method: "DELETE"
       })
       if (!res.ok) throw new Error("API call failed")
@@ -76,7 +76,7 @@ export function PrivacySettings() {
     }
     setExporting(true)
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/export-data?firebaseUid=${user.uid}`)
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "/api"}/users/export-data?firebaseUid=${user.uid}`)
       if (!res.ok) throw new Error("API call failed")
       const data = await res.json()
       if (data.success && data.data) {

@@ -85,7 +85,7 @@ export function StoryViewer({ groupedStories, initialGroupIndex, onClose }: Stor
     if (!confirm("Are you sure you want to delete this story?")) return
 
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/stories/${currentStory._id}`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "/api"}/stories/${currentStory._id}`, {
         method: "DELETE"
       })
       if (!res.ok) throw new Error("Fetch failed")

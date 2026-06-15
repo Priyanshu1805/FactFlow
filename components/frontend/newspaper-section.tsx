@@ -24,7 +24,7 @@ export function NewspaperSection() {
 
   useEffect(() => {
     const fetchNews = () => {
-      fetch(`${process.env.NEXT_PUBLIC_API_URL}/news?longform=true&limit=16&${useAuthStore.getState().user?.uid ? 'firebaseUid=' + useAuthStore.getState().user?.uid : ''}&region=GLOBAL`)
+      fetch(`${process.env.NEXT_PUBLIC_API_URL || "/api"}/news?longform=true&limit=16&${useAuthStore.getState().user?.uid ? 'firebaseUid=' + useAuthStore.getState().user?.uid : ''}&region=GLOBAL`)
         .then((res) => {
           if (!res.ok) throw new Error("Fetch failed")
           return res.json()

@@ -60,7 +60,7 @@ export function UploadFlowModal({ isOpen, onClose, type, isDark }: UploadFlowMod
       const formData = new FormData()
       formData.append("file", file)
       
-      const uploadRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/upload`, {
+      const uploadRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "/api"}/upload`, {
         method: "POST",
         body: formData
       })

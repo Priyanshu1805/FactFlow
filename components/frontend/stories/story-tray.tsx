@@ -15,7 +15,7 @@ export function StoryTray({ onStoryClick, onAddStoryClick }: StoryTrayProps) {
   const { user } = useAuthStore()
 
   useEffect(() => {
-    fetch(`${process.env.NEXT_PUBLIC_API_URL}/stories`)
+    fetch(`${process.env.NEXT_PUBLIC_API_URL || "/api"}/stories`)
       .then(res => res.json())
       .then(data => {
         if (data.success) setGroupedStories(data.data)

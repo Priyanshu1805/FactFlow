@@ -17,7 +17,7 @@ export function RelatedNews({ currentCategory, currentArticleId }: { currentCate
 
   useEffect(() => {
     // Fetch related news (limit 7 to ensure we have 6 after filtering out the current article)
-    fetch(`${process.env.NEXT_PUBLIC_API_URL}/news?category=${currentCategory}&limit=7&${useAuthStore.getState().user?.uid ? 'firebaseUid=' + useAuthStore.getState().user?.uid : ''}`)
+    fetch(`${process.env.NEXT_PUBLIC_API_URL || "/api"}/news?category=${currentCategory}&limit=7&${useAuthStore.getState().user?.uid ? 'firebaseUid=' + useAuthStore.getState().user?.uid : ''}`)
       .then((res) => {
         if (!res.ok) throw new Error("Fetch failed")
         return res.json()

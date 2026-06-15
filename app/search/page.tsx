@@ -27,7 +27,7 @@ function SearchResults() {
       setLoading(true)
       setError(false)
       try {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/search?q=${encodeURIComponent(query)}`)
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "/api"}/search?q=${encodeURIComponent(query)}`)
         if (!res.ok) throw new Error("Search failed")
         const data = await res.json()
         setResults(data)

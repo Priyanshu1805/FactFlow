@@ -21,7 +21,8 @@ export function ReelsSection() {
   const [activeReel, setActiveReel] = useState<string | null>(null)
 
   useEffect(() => {
-    fetch(`${process.env.NEXT_PUBLIC_API_URL}/reels?limit=10`)
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || "/api"
+    fetch(`${apiUrl}/reels?limit=10`)
       .then((res) => {
         if (!res.ok) throw new Error("Fetch failed")
         return res.json()

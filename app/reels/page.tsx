@@ -15,7 +15,7 @@ export default function ReelsPage() {
   const containerRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    fetch(`${process.env.NEXT_PUBLIC_API_URL}/reels`)
+    fetch(`${process.env.NEXT_PUBLIC_API_URL || "/api"}/reels`)
       .then((res) => {
         if (!res.ok) throw new Error("Fetch failed")
         return res.json()
