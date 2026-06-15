@@ -243,7 +243,7 @@ export function EditProfileModal({ isOpen, onClose, onSuccess, isDark }: EditPro
               <AtSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 opacity-50" />
               <input
                 value={username}
-                onChange={(e) => setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_.-]/g, ''))}
+                onChange={(e) => setUsername(e.target.value.replace(/[^a-zA-Z0-9_.-]/g, ''))}
                 placeholder="username"
                 className="w-full pl-9 pr-3 py-2 bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl text-sm placeholder:text-gray-300 dark:text-white/20 focus:outline-none focus:border-red-500"
               />

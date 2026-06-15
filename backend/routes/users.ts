@@ -586,7 +586,7 @@ router.post("/avatar", upload.single("avatar"), async (req: Request, res: Respon
           folder: "factflow/avatars",
           public_id: `user_${firebaseUid}`,
           overwrite: true,
-          transformation: [{ width: 400, height: 400, crop: "fill", gravity: "face" }],
+          transformation: [{ width: 400, height: 400, crop: "fill", gravity: "face", quality: "auto", fetch_format: "auto" }],
         },
         (error, result) => {
           if (error) reject(error)
@@ -624,7 +624,7 @@ router.post("/cover", upload.single("cover"), async (req: Request, res: Response
           folder: "factflow/covers",
           public_id: `cover_${firebaseUid}`,
           overwrite: true,
-          transformation: [{ width: 1200, height: 400, crop: "fill" }],
+          transformation: [{ width: 1200, height: 400, crop: "fill", quality: "auto", fetch_format: "auto" }],
         },
         (error, result) => {
           if (error) reject(error)

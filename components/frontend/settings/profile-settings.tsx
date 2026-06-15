@@ -249,7 +249,7 @@ export function ProfileSettings() {
                 <AtSign className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-600 dark:text-white/[0.85]" />
                 <input
                   value={username}
-                  onChange={(e) => setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_.-]/g, ''))}
+                  onChange={(e) => setUsername(e.target.value.replace(/[^a-zA-Z0-9_.-]/g, ''))}
                   placeholder="username"
                   className="w-full pl-11 pr-4 py-3 bg-white dark:bg-black/20 border border-gray-200 dark:border-white/10 rounded-xl text-gray-900 dark:text-white text-sm placeholder:text-gray-400 dark:text-white/30 focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500/50 transition-all"
                 />
