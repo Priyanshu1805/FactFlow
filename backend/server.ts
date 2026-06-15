@@ -63,6 +63,8 @@ const io = new SocketIOServer(httpServer, {
       const isAllowed = !origin || 
         origin.includes("localhost") || 
         origin.includes("127.0.0.1") ||
+        origin.includes("onrender.com") ||
+        origin.includes("factflow") ||
         origin === process.env.FRONTEND_URL ||
         /^http:\/\/(192\.168\.\d+\.\d+|10\.\d+\.\d+\.\d+|172\.(1[6-9]|2\d|3[0-1])\.\d+\.\d+)(:\d+)?$/.test(origin) ||
         origin.includes("ngrok");
@@ -212,6 +214,8 @@ app.use(cors({
     const isAllowed = 
       origin.includes("localhost") || 
       origin.includes("127.0.0.1") ||
+      origin.includes("onrender.com") ||
+      origin.includes("factflow") ||
       origin === process.env.FRONTEND_URL ||
       /^http:\/\/(192\.168\.\d+\.\d+|10\.\d+\.\d+\.\d+|172\.(1[6-9]|2\d|3[0-1])\.\d+\.\d+)(:\d+)?$/.test(origin) ||
       origin.includes("ngrok");
