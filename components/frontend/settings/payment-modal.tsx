@@ -28,7 +28,7 @@ export function PaymentModal({ open, plan, onClose, onSuccess }: PaymentModalPro
   const parsed = token ? (() => { try { return JSON.parse(token) } catch { return null } })() : null
   const jwt = parsed?.state?.user?.accessToken || parsed?.state?.user?.stsTokenManager?.accessToken
 
-  const api = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"
+  const api = process.env.NEXT_PUBLIC_API_URL || ""
 
   useState(() => {
     if (!open) return

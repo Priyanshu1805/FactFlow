@@ -13,7 +13,7 @@ import { useTheme } from "@/components/theme-provider"
 import { toast } from "sonner"
 import { useSocket } from "@/hooks/use-socket"
 
-const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api"
+const API = process.env.NEXT_PUBLIC_API_URL || "/api"
 
 type NotifType =
   | "mention" | "reply" | "reaction" | "like" | "share_post"

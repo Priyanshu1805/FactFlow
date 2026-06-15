@@ -116,7 +116,7 @@ export function SubscriptionSettings() {
   const [historyLoading, setHistoryLoading] = useState(false)
 
   const token = (user as any)?.accessToken || (user as any)?.stsTokenManager?.accessToken
-  const api = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"
+  const api = process.env.NEXT_PUBLIC_API_URL || ""
 
   const fetchSubscription = useCallback(async () => {
     if (!token) {

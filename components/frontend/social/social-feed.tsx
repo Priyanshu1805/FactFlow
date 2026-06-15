@@ -56,7 +56,7 @@ export function SocialFeed({ isDark }: SocialFeedProps) {
       setLoading(true)
       try {
         const uidParam = user?.uid ? `&firebaseUid=${user.uid}` : ""
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api"}/posts/feed?page=${page}&limit=5${uidParam}`)
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "/api"}/posts/feed?page=${page}&limit=5${uidParam}`)
         const data = await res.json()
         
         if (data.success) {

@@ -93,7 +93,7 @@ export function PostCard({ post, isDark, socket }: PostCardProps) {
     setLikesCount((prev: number) => currentlyLiked ? prev - 1 : prev + 1)
     
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api"}/posts/${post._id}/like`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "/api"}/posts/${post._id}/like`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ firebaseUid: user.uid }),
@@ -121,7 +121,7 @@ export function PostCard({ post, isDark, socket }: PostCardProps) {
     setSavesCount((prev: number) => currentlySaved ? prev - 1 : prev + 1)
     
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api"}/posts/${post._id}/save`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "/api"}/posts/${post._id}/save`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ firebaseUid: user.uid }),

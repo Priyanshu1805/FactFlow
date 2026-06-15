@@ -141,7 +141,7 @@ export function StoryViewer({ groupedStories, initialGroupIndex, onClose }: Stor
     setSendingReaction(true)
     try {
       // 1. Access or create chat
-      const chatRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api"}/chats/access`, {
+      const chatRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "/api"}/chats/access`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ firebaseUid: user.uid, userId: currentGroup.user._id })
@@ -159,7 +159,7 @@ export function StoryViewer({ groupedStories, initialGroupIndex, onClose }: Stor
       formData.append("chatId", chatData.chat._id)
       formData.append("content", isReaction ? `${textToSend} (Reacted to story)` : `Replied to story: "${textToSend}"`)
       
-      const msgRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api"}/messages`, {
+      const msgRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "/api"}/messages`, {
         method: "POST",
         body: formData
       })

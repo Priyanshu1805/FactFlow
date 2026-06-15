@@ -33,7 +33,7 @@ export function useVideoSettings() {
   useEffect(() => {
     if (!user?.uid) return
 
-    const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"
+    const API_URL = process.env.NEXT_PUBLIC_API_URL || ""
 
     axios.get(`${API_URL}/preferences?firebaseUid=${user.uid}`)
       .then(res => {

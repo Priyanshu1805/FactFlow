@@ -19,7 +19,7 @@ export default function ProfilePage() {
     setMounted(true)
     if (user?.uid) {
       // Fetch real data for stats
-      fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api"}/users/public/${user.uid}`)
+      fetch(`${process.env.NEXT_PUBLIC_API_URL || "/api"}/users/public/${user.uid}`)
         .then(res => res.json())
         .then(data => {
           if (data.success && data.stats) {

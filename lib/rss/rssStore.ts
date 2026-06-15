@@ -122,7 +122,7 @@ export const useRssStore = create<RssState>((set, get) => ({
       // 1. Fetch from Unified Backend (Art, AI News, User articles)
       // Paginated with page and limit=20
       try {
-        const apiRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api"}/news?limit=20&page=${page}${catParam}&region=${regionCode}${uidParam}&language=${activeLang}`)
+        const apiRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "/api"}/news?limit=20&page=${page}${catParam}&region=${regionCode}${uidParam}&language=${activeLang}`)
         if (apiRes.ok) {
           const apiData = await apiRes.json()
           if (apiData.success && apiData.data) {

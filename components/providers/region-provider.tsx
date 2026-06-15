@@ -58,7 +58,7 @@ export function RegionProvider({ children }: { children: ReactNode }) {
       // 2. Sync with backend
       try {
         const token = localStorage.getItem("token")
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api"}/preferences/region`, {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "/api"}/preferences/region`, {
           headers: { Authorization: `Bearer ${token}` }
         })
         const data = await res.json()
@@ -91,7 +91,7 @@ export function RegionProvider({ children }: { children: ReactNode }) {
     if (user?.uid) {
       try {
         const token = localStorage.getItem("token")
-        await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api"}/preferences/region`, {
+        await fetch(`${process.env.NEXT_PUBLIC_API_URL || "/api"}/preferences/region`, {
           method: "PATCH",
           headers: {
             "Content-Type": "application/json",

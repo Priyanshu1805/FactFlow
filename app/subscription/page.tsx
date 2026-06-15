@@ -30,7 +30,7 @@ interface PaymentRecord {
 }
 
 // ─── Constants ──────────────────────────────────────────────────────────────
-const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:5000/api";
+const API = process.env.NEXT_PUBLIC_API_URL ?? "/api";
 
 const PLAN_PRICES: Record<string, number> = {
     weekly: 15,

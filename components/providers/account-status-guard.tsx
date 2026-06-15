@@ -4,7 +4,7 @@ import { useEffect, useState } from "react"
 import { useAuthStore } from "@/store/auth-store"
 import { AlertTriangle, Loader2, RefreshCw, LogOut } from "lucide-react"
 
-const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api"
+const API = process.env.NEXT_PUBLIC_API_URL || "/api"
 
 export function AccountStatusGuard({ children }: { children: React.ReactNode }) {
   const { user, logout } = useAuthStore()

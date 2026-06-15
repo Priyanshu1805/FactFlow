@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react"
 import { X, Camera, Save, Loader2, User, FileText, AtSign, AlertTriangle } from "lucide-react"
 import { useAuthStore } from "@/store/auth-store"
 
-const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api"
+const API = process.env.NEXT_PUBLIC_API_URL || "/api"
 
 interface EditProfileModalProps {
   isOpen: boolean

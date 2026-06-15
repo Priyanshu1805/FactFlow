@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react"
 import { User, Camera, Save, X, AlertTriangle, CheckCircle, Loader2, FileText, Edit3, AtSign } from "lucide-react"
 import { useAuthStore } from "@/store/auth-store"
 
-const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api"
+const API = process.env.NEXT_PUBLIC_API_URL || "/api"
 
 export function ProfileSettings() {
   const { user, setUser } = useAuthStore()

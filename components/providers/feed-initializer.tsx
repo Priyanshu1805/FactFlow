@@ -4,7 +4,7 @@ import { useEffect } from "react"
 import { useAuthStore } from "@/store/auth-store"
 import { useFeedStore } from "@/lib/store/feed-store"
 
-const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api"
+const API = process.env.NEXT_PUBLIC_API_URL || "/api"
 
 export function FeedInitializer() {
   const { user, setUser } = useAuthStore()

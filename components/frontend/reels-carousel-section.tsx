@@ -10,7 +10,7 @@ export function ReelsCarouselSection() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api"}/reels?limit=6`)
+    fetch(`${process.env.NEXT_PUBLIC_API_URL || "/api"}/reels?limit=6`)
       .then(res => res.json())
       .then(data => {
         if (data.success && data.data) {

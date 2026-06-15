@@ -52,7 +52,7 @@ export function useSubscription() {
     }
 
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/subscription/me`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || ""}/subscription/me`, {
         headers: { Authorization: `Bearer ${token}` },
       })
       if (!res.ok) throw new Error("Fetch failed")

@@ -13,7 +13,7 @@ import { useAuthStore } from "@/store/auth-store"
 import { useTheme } from "@/components/theme-provider"
 import FastGhostCursor from "@/components/ui/fast-ghost-cursor"
 
-const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api"
+const API = process.env.NEXT_PUBLIC_API_URL || "/api"
 
 export default function LoginPage() {
   // Common

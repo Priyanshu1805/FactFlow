@@ -4,7 +4,7 @@ import { useEffect, useState } from "react"
 import { useAuthStore } from "@/store/auth-store"
 import { Shield, Loader2, ArrowRight } from "lucide-react"
 
-const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api"
+const API = process.env.NEXT_PUBLIC_API_URL || "/api"
 
 export function TwoFactorGuard({ children }: { children: React.ReactNode }) {
   const { user, is2faVerified, set2faVerified, logout } = useAuthStore()

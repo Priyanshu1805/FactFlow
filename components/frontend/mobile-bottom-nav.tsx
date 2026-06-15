@@ -20,7 +20,7 @@ export function MobileBottomNav() {
     setIsDark(settings?.appearance?.theme === "dark" || (!settings?.appearance?.theme && window.matchMedia('(prefers-color-scheme: dark)').matches))
   }, [settings?.appearance?.theme])
   const lastScrollY = useRef(0)
-  const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api"
+  const API_URL = process.env.NEXT_PUBLIC_API_URL || "/api"
 
   // Auto-hide navbar on scroll down, show on scroll up
   useEffect(() => {
@@ -58,7 +58,7 @@ export function MobileBottomNav() {
 
   useEffect(() => {
     if (!user) return
-    const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api"
+    const API_URL = process.env.NEXT_PUBLIC_API_URL || "/api"
     const checkNotifications = () => {
       fetch(`${API_URL}/notifications?firebaseUid=${user.uid}`)
         .then(res => {

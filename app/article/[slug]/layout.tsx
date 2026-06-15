@@ -6,7 +6,7 @@ type Props = {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   try {
-    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api"}/news/${params.slug}`)
+    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "/api"}/news/${params.slug}`)
     if (!res.ok) return { title: "Article Not Found | Fact Flow" }
     
     const data = await res.json()

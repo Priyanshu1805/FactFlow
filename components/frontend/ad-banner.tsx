@@ -6,7 +6,7 @@ import { useTheme } from "@/components/theme-provider"
 import { useAuthStore } from "@/store/auth-store"
 import Link from "next/link"
 
-const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api"
+const API = process.env.NEXT_PUBLIC_API_URL || "/api"
 
 export function AdBanner({ className = "" }: { className?: string }) {
   const { user } = useAuthStore()

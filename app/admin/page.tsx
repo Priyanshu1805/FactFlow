@@ -15,7 +15,7 @@ import { useAuthStore } from "@/store/auth-store"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 
-const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api"
+const API = process.env.NEXT_PUBLIC_API_URL || "/api"
 
 export default function AdminDashboard() {
   const { theme } = useTheme()

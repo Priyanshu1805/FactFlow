@@ -8,7 +8,7 @@ import { useAuthStore } from "@/store/auth-store"
 import { useRegion } from "@/components/providers/region-provider"
 import { toast } from "sonner"
 
-const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api"
+const API = process.env.NEXT_PUBLIC_API_URL || "/api"
 
 const CATEGORIES = [
   { id: "politics", label: "Politics", emoji: "🏛️", desc: "Government & policy news" },

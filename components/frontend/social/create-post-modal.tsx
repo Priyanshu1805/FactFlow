@@ -69,7 +69,7 @@ export function CreatePostModal({ isOpen, onClose, isDark }: CreatePostModalProp
         formData.append("media", file)
       })
 
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api"}/posts/create`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "/api"}/posts/create`, {
         method: "POST",
         body: formData,
       })

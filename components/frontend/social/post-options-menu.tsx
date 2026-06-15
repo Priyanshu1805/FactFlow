@@ -30,7 +30,7 @@ export function PostOptionsMenu({ isOpen, onClose, post, isDark, onEdit }: PostO
     
     setLoadingAction(actionType)
     try {
-      const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api"
+      const API = process.env.NEXT_PUBLIC_API_URL || "/api"
       
       if (actionType === "save" || actionType === "favorite") {
         const res = await fetch(`${API}/posts/${post._id}/save`, {

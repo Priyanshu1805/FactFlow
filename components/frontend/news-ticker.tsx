@@ -23,7 +23,7 @@ export function NewsTicker() {
       try {
         let localNews: any[] = []
         try {
-          const baseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api"
+          const baseUrl = process.env.NEXT_PUBLIC_API_URL || "/api"
           const dbRes = await fetch(`${baseUrl}/news?limit=15`)
           const dbData = await dbRes.json()
           if (dbData.data) {

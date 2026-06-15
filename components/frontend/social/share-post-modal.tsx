@@ -6,7 +6,7 @@ import { Search, X, Loader2, Link as LinkIcon } from "lucide-react"
 import { useAuthStore } from "@/store/auth-store"
 import { toast } from "sonner"
 
-const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api"
+const API = process.env.NEXT_PUBLIC_API_URL || "/api"
 
 interface SharePostModalProps {
   isOpen: boolean

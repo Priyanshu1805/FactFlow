@@ -70,7 +70,7 @@ export const useSettingsStore = create<SettingsState>()(
       socket: null,
       initSocket: (userId) => {
         if (get().socket) return
-        const newSocket = io(process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000')
+        const newSocket = io(process.env.NEXT_PUBLIC_API_URL || "")
         
         newSocket.on('connect', () => {
           newSocket.emit('register_user', userId)
@@ -124,7 +124,7 @@ export const useSettingsStore = create<SettingsState>()(
 
         // Instant save to backend
         try {
-          const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/settings`, {
+          const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "/api"}/settings`, {
             method: 'PUT',
             headers: {
               'Content-Type': 'application/json',
@@ -141,7 +141,7 @@ export const useSettingsStore = create<SettingsState>()(
         if (!token) return;
         set({ isLoading: true })
         try {
-          const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/settings`, {
+          const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "/api"}/settings`, {
             headers: { 'Authorization': `Bearer ${token}` }
           })
           if (res.ok) {

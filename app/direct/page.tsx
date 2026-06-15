@@ -13,10 +13,10 @@ import { Navbar } from "@/components/frontend/navbar"
 import { useSocket } from "@/hooks/use-socket"
 import { toast } from "sonner"
 
-const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api"
+const API = process.env.NEXT_PUBLIC_API_URL || "/api"
 const SOCKET_URL = process.env.NEXT_PUBLIC_SOCKET_URL && process.env.NEXT_PUBLIC_SOCKET_URL !== "/"
   ? process.env.NEXT_PUBLIC_SOCKET_URL
-  : "http://localhost:5000"
+  : ""
 
 export default function DirectInboxPage() {
   const { user, isAuthenticated } = useAuthStore()

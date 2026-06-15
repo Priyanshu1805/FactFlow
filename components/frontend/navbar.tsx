@@ -63,7 +63,7 @@ export function Navbar() {
     if (!isAuthenticated || !user?.uid) return
     const fetchDbProfile = async () => {
       try {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api"}/users/profile?firebaseUid=${user.uid}&email=${user.email}`)
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "/api"}/users/profile?firebaseUid=${user.uid}&email=${user.email}`)
         const data = await res.json()
         if (data.success) {
           setDbUser(data.user)
@@ -104,7 +104,7 @@ export function Navbar() {
 
   useEffect(() => {
     if (!isAuthenticated || !user) return
-    const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api"
+    const API_URL = process.env.NEXT_PUBLIC_API_URL || "/api"
     const checkNotifications = () => {
       fetch(`${API_URL}/notifications/unread-count?firebaseUid=${user.uid}`)
         .then(res => {
@@ -142,7 +142,7 @@ export function Navbar() {
   const markSocialRead = async () => {
     if (!user) return
     try {
-      await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api"}/notifications/read-all`, {
+      await fetch(`${process.env.NEXT_PUBLIC_API_URL || "/api"}/notifications/read-all`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ firebaseUid: user.uid })
@@ -154,7 +154,7 @@ export function Navbar() {
   // Smart DM unread polling
   useEffect(() => {
     if (!isAuthenticated || !user) return
-    const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api"
+    const API_URL = process.env.NEXT_PUBLIC_API_URL || "/api"
     const checkDMs = () => {
       fetch(`${API_URL}/chats?firebaseUid=${user.uid}`)
         .then(res => {

@@ -28,7 +28,7 @@ export function EditPostModal({ isOpen, onClose, post, isDark }: EditPostModalPr
     if (!user) return
     setIsSaving(true)
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api"}/posts/${post._id}`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "/api"}/posts/${post._id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

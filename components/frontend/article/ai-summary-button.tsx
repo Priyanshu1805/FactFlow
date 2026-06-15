@@ -32,7 +32,7 @@ export function AISummaryButton({ articleText }: AISummaryButtonProps) {
     setExpanded(true)
 
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api"}/ollama/summarize`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "/api"}/ollama/summarize`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ text: articleText.substring(0, 4000) }) // Send up to 4000 chars to avoid token limits

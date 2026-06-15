@@ -23,7 +23,7 @@ export function SocketProvider({ children }: { children: React.ReactNode }) {
     // For now, we connect globally but only register if authenticated.
     const socketUrl = process.env.NEXT_PUBLIC_SOCKET_URL && process.env.NEXT_PUBLIC_SOCKET_URL !== "/"
       ? process.env.NEXT_PUBLIC_SOCKET_URL
-      : (process.env.NEXT_PUBLIC_API_URL?.replace("/api", "") || "http://localhost:5000")
+      : (process.env.NEXT_PUBLIC_API_URL?.replace("/api", "") || "")
 
     const newSocket = io(socketUrl, {
       path: "/socket.io",

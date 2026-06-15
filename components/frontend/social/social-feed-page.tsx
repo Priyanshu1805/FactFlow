@@ -21,7 +21,7 @@ import { SocialNotificationPanel } from "@/components/frontend/social/social-not
 import { toast } from "sonner"
 import { useSocket } from "@/hooks/use-socket"
 
-const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api"
+const API = process.env.NEXT_PUBLIC_API_URL || "/api"
 
 function ReelsScroller() {
   const { theme } = useTheme()
@@ -145,7 +145,7 @@ export function SocialFeedPage({ isDark, onStoryClick }: SocialFeedPageProps) {
 
   useEffect(() => {
     if (!user) return
-    const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api"
+    const API = process.env.NEXT_PUBLIC_API_URL || "/api"
     fetch(`${API}/notifications/read-all`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },

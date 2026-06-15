@@ -10,7 +10,7 @@ export function useLiveNews(categoryFilter: string) {
 
   useEffect(() => {
     if (!socketInstance) {
-      const url = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"
+      const url = process.env.NEXT_PUBLIC_API_URL || ""
       // Assuming socket connects to the root URL derived from API URL
       const socketUrl = url.replace("/api", "")
       

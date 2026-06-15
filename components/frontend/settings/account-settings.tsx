@@ -7,7 +7,7 @@ import { auth } from "@/lib/firebase"
 import { signOut, sendPasswordResetEmail, EmailAuthProvider, reauthenticateWithCredential } from "firebase/auth"
 import { useRouter } from "next/navigation"
 
-const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api"
+const API = process.env.NEXT_PUBLIC_API_URL || "/api"
 
 export function AccountSettings() {
   const { user, logout, setUser } = useAuthStore()

@@ -62,7 +62,7 @@ export function PostCommentsSheet({ isOpen, onClose, post, isDark, socket }: Pos
   const fetchComments = async () => {
     setLoading(true)
     try {
-      const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api"
+      const API = process.env.NEXT_PUBLIC_API_URL || "/api"
       const res = await fetch(`${API}/posts/${post._id}/comments`)
       if (!res.ok) throw new Error("Fetch failed")
       const data = await res.json()
@@ -83,7 +83,7 @@ export function PostCommentsSheet({ isOpen, onClose, post, isDark, socket }: Pos
 
     setIsSubmitting(true)
     try {
-      const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api"
+      const API = process.env.NEXT_PUBLIC_API_URL || "/api"
       const res = await fetch(`${API}/posts/${post._id}/comment`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -112,7 +112,7 @@ export function PostCommentsSheet({ isOpen, onClose, post, isDark, socket }: Pos
   const handleAction = async (commentId: string, actionType: string) => {
     if (!user) return toast.error("Please login first")
     try {
-      const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api"
+      const API = process.env.NEXT_PUBLIC_API_URL || "/api"
       const res = await fetch(`${API}/posts/${post._id}/comment/${commentId}/action`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
