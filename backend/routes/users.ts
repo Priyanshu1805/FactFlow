@@ -608,6 +608,44 @@ router.post("/avatar", upload.single("avatar"), async (req: Request, res: Respon
 })
 
 // ─────────────────────────────────────────────
+// POST /api/users/cover  — Upload cover banner
+// multipart/form-data: file + firebaseUid
+// ─────────────────────────────────────────────
+router.post("/cover", upload.single("cover"), async (req: Request, res: Response) => {
+  try {
+    if (!req.file) return res.status(400).json({ error: "No file uploaded" })
+    const { firebaseUid } = req.body
+    if (!firebaseUid) return res.status(400).json({ error: "firebaseUid required" })
+
+    // Upload buffer to Cloudinary
+    const uploadResult = await new Promise<any>((resolve, reject) => {
+      const stream = cloudinary.uploader.upload_stream(
+        {
+          folder: "factflow/covers",
+          public_id: `cover_${firebaseUid}`,
+          overwrite: true,
+          transformation: [{ width: 1200, height: 400, crop: "fill" }],
+        },
+        (error, result) => {
+          if (error) reject(error)
+          else resolve(result)
+        }
+      )
+      stream.end(req.file!.buffer)
+    })
+
+    const coverUrl = uploadResult.secure_url
+
+    // Save to MongoDB
+    await User.findOneAndUpdate({ firebaseUid }, { $set: { coverImage: coverUrl } })
+
+    res.json({ success: true, coverUrl })
+  } catch (err: any) {
+    res.status(500).json({ error: err.message })
+  }
+})
+
+// ─────────────────────────────────────────────
 // POST /api/users/logout-all
 // Revoke all Firebase refresh tokens for the user
 // Body: { firebaseUid }
