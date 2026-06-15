@@ -150,7 +150,7 @@ export function LiveWidgetsDashboard() {
           values={activeIds} 
           onReorder={setActiveIds}
           ref={containerRef}
-          className="grid grid-cols-2 gap-3 sm:flex sm:flex-row sm:gap-4 sm:overflow-x-auto pb-4 sm:snap-x sm:snap-mandatory scrollbar-hide sm:cursor-grab sm:active:cursor-grabbing"
+          className="flex flex-nowrap overflow-x-auto snap-x snap-mandatory gap-3 sm:gap-4 pb-4 scrollbar-hide sm:cursor-grab sm:active:cursor-grabbing"
           style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
         >
           <AnimatePresence>
