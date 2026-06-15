@@ -22,7 +22,7 @@ export function ReelsSection() {
 
   useEffect(() => {
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || "/api"
-    fetch(`${apiUrl}/reels?limit=10`)
+    fetch(`${apiUrl}/reels?limit=10&t=${Date.now()}`)
       .then((res) => {
         if (!res.ok) throw new Error("Fetch failed")
         return res.json()

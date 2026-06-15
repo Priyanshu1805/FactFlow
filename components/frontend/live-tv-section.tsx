@@ -44,7 +44,7 @@ export function LiveTvSection() {
   // Auto-refresh mechanism
   const fetchChannels = async (silent = false) => {
     try {
-      const res = await fetch(`${API_URL}/live-channels`)
+      const res = await fetch(`${API_URL}/live-channels?t=${Date.now()}`)
       const data = await res.json()
       if (data.success && data.channels.length > 0) {
         setChannels(data.channels)

@@ -96,6 +96,16 @@ export function NewsTicker() {
             width: max-content;
             animation: ticker-scroll 25s linear infinite;
           }
+          @media (min-width: 768px) {
+            .ticker-track {
+              animation-duration: 45s;
+            }
+          }
+          @media (min-width: 1280px) {
+            .ticker-track {
+              animation-duration: 60s;
+            }
+          }
         `}</style>
         <div className="ticker-track">
           {/* Duplicate items for seamless loop */}
