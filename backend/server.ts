@@ -1,6 +1,11 @@
 import dns from "dns"
 dns.setDefaultResultOrder("ipv4first")
-import "dotenv/config"
+import dotenv from "dotenv"
+dotenv.config()
+import fs from "fs"
+if (fs.existsSync(".env.render")) {
+  dotenv.config({ path: ".env.render", override: true })
+}
 import express from "express"
 import cors from "cors"
 import helmet from "helmet"

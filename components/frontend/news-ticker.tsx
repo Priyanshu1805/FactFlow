@@ -77,10 +77,10 @@ export function NewsTicker() {
   if (isLoading || articles.length === 0) return null
 
   return (
-    <div className={`flex items-center h-10 w-full overflow-hidden shadow-md border-b ${isDark ? "bg-zinc-900 border-zinc-800" : "bg-white border-gray-200"}`}>
+    <div className={`flex items-center h-7 w-full overflow-hidden shadow-sm border-b ${isDark ? "bg-zinc-900 border-zinc-800" : "bg-white border-gray-200"}`}>
       {/* Badge */}
-      <div className="shrink-0 h-full flex items-center justify-center px-4 bg-red-600 text-white font-bold text-xs uppercase tracking-wider z-10 relative shadow-[4px_0_10px_rgba(0,0,0,0.1)]">
-        <span className="w-2 h-2 bg-white rounded-full animate-pulse mr-2" />
+      <div className="shrink-0 h-full flex items-center justify-center px-3 bg-red-600 text-white font-bold text-[10px] uppercase tracking-wider z-10 relative shadow-[4px_0_10px_rgba(0,0,0,0.1)]">
+        <span className="w-1.5 h-1.5 bg-white rounded-full animate-pulse mr-1.5" />
         Breaking
       </div>
 
@@ -94,7 +94,7 @@ export function NewsTicker() {
           .ticker-track {
             display: flex;
             width: max-content;
-            animation: ticker-scroll 120s linear infinite;
+            animation: ticker-scroll 45s linear infinite;
           }
           .ticker-track:hover {
             animation-play-state: paused;
@@ -104,7 +104,7 @@ export function NewsTicker() {
           {/* Duplicate items for seamless loop */}
           {[...articles, ...articles].map((a, idx) => (
             <span key={a._id ? `${a._id}-${idx}` : `ticker-${idx}`} className="inline-flex items-center mx-4 whitespace-nowrap">
-              <span className={`text-[11px] font-bold uppercase tracking-wider px-2 py-0.5 rounded mr-2 ${
+              <span className={`text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded mr-2 ${
                 isDark ? "bg-zinc-800 text-red-400" : "bg-gray-100 text-red-600"
               }`}>
                 {a.category || "News"}
@@ -114,7 +114,7 @@ export function NewsTicker() {
                   if (a.link) window.open(a.link, '_blank')
                   else router.push(`/article/${a._id}`)
                 }}
-                className={`text-sm font-medium cursor-pointer hover:underline ${
+                className={`text-xs font-medium cursor-pointer hover:underline ${
                   isDark ? "text-gray-200 hover:text-white" : "text-gray-800 hover:text-black"
                 }`}
               >
