@@ -29,24 +29,24 @@ async function fetchFromGemini(prompt: string): Promise<string> {
   return data.candidates?.[0]?.content?.parts?.[0]?.text || ""
 }
 
-async function fetchFromOpenAI(prompt: string): Promise<string> {
-  const apiKey = process.env.OPENAI_API_KEY
-  if (!apiKey) throw new Error("Missing OPENAI_API_KEY")
+async function fetchFromGroq(prompt: string): Promise<string> {
+  const apiKey = process.env.GROQ_API_KEY
+  if (!apiKey) throw new Error("Missing GROQ_API_KEY")
 
-  const res = await fetch("https://api.openai.com/v1/chat/completions", {
+  const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       Authorization: `Bearer ${apiKey}`,
     },
     body: JSON.stringify({
-      model: "gpt-3.5-turbo",
+      model: "llama-3.3-70b-versatile",
       messages: [{ role: "user", content: prompt }],
       max_tokens: 500,
     }),
   })
   const data: any = await res.json()
-  if (!res.ok) throw new Error(data.error?.message || "OpenAI API Error")
+  if (!res.ok) throw new Error(data.error?.message || "Groq API Error")
   return data.choices?.[0]?.message?.content || ""
 }
 
@@ -61,7 +61,7 @@ export async function generateContent(req: Request, res: Response): Promise<void
     const providers = [
       { name: "Ollama", fn: fetchFromOllama },
       { name: "Gemini", fn: fetchFromGemini },
-      { name: "OpenAI", fn: fetchFromOpenAI }
+      { name: "Groq", fn: fetchFromGroq }
     ]
 
     for (const provider of providers) {
@@ -77,7 +77,7 @@ export async function generateContent(req: Request, res: Response): Promise<void
       }
     }
 
-    throw new Error("All AI providers (Ollama, Gemini, OpenAI) failed or are missing API keys.")
+    throw new Error("All AI providers (Ollama, Gemini, Groq) failed or are missing API keys.")
   } catch (err: any) {
     res.status(500).json({ success: false, error: err.message })
   }
@@ -96,7 +96,7 @@ export async function summarizeArticle(req: Request, res: Response): Promise<voi
     const providers = [
       { name: "Ollama", fn: fetchFromOllama },
       { name: "Gemini", fn: fetchFromGemini },
-      { name: "OpenAI", fn: fetchFromOpenAI }
+      { name: "Groq", fn: fetchFromGroq }
     ]
 
     for (const provider of providers) {
