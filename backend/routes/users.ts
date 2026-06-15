@@ -16,7 +16,7 @@ const router = Router()
 // Multer memory storage (we upload buffer directly to cloudinary)
 const upload = multer({
   storage: multer.memoryStorage(),
-  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB max
+  // Remove size limit to allow any MB image upload
   fileFilter: (_req, file, cb) => {
     if (file.mimetype.startsWith("image/")) {
       cb(null, true)
