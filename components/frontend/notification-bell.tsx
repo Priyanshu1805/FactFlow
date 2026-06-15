@@ -380,7 +380,7 @@ export function NotificationBell() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 10, scale: 0.97 }}
             transition={{ duration: 0.18, ease: "easeOut" }}
-            className={`absolute right-0 mt-3 w-[380px] rounded-2xl shadow-2xl border overflow-hidden z-[200] ${
+            className={`absolute right-[-10px] sm:right-0 mt-3 w-[calc(100vw-20px)] sm:w-[380px] rounded-2xl shadow-2xl border overflow-hidden z-[200] ${
               isDark
                 ? "bg-[#111111] border-white/10 shadow-black/60"
                 : "bg-white border-gray-200 shadow-gray-300/40"
