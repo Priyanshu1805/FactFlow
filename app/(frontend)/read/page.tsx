@@ -122,7 +122,7 @@ const getRandomFallback = () => fallbacks[Math.floor(Math.random() * fallbacks.l
 
         // 2. Fetch Global Stats from Backend
         const userId = user?.uid || ""
-        const statsRes = await fetch(`/api/backend/external-articles/stats?url=${encodeURIComponent(url)}&userId=${userId}&t=${Date.now()}`, { cache: "no-store" })
+        const statsRes = await fetch(`/api/external-articles/stats?url=${encodeURIComponent(url)}&userId=${userId}&t=${Date.now()}`, { cache: "no-store" })
         const statsData = await statsRes.json()
         if (statsData.success) {
           setStats({ likes: statsData.likes, dislikes: statsData.dislikes, saves: statsData.saves, shares: statsData.shares })
@@ -152,7 +152,7 @@ const getRandomFallback = () => fallbacks[Math.floor(Math.random() * fallbacks.l
     if (newLiked) setIsDisliked(false)
 
     try {
-      const res = await fetch(`/api/backend/external-articles/interact`, {
+      const res = await fetch(`/api/external-articles/interact`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -185,7 +185,7 @@ const getRandomFallback = () => fallbacks[Math.floor(Math.random() * fallbacks.l
     if (newDisliked) setIsLiked(false)
 
     try {
-      const res = await fetch(`/api/backend/external-articles/interact`, {
+      const res = await fetch(`/api/external-articles/interact`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -230,7 +230,7 @@ const getRandomFallback = () => fallbacks[Math.floor(Math.random() * fallbacks.l
 
     if (user?.uid) {
       try {
-        const res = await fetch(`/api/backend/external-articles/interact`, {
+        const res = await fetch(`/api/external-articles/interact`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -268,7 +268,7 @@ const getRandomFallback = () => fallbacks[Math.floor(Math.random() * fallbacks.l
       
       // Ping Backend to increment share count
       setStats(prev => ({ ...prev, shares: prev.shares + 1 }))
-      fetch(`/api/backend/external-articles/interact`, {
+      fetch(`/api/external-articles/interact`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ url, action: "share", value: 1 })
