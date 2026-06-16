@@ -17,7 +17,9 @@ import { toast } from "sonner"
 const API = process.env.NEXT_PUBLIC_API_URL || "/api"
 
 const fetchWithTimeout = async (url: string, options: RequestInit = {}) => {
-  const timeout = 15000;
+  // Render free tier can take up to 50 seconds to wake up from sleep.
+  // We need a long timeout to ensure the login request doesn't abort prematurely.
+  const timeout = 60000;
   const controller = new AbortController();
   const id = setTimeout(() => controller.abort(), timeout);
   try {
@@ -27,7 +29,7 @@ const fetchWithTimeout = async (url: string, options: RequestInit = {}) => {
   } catch (error: any) {
     clearTimeout(id);
     if (error.name === "AbortError") {
-      throw new Error("Network timeout: The server took too long to respond.");
+      throw new Error("Network timeout: The server took too long to wake up. Please try again.");
     }
     throw error;
   }
@@ -82,33 +84,44 @@ export default function LoginPage() {
 
   // Check for Magic Link and Google Redirect on Mount
   useEffect(() => {
-    // 1. Handle Google Redirect Result
+    // 1. Handle Google Redirect Result and existing Firebase sessions
+    const handleFirebaseSession = async (user: any) => {
+      setIsLoading(true)
+      try {
+        const profileRes = await fetchWithTimeout(`${API}/users/profile?firebaseUid=${user.uid}&email=${user.email}&name=${encodeURIComponent(user.displayName || "")}`)
+        if (!profileRes.ok) throw new Error("Server returned an error. Please try again later.")
+        const profileData = await profileRes.json()
+        const mongoUser = profileData.success ? profileData.user : {}
+
+        setUser({
+          uid: user.uid,
+          email: user.email,
+          displayName: user.displayName || mongoUser.name || "",
+          photoURL: user.photoURL || mongoUser.avatar || "",
+          _id: mongoUser._id,
+          id: mongoUser._id,
+          username: mongoUser.username,
+          role: mongoUser.role
+        })
+        toast.success("Successfully logged in!")
+        router.push("/")
+      } catch (err: any) {
+        toast.error("Profile sync failed: " + err.message)
+        setIsLoading(false)
+      }
+    }
+
     getRedirectResult(auth).then(async (result) => {
       if (result && result.user) {
-        setIsLoading(true)
-        try {
-          const profileRes = await fetchWithTimeout(`${API}/users/profile?firebaseUid=${result.user.uid}&email=${result.user.email}&name=${encodeURIComponent(result.user.displayName || "")}`)
-          if (!profileRes.ok) throw new Error("Server returned an error. Please try again later.")
-          const profileData = await profileRes.json()
-          const mongoUser = profileData.success ? profileData.user : {}
-
-          setUser({
-            uid: result.user.uid,
-            email: result.user.email,
-            displayName: result.user.displayName || mongoUser.name || "",
-            photoURL: result.user.photoURL || mongoUser.avatar || "",
-            _id: mongoUser._id,
-            id: mongoUser._id,
-            username: mongoUser.username,
-            role: mongoUser.role
-          })
-          toast.success("Successfully logged in!")
-          router.push("/")
-        } catch (err: any) {
-          toast.error("Google login redirect failed: " + err.message)
-        } finally {
-          setIsLoading(false)
-        }
+        await handleFirebaseSession(result.user)
+      } else {
+        // Check if already logged in to Firebase but not MongoDB (e.g. previous timeout)
+        const unsubscribe = auth.onAuthStateChanged(async (user) => {
+          if (user && !useAuthStore.getState().user) {
+            await handleFirebaseSession(user)
+          }
+          unsubscribe()
+        })
       }
     }).catch(err => {
       toast.error("Google sign in failed: " + err.message)
