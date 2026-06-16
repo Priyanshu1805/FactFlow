@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { Sparkles, Mail, Lock, ArrowRight, User as UserIcon, Eye, EyeOff, CheckCircle2, XCircle, ChevronDown } from "lucide-react"
+import { Sparkles, Mail, Lock, ArrowRight, User as UserIcon, Eye, EyeOff, CheckCircle2, XCircle, ChevronDown, ChevronLeft } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { auth, googleProvider } from "@/lib/firebase"
 import { 
@@ -12,15 +12,33 @@ import {
 import { useAuthStore } from "@/store/auth-store"
 import { useTheme } from "@/components/theme-provider"
 import FastGhostCursor from "@/components/ui/fast-ghost-cursor"
+import { toast } from "sonner"
 
 const API = process.env.NEXT_PUBLIC_API_URL || "/api"
+
+const fetchWithTimeout = async (url: string, options: RequestInit = {}) => {
+  const timeout = 15000;
+  const controller = new AbortController();
+  const id = setTimeout(() => controller.abort(), timeout);
+  try {
+    const response = await fetch(url, { ...options, signal: controller.signal });
+    clearTimeout(id);
+    return response;
+  } catch (error: any) {
+    clearTimeout(id);
+    if (error.name === "AbortError") {
+      throw new Error("Network timeout: The server took too long to respond.");
+    }
+    throw error;
+  }
+};
 
 export default function LoginPage() {
   // Common
   const [isSignUp, setIsSignUp] = useState(false)
   const [loginMethod, setLoginMethod] = useState<"standard" | "magic" | "forgot">("standard")
   const [isLoading, setIsLoading] = useState(false)
-  const [error, setError] = useState("")
+  const [signupStep, setSignupStep] = useState(1)
   const [showPassword, setShowPassword] = useState(false)
 
   // Standard Auth Form (Email/Username/Password)
@@ -69,7 +87,8 @@ export default function LoginPage() {
       if (result && result.user) {
         setIsLoading(true)
         try {
-          const profileRes = await fetch(`${API}/users/profile?firebaseUid=${result.user.uid}&email=${result.user.email}&name=${encodeURIComponent(result.user.displayName || "")}`)
+          const profileRes = await fetchWithTimeout(`${API}/users/profile?firebaseUid=${result.user.uid}&email=${result.user.email}&name=${encodeURIComponent(result.user.displayName || "")}`)
+          if (!profileRes.ok) throw new Error("Server returned an error. Please try again later.")
           const profileData = await profileRes.json()
           const mongoUser = profileData.success ? profileData.user : {}
 
@@ -83,15 +102,16 @@ export default function LoginPage() {
             username: mongoUser.username,
             role: mongoUser.role
           })
+          toast.success("Successfully logged in!")
           router.push("/")
         } catch (err: any) {
-          setError("Google login redirect failed: " + err.message)
+          toast.error("Google login redirect failed: " + err.message)
         } finally {
           setIsLoading(false)
         }
       }
     }).catch(err => {
-      setError("Google sign in failed: " + err.message)
+      toast.error("Google sign in failed: " + err.message)
     })
 
     // 2. Handle Magic Link
@@ -106,7 +126,8 @@ export default function LoginPage() {
           .then(async (result) => {
             window.localStorage.removeItem("emailForSignIn")
             // Create/Update profile in MongoDB
-            const profileRes = await fetch(`${API}/users/profile?firebaseUid=${result.user.uid}&email=${result.user.email}&name=${encodeURIComponent(result.user.displayName || "")}`)
+            const profileRes = await fetchWithTimeout(`${API}/users/profile?firebaseUid=${result.user.uid}&email=${result.user.email}&name=${encodeURIComponent(result.user.displayName || "")}`)
+            if (!profileRes.ok) throw new Error("Server error while fetching profile.")
             const profileData = await profileRes.json()
             const mongoUser = profileData.success ? profileData.user : {}
             
@@ -120,10 +141,11 @@ export default function LoginPage() {
               username: mongoUser.username,
               role: mongoUser.role
             })
+            toast.success("Successfully logged in!")
             router.push("/")
           })
           .catch((err) => {
-            setError("Error signing in with magic link: " + err.message)
+            toast.error("Error signing in with magic link: " + err.message)
             setIsLoading(false)
           })
       }
@@ -140,7 +162,7 @@ export default function LoginPage() {
     const timer = setTimeout(async () => {
       setUsernameStatus("checking")
       try {
-        const res = await fetch(`${API}/users/check-username`, {
+        const res = await fetchWithTimeout(`${API}/users/check-username`, {
           method: "POST", headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ username })
         })
@@ -180,12 +202,13 @@ export default function LoginPage() {
   }
 
   const handleGoogleLogin = async () => {
-    setIsLoading(true); setError("")
+    setIsLoading(true);
     try {
       // Always try popup first (even on mobile) to avoid cross-site tracking cookie drops which break signInWithRedirect
       // Fallback to redirect is already handled in the catch block below if popup is blocked
       const result = await signInWithPopup(auth, googleProvider)
-      const profileRes = await fetch(`${API}/users/profile?firebaseUid=${result.user.uid}&email=${result.user.email}&name=${encodeURIComponent(result.user.displayName || "")}`)
+      const profileRes = await fetchWithTimeout(`${API}/users/profile?firebaseUid=${result.user.uid}&email=${result.user.email}&name=${encodeURIComponent(result.user.displayName || "")}`)
+      if (!profileRes.ok) throw new Error("Server returned an error. Please try again.")
       const profileData = await profileRes.json()
       const mongoUser = profileData.success ? profileData.user : {}
 
@@ -199,25 +222,36 @@ export default function LoginPage() {
         username: mongoUser.username,
         role: mongoUser.role
       })
+      toast.success("Successfully logged in!")
       router.push("/")
     } catch (err: any) {
-      if (err.code === "auth/invalid-api-key") setError("Firebase API Key is missing!")
+      if (err.code === "auth/invalid-api-key") toast.error("Firebase API Key is missing!")
       else if (err.code === "auth/popup-blocked" || err.code === "auth/popup-closed-by-user" || err.code === "auth/internal-error") {
         // Fallback to redirect if popup fails for any reason
         await signInWithRedirect(auth, googleProvider)
       }
-      else setError("Google login failed. " + err.message)
+      else toast.error("Google login failed. " + err.message)
       setIsLoading(false)
     }
   }
 
   // --- STANDARD AUTH (Email/Username/Phone + Password) ---
-  const handleStandardAuth = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setIsLoading(true); setError("")
+  const handleStandardAuth = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault()
+    
+    if (isSignUp && signupStep === 1) {
+      if (!name) return toast.error("Full Name is required")
+      if (!username) return toast.error("Username is required")
+      if (!email.includes("@")) return toast.error("Invalid email format")
+      if (usernameStatus !== "available") return toast.error("Please choose an available username")
+      setSignupStep(2)
+      return
+    }
+
+    setIsLoading(true);
 
     if (isSignUp && password !== confirmPassword) {
-      setError("Passwords do not match.")
+      toast.error("Passwords do not match.")
       setIsLoading(false)
       return
     }
@@ -225,9 +259,7 @@ export default function LoginPage() {
     try {
       if (isSignUp) {
         // Sign Up Flow
-        if (!username) throw new Error("Username is required")
         if (!phone) throw new Error("Phone number is required")
-        if (!email.includes("@")) throw new Error("Invalid email format")
 
         // Password Validation
         if (password.length < 8) throw new Error("Password must be at least 8 characters long.")
@@ -236,7 +268,7 @@ export default function LoginPage() {
         if (!/[^A-Za-z0-9]/.test(password)) throw new Error("Password must contain at least 1 special character.")
 
         // 1. Check Username
-        const checkRes = await fetch(`${API}/users/check-username`, {
+        const checkRes = await fetchWithTimeout(`${API}/users/check-username`, {
           method: "POST", headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ username })
         })
@@ -255,7 +287,7 @@ export default function LoginPage() {
         
         // 3. Create MongoDB Profile
         const fullPhone = countryCode + phone
-        const profileRes = await fetch(`${API}/users/profile?firebaseUid=${result.user.uid}&email=${email}&name=${encodeURIComponent(name)}&username=${encodeURIComponent(username)}&phone=${encodeURIComponent(fullPhone)}`)
+        const profileRes = await fetchWithTimeout(`${API}/users/profile?firebaseUid=${result.user.uid}&email=${email}&name=${encodeURIComponent(name)}&username=${encodeURIComponent(username)}&phone=${encodeURIComponent(fullPhone)}`)
         if (!profileRes.ok) {
           const errData = await profileRes.json().catch(() => ({}));
           throw new Error(errData.error || "Profile setup failed");
@@ -275,6 +307,7 @@ export default function LoginPage() {
           username: profileData.user.username,
           role: profileData.user.role
         })
+        toast.success("Account created successfully!")
         router.push("/")
       } else {
         // Login Flow
@@ -282,7 +315,7 @@ export default function LoginPage() {
         
         // If it's not an email, lookup the email via our proxy
         if (!identifier.includes("@")) {
-          const lookupRes = await fetch(`${API}/users/lookup`, {
+          const lookupRes = await fetchWithTimeout(`${API}/users/lookup`, {
             method: "POST", headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ identifier })
           })
@@ -308,7 +341,8 @@ export default function LoginPage() {
         const result = await signInWithEmailAndPassword(auth, loginEmail, password)
         
         // Fetch MongoDB Profile during standard login
-        const profileRes = await fetch(`${API}/users/profile?firebaseUid=${result.user.uid}&email=${result.user.email}`)
+        const profileRes = await fetchWithTimeout(`${API}/users/profile?firebaseUid=${result.user.uid}&email=${result.user.email}`)
+        if (!profileRes.ok) throw new Error("Server error fetching profile data")
         const profileData = await profileRes.json()
         
         if (!profileRes.ok || !profileData.success) {
@@ -328,12 +362,13 @@ export default function LoginPage() {
           username: mongoUser.username,
           role: mongoUser.role
         })
+        toast.success("Successfully logged in!")
         router.push("/")
       }
     } catch (err: any) {
-      if (err.code === "auth/email-already-in-use") setError("Email already in use. Try logging in.")
-      else if (err.code === "auth/invalid-credential") setError("Invalid credentials: The email/username or password you entered is incorrect, or you haven't signed up yet.")
-      else setError("Authentication failed: " + err.message)
+      if (err.code === "auth/email-already-in-use") toast.error("Email already in use. Try logging in.")
+      else if (err.code === "auth/invalid-credential") toast.error("Invalid credentials: The email/username or password you entered is incorrect, or you haven't signed up yet.")
+      else toast.error("Authentication failed: " + err.message)
     } finally {
       setIsLoading(false)
     }
@@ -342,8 +377,8 @@ export default function LoginPage() {
   // --- MAGIC LINK AUTH ---
   const handleSendMagicLink = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!magicEmail) return setError("Please enter your email")
-    setIsLoading(true); setError("")
+    if (!magicEmail) return toast.error("Please enter your email")
+    setIsLoading(true)
     try {
       const actionCodeSettings = {
         url: window.location.origin + "/login",
@@ -352,8 +387,9 @@ export default function LoginPage() {
       await sendSignInLinkToEmail(auth, magicEmail, actionCodeSettings)
       window.localStorage.setItem("emailForSignIn", magicEmail)
       setMagicSent(true)
+      toast.success("Magic link sent successfully!")
     } catch (err: any) {
-      setError("Failed to send magic link: " + err.message)
+      toast.error("Failed to send magic link: " + err.message)
     } finally {
       setIsLoading(false)
     }
@@ -362,14 +398,14 @@ export default function LoginPage() {
   // --- FORGOT PASSWORD ---
   const handleResetPassword = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!resetEmail) return setError("Please enter your email")
-    setIsLoading(true); setError("")
+    if (!resetEmail) return toast.error("Please enter your email")
+    setIsLoading(true)
     try {
       await sendPasswordResetEmail(auth, resetEmail)
       setLoginMethod("standard")
-      alert("Password reset link sent! Check your email.")
+      toast.success("Password reset link sent! Check your email.")
     } catch (err: any) {
-      setError("Failed to send reset link: " + err.message)
+      toast.error("Failed to send reset link: " + err.message)
     } finally {
       setIsLoading(false)
     }
@@ -424,7 +460,7 @@ export default function LoginPage() {
           transition={{ duration: 0.8, delay: 0.2 }}
           className="w-full max-w-md"
         >
-          <div className={`relative p-8 sm:p-10 rounded-3xl border backdrop-blur-xl ${
+          <div className={`relative p-5 sm:p-10 rounded-3xl border backdrop-blur-xl ${
             isDark 
               ? "bg-white/5 border-white/10 shadow-[0_0_40px_rgba(0,0,0,0.5)]" 
               : "bg-white/80 border-gray-200 shadow-xl"
@@ -441,12 +477,6 @@ export default function LoginPage() {
             <p className={`text-sm mb-6 ${isDark ? "text-white/[0.85]" : "text-gray-500"}`}>
               {isSignUp ? "Join the Fact Flow network" : "Access your personalized AI dashboard"}
             </p>
-
-            {error && (
-              <div className="p-3 mb-6 rounded-lg bg-red-500/10 border border-red-500/20 text-red-500 text-sm">
-                {error}
-              </div>
-            )}
 
             {/* Login Method Tabs (Only show during Login) */}
             {!isSignUp && loginMethod !== "forgot" && (
@@ -476,247 +506,273 @@ export default function LoginPage() {
 
             {loginMethod === "standard" ? (
               <>
-                {/* Email / Username Auth Form */}
-                <form onSubmit={handleStandardAuth} className="space-y-4 mb-6">
-                  {isSignUp && (
-                    <>
-                      <div className="space-y-1">
-                        <label className={`text-sm font-medium ${isDark ? "text-white/[0.85]" : "text-gray-700"}`}>Full Name <span className="text-red-500">*</span></label>
-                        <input
-                          type="text" value={name} onChange={(e) => handleNameChange(e.target.value)} required
-                          placeholder="User"
-                          className={`w-full px-4 py-3 rounded-xl outline-none border transition-all ${
-                            isDark ? "bg-white/5 border-white/10 focus:border-blue-500 text-white" : "bg-gray-50 border-gray-200 focus:border-blue-500 text-gray-900"
-                          }`}
-                        />
-                      </div>
-                      <div className="space-y-1">
-                        <label className={`text-sm font-medium ${isDark ? "text-white/[0.85]" : "text-gray-700"}`}>Username <span className="text-red-500">*</span></label>
-                        <div className="relative">
-                          <UserIcon className={`absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 ${isDark ? "text-white/[0.85]" : "text-gray-400"}`} />
-                          <input
-                            type="text" value={username} onChange={(e) => handleUsernameChange(e.target.value)} required
-                            placeholder="User123"
-                            className={`w-full pl-10 pr-10 py-3 rounded-xl outline-none border transition-all ${
-                              isDark 
-                                ? usernameStatus === "available" ? "bg-green-500/10 border-green-500/50 text-white" : usernameStatus === "taken" ? "bg-red-500/10 border-red-500/50 text-white" : "bg-white/5 border-white/10 focus:border-blue-500 text-white" 
-                                : usernameStatus === "available" ? "bg-green-50 border-green-500 text-gray-900" : usernameStatus === "taken" ? "bg-red-50 border-red-500 text-gray-900" : "bg-gray-50 border-gray-200 focus:border-blue-500 text-gray-900"
-                            }`}
-                          />
-                          <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                            {usernameStatus === "checking" && <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />}
-                            {usernameStatus === "available" && <CheckCircle2 className="w-5 h-5 text-green-500" />}
-                            {usernameStatus === "taken" && <XCircle className="w-5 h-5 text-red-500" />}
-                          </div>
-                        </div>
-                        {usernameStatus === "taken" && <p className="text-xs text-red-500 mt-1">This username is already taken.</p>}
-                        {usernameStatus === "available" && <p className="text-xs text-green-500 mt-1">Username is available!</p>}
-                        <p className={`text-[11px] mt-1 ${isDark ? "text-white/[0.85]" : "text-gray-500"}`}>First letter will be capital. Letters, numbers and underscores only.</p>
-                        
-                        {usernameSuggestions.length > 0 && (
-                          <div className="flex flex-wrap gap-2 mt-2">
-                            {usernameSuggestions.map(s => (
-                              <button
-                                key={s} type="button"
-                                onClick={() => { setUsername(s); setUsernameSuggestions([]); }}
-                                className={`px-3 py-1 text-xs rounded-full border transition-all ${
-                                  isDark ? "bg-blue-500/10 text-blue-400 border-blue-500/20 hover:bg-blue-500/20" : "bg-blue-50 text-blue-600 border-blue-200 hover:bg-blue-100"
-                                }`}
-                              >
-                                {s}
-                              </button>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                      <div className="space-y-1">
-                        <label className={`text-sm font-medium ${isDark ? "text-white/[0.85]" : "text-gray-700"}`}>Email <span className="text-red-500">*</span></label>
-                        <div className="relative">
-                          <Mail className={`absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 ${isDark ? "text-white/[0.85]" : "text-gray-400"}`} />
-                          <input
-                            type="email" value={email} onChange={(e) => setEmail(e.target.value)} required
-                            placeholder="User@example.com"
-                            className={`w-full pl-10 pr-4 py-3 rounded-xl outline-none border transition-all ${
-                              isDark ? "bg-white/5 border-white/10 focus:border-blue-500 text-white" : "bg-gray-50 border-gray-200 focus:border-blue-500 text-gray-900"
-                            }`}
-                          />
-                        </div>
-                      </div>
-                      <div className="space-y-1">
-                        <label className={`text-sm font-medium ${isDark ? "text-white/[0.85]" : "text-gray-700"}`}>Phone <span className="text-red-500">*</span></label>
-                        <div className="flex gap-2">
-                          <div className="relative">
-                            <button
-                              type="button"
-                              onClick={() => setShowCountryMenu(!showCountryMenu)}
-                              className={`w-[90px] h-full py-3 flex items-center justify-between px-3 rounded-xl outline-none border transition-all ${
-                                isDark ? "bg-white/5 border-white/10 hover:bg-white/10 text-white" : "bg-gray-50 border-gray-200 hover:bg-gray-100 text-gray-900"
-                              }`}
-                            >
-                              <span>{countries.find(c => c.code === countryCode)?.flag}</span>
-                              <ChevronDown className={`w-4 h-4 transition-transform duration-300 ${showCountryMenu ? "rotate-180" : ""}`} />
-                            </button>
-                            
-                            <AnimatePresence>
-                              {showCountryMenu && (
-                                <motion.div
-                                  initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                                  animate={{ opacity: 1, y: 0, scale: 1 }}
-                                  exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                                  transition={{ duration: 0.2, ease: "easeOut" }}
-                                  className={`absolute top-full left-0 mt-2 w-[140px] rounded-xl border shadow-xl z-50 overflow-hidden ${
-                                    isDark ? "bg-[#111] border-white/10" : "bg-white border-gray-200"
-                                  }`}
-                                >
-                                  <div className="max-h-48 overflow-y-auto py-1 custom-scrollbar">
-                                    {countries.map(c => (
-                                      <button
-                                        key={c.code}
-                                        type="button"
-                                        onClick={() => {
-                                          setCountryCode(c.code)
-                                          setShowCountryMenu(false)
-                                        }}
-                                        className={`w-full flex items-center gap-3 px-3 py-2 text-sm transition-colors ${
-                                          isDark ? "hover:bg-white/10 text-white" : "hover:bg-gray-100 text-gray-900"
-                                        }`}
-                                      >
-                                        <span className="text-lg">{c.flag}</span>
-                                        <span className="font-medium">{c.code}</span>
-                                      </button>
-                                    ))}
-                                  </div>
-                                </motion.div>
-                              )}
-                            </AnimatePresence>
-                          </div>
-                          <input
-                            type="tel" value={phone} onChange={(e) => setPhone(e.target.value.replace(/[^0-9]/g, ''))} required
-                            placeholder="1234567890"
-                            className={`flex-1 px-4 py-3 rounded-xl outline-none border transition-all ${
-                              isDark ? "bg-white/5 border-white/10 focus:border-blue-500 text-white" : "bg-gray-50 border-gray-200 focus:border-blue-500 text-gray-900"
-                            }`}
-                          />
-                        </div>
-                      </div>
-                    </>
-                  )}
-
-                  {!isSignUp && (
-                    <div className="space-y-1">
-                      <label className={`text-sm font-medium ${isDark ? "text-white/[0.85]" : "text-gray-700"}`}>
-                        Email, Username or Phone
-                      </label>
-                      <div className="relative">
-                        <UserIcon className={`absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 ${isDark ? "text-white/[0.85]" : "text-gray-400"}`} />
-                        <input
-                          type="text" value={identifier} onChange={(e) => setIdentifier(e.target.value.replace(/\s/g, ''))} required
-                          placeholder="User123 or 1234..."
-                          className={`w-full pl-10 pr-4 py-3 rounded-xl outline-none border transition-all ${
-                            isDark ? "bg-white/5 border-white/10 focus:border-blue-500 text-white" : "bg-gray-50 border-gray-200 focus:border-blue-500 text-gray-900"
-                          }`}
-                        />
-                      </div>
-                    </div>
-                  )}
-
-                  <div className="space-y-1">
-                    <label className={`text-sm font-medium ${isDark ? "text-white/[0.85]" : "text-gray-700"}`}>Password <span className="text-red-500">*</span></label>
-                    <div className="relative">
-                      <Lock className={`absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 ${isDark ? "text-white/[0.85]" : "text-gray-400"}`} />
-                      <input
-                        type={showPassword ? "text" : "password"} value={password} onChange={(e) => setPassword(e.target.value)} required
-                        placeholder={isSignUp ? "Abcxyz@1234" : "••••••••"}
-                        className={`w-full pl-10 pr-12 py-3 rounded-xl outline-none border transition-all ${
-                          isDark ? "bg-white/5 border-white/10 focus:border-blue-500 text-white" : "bg-gray-50 border-gray-200 focus:border-blue-500 text-gray-900"
-                        }`}
-                      />
-                      {password.length > 0 && (
-                        <button
-                          type="button"
-                          onClick={() => setShowPassword(!showPassword)}
-                          className={`absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded-md transition-colors ${
-                            isDark ? "text-white/[0.85] hover:text-white" : "text-gray-400 hover:text-gray-900"
-                          }`}
-                        >
-                          {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                        </button>
-                      )}
-                    </div>
-                    {!isSignUp && (
-                      <div className="flex justify-end mt-1">
-                        <button 
-                          type="button" 
-                          onClick={() => { setLoginMethod("forgot"); setError(""); }} 
-                          className={`text-xs font-medium hover:underline transition-colors ${isDark ? "text-blue-400 hover:text-blue-300" : "text-blue-600 hover:text-blue-700"}`}
-                        >
-                          Forgot password?
-                        </button>
-                      </div>
-                    )}
-                    {isSignUp && (
-                      <>
-                        <p className={`text-[11px] mt-1.5 ${isDark ? "text-white/[0.85]" : "text-gray-500"}`}>
-                          Example: Abcxyz@1234 (8+ chars, 1 Capital, 1 Number, 1 Special)
-                        </p>
-                        <div className="space-y-1 mt-4">
-                          <label className={`text-sm font-medium ${isDark ? "text-white/[0.85]" : "text-gray-700"}`}>Confirm Password <span className="text-red-500">*</span></label>
-                          <div className="relative">
-                            <Lock className={`absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 ${isDark ? "text-white/[0.85]" : "text-gray-400"}`} />
-                            <input
-                              type={showConfirmPassword ? "text" : "password"} value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} required
-                              placeholder="••••••••"
-                              className={`w-full pl-10 pr-12 py-3 rounded-xl outline-none border transition-all ${
-                                isDark ? "bg-white/5 border-white/10 focus:border-blue-500 text-white" : "bg-gray-50 border-gray-200 focus:border-blue-500 text-gray-900"
-                              }`}
-                            />
-                            {confirmPassword.length > 0 && (
-                              <button
-                                type="button"
-                                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                                className={`absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded-md transition-colors ${
-                                  isDark ? "text-white/[0.85] hover:text-white" : "text-gray-400 hover:text-gray-900"
-                                }`}
-                              >
-                                {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                              </button>
-                            )}
-                          </div>
-                        </div>
-                      </>
-                    )}
-                  </div>
-
-                  <button
-                    type="submit"
-                    disabled={isLoading}
-                    className="btn w-full mt-2"
-                  >
-                    <span>
-                      {isLoading ? (
-                        <div className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin" />
-                      ) : (
-                        <>
-                          {isSignUp ? "Sign Up" : "Log In"} <ArrowRight className="w-4 h-4" />
-                        </>
-                      )}
-                    </span>
-                  </button>
-                </form>
-
-                {/* Social Logins divider */}
-                <div className={`relative flex items-center justify-center mb-6`}>
-                  <div className={`absolute inset-0 flex items-center`}><div className={`w-full border-t ${isDark ? "border-white/10" : "border-gray-200"}`}></div></div>
-                  <div className={`relative px-4 text-xs uppercase tracking-wider ${isDark ? "bg-[#0a0a0a] text-white/[0.85]" : "bg-white text-gray-400"}`}>Or continue with</div>
-                </div>
-
-                {/* Social Logins */}
+                {/* Social Logins First */}
                 <div className="flex gap-3 mb-6">
-                  <button onClick={handleGoogleLogin} disabled={isLoading} className={`w-full flex justify-center items-center py-3 rounded-xl border transition-all ${isDark ? "bg-white/5 border-white/10 hover:bg-white/10 text-white" : "bg-white border-gray-200 hover:bg-gray-50"}`}>
+                  <button onClick={handleGoogleLogin} disabled={isLoading} className={`w-full flex justify-center items-center py-3 rounded-xl border transition-all font-medium ${isDark ? "bg-white/5 border-white/10 hover:bg-white/10 text-white shadow-sm" : "bg-white border-gray-200 hover:bg-gray-50 shadow-sm text-gray-900"}`}>
                     <img src="https://www.google.com/favicon.ico" alt="Google" className="w-5 h-5 mr-3" />
                     Continue with Google
                   </button>
                 </div>
+
+                <div className={`relative flex items-center justify-center mb-6`}>
+                  <div className={`absolute inset-0 flex items-center`}><div className={`w-full border-t ${isDark ? "border-white/10" : "border-gray-200"}`}></div></div>
+                  <div className={`relative px-4 text-xs uppercase tracking-wider ${isDark ? "bg-black/20 text-white/[0.85]" : "bg-white text-gray-400"}`}>Or continue with email</div>
+                </div>
+
+                {/* Email / Username Auth Form */}
+                <form onSubmit={handleStandardAuth} className="space-y-4 mb-6">
+                  {isSignUp && (
+                    <>
+                      {/* Step Indicator */}
+                      <div className="flex items-center mb-6 gap-2">
+                        <div className={`flex-1 h-1.5 rounded-full transition-colors ${signupStep >= 1 ? "bg-blue-500" : (isDark ? "bg-white/10" : "bg-gray-200")}`}></div>
+                        <div className={`flex-1 h-1.5 rounded-full transition-colors ${signupStep >= 2 ? "bg-blue-500" : (isDark ? "bg-white/10" : "bg-gray-200")}`}></div>
+                      </div>
+
+                      {signupStep === 1 && (
+                        <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-4">
+                          <div className="space-y-1">
+                            <label className={`text-sm font-medium ${isDark ? "text-white/[0.85]" : "text-gray-700"}`}>Full Name <span className="text-red-500">*</span></label>
+                            <input
+                              type="text" value={name} onChange={(e) => handleNameChange(e.target.value)} required
+                              placeholder="User"
+                              className={`w-full px-4 py-3 rounded-xl outline-none border transition-all ${
+                                isDark ? "bg-white/5 border-white/10 focus:border-blue-500 text-white" : "bg-gray-50 border-gray-200 focus:border-blue-500 text-gray-900"
+                              }`}
+                            />
+                          </div>
+                          <div className="space-y-1">
+                            <label className={`text-sm font-medium ${isDark ? "text-white/[0.85]" : "text-gray-700"}`}>Username <span className="text-red-500">*</span></label>
+                            <div className="relative">
+                              <UserIcon className={`absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 ${isDark ? "text-white/[0.85]" : "text-gray-400"}`} />
+                              <input
+                                type="text" value={username} onChange={(e) => handleUsernameChange(e.target.value)} required
+                                placeholder="User123"
+                                className={`w-full pl-10 pr-10 py-3 rounded-xl outline-none border transition-all ${
+                                  isDark 
+                                    ? usernameStatus === "available" ? "bg-green-500/10 border-green-500/50 text-white" : usernameStatus === "taken" ? "bg-red-500/10 border-red-500/50 text-white" : "bg-white/5 border-white/10 focus:border-blue-500 text-white" 
+                                    : usernameStatus === "available" ? "bg-green-50 border-green-500 text-gray-900" : usernameStatus === "taken" ? "bg-red-50 border-red-500 text-gray-900" : "bg-gray-50 border-gray-200 focus:border-blue-500 text-gray-900"
+                                }`}
+                              />
+                              <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                                {usernameStatus === "checking" && <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />}
+                                {usernameStatus === "available" && <CheckCircle2 className="w-5 h-5 text-green-500" />}
+                                {usernameStatus === "taken" && <XCircle className="w-5 h-5 text-red-500" />}
+                              </div>
+                            </div>
+                            {usernameStatus === "taken" && <p className="text-xs text-red-500 mt-1">This username is already taken.</p>}
+                            {usernameStatus === "available" && <p className="text-xs text-green-500 mt-1">Username is available!</p>}
+                            <p className={`text-[11px] mt-1 ${isDark ? "text-white/[0.85]" : "text-gray-500"}`}>First letter will be capital. Letters, numbers and underscores only.</p>
+                            
+                            {usernameSuggestions.length > 0 && (
+                              <div className="flex flex-wrap gap-2 mt-2">
+                                {usernameSuggestions.map(s => (
+                                  <button
+                                    key={s} type="button"
+                                    onClick={() => { setUsername(s); setUsernameSuggestions([]); }}
+                                    className={`px-3 py-1 text-xs rounded-full border transition-all ${
+                                      isDark ? "bg-blue-500/10 text-blue-400 border-blue-500/20 hover:bg-blue-500/20" : "bg-blue-50 text-blue-600 border-blue-200 hover:bg-blue-100"
+                                    }`}
+                                  >
+                                    {s}
+                                  </button>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                          <div className="space-y-1">
+                            <label className={`text-sm font-medium ${isDark ? "text-white/[0.85]" : "text-gray-700"}`}>Email <span className="text-red-500">*</span></label>
+                            <div className="relative">
+                              <Mail className={`absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 ${isDark ? "text-white/[0.85]" : "text-gray-400"}`} />
+                              <input
+                                type="email" value={email} onChange={(e) => setEmail(e.target.value)} required
+                                placeholder="User@example.com"
+                                className={`w-full pl-10 pr-4 py-3 rounded-xl outline-none border transition-all ${
+                                  isDark ? "bg-white/5 border-white/10 focus:border-blue-500 text-white" : "bg-gray-50 border-gray-200 focus:border-blue-500 text-gray-900"
+                                }`}
+                              />
+                            </div>
+                          </div>
+
+                          <button type="button" onClick={() => handleStandardAuth()} className="btn w-full mt-4">
+                            <span>Continue <ArrowRight className="w-4 h-4 ml-1" /></span>
+                          </button>
+                        </motion.div>
+                      )}
+
+                      {signupStep === 2 && (
+                        <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-4">
+                          <button type="button" onClick={() => setSignupStep(1)} className={`flex items-center text-sm mb-2 ${isDark ? "text-white/[0.85] hover:text-white" : "text-gray-500 hover:text-gray-900"}`}>
+                            <ChevronLeft className="w-4 h-4 mr-1" /> Back
+                          </button>
+
+                          <div className="space-y-1">
+                            <label className={`text-sm font-medium ${isDark ? "text-white/[0.85]" : "text-gray-700"}`}>Phone <span className="text-red-500">*</span></label>
+                            <div className="flex gap-2">
+                              <div className="relative">
+                                <button
+                                  type="button"
+                                  onClick={() => setShowCountryMenu(!showCountryMenu)}
+                                  className={`w-[90px] h-full py-3 flex items-center justify-between px-3 rounded-xl outline-none border transition-all ${
+                                    isDark ? "bg-white/5 border-white/10 hover:bg-white/10 text-white" : "bg-gray-50 border-gray-200 hover:bg-gray-100 text-gray-900"
+                                  }`}
+                                >
+                                  <span>{countries.find(c => c.code === countryCode)?.flag}</span>
+                                  <ChevronDown className={`w-4 h-4 transition-transform duration-300 ${showCountryMenu ? "rotate-180" : ""}`} />
+                                </button>
+                                
+                                <AnimatePresence>
+                                  {showCountryMenu && (
+                                    <motion.div
+                                      initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                                      exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                                      transition={{ duration: 0.2, ease: "easeOut" }}
+                                      className={`absolute top-full left-0 mt-2 w-[140px] rounded-xl border shadow-xl z-50 overflow-hidden ${
+                                        isDark ? "bg-[#111] border-white/10" : "bg-white border-gray-200"
+                                      }`}
+                                    >
+                                      <div className="max-h-48 overflow-y-auto py-1 custom-scrollbar">
+                                        {countries.map(c => (
+                                          <button
+                                            key={c.code}
+                                            type="button"
+                                            onClick={() => {
+                                              setCountryCode(c.code)
+                                              setShowCountryMenu(false)
+                                            }}
+                                            className={`w-full flex items-center gap-3 px-3 py-2 text-sm transition-colors ${
+                                              isDark ? "hover:bg-white/10 text-white" : "hover:bg-gray-100 text-gray-900"
+                                            }`}
+                                          >
+                                            <span className="text-lg">{c.flag}</span>
+                                            <span className="font-medium">{c.code}</span>
+                                          </button>
+                                        ))}
+                                      </div>
+                                    </motion.div>
+                                  )}
+                                </AnimatePresence>
+                              </div>
+                              <input
+                                type="tel" value={phone} onChange={(e) => setPhone(e.target.value.replace(/[^0-9]/g, ''))} required
+                                placeholder="1234567890"
+                                className={`flex-1 min-w-0 px-4 py-3 rounded-xl outline-none border transition-all ${
+                                  isDark ? "bg-white/5 border-white/10 focus:border-blue-500 text-white" : "bg-gray-50 border-gray-200 focus:border-blue-500 text-gray-900"
+                                }`}
+                              />
+                            </div>
+                          </div>
+                        </motion.div>
+                      )}
+                    </>
+                  )}
+
+                  {(!isSignUp || signupStep === 2) && (
+                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4">
+                      {!isSignUp && (
+                        <div className="space-y-1">
+                          <label className={`text-sm font-medium ${isDark ? "text-white/[0.85]" : "text-gray-700"}`}>
+                            Email, Username or Phone
+                          </label>
+                          <div className="relative">
+                            <UserIcon className={`absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 ${isDark ? "text-white/[0.85]" : "text-gray-400"}`} />
+                            <input
+                              type="text" value={identifier} onChange={(e) => setIdentifier(e.target.value.replace(/\s/g, ''))} required
+                              placeholder="User123 or 1234..."
+                              className={`w-full pl-10 pr-4 py-3 rounded-xl outline-none border transition-all ${
+                                isDark ? "bg-white/5 border-white/10 focus:border-blue-500 text-white" : "bg-gray-50 border-gray-200 focus:border-blue-500 text-gray-900"
+                              }`}
+                            />
+                          </div>
+                        </div>
+                      )}
+
+                      <div className="space-y-1">
+                        <label className={`text-sm font-medium ${isDark ? "text-white/[0.85]" : "text-gray-700"}`}>Password <span className="text-red-500">*</span></label>
+                        <div className="relative">
+                          <Lock className={`absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 ${isDark ? "text-white/[0.85]" : "text-gray-400"}`} />
+                          <input
+                            type={showPassword ? "text" : "password"} value={password} onChange={(e) => setPassword(e.target.value)} required
+                            placeholder={isSignUp ? "Abcxyz@1234" : "••••••••"}
+                            className={`w-full pl-10 pr-12 py-3 rounded-xl outline-none border transition-all ${
+                              isDark ? "bg-white/5 border-white/10 focus:border-blue-500 text-white" : "bg-gray-50 border-gray-200 focus:border-blue-500 text-gray-900"
+                            }`}
+                          />
+                          {password.length > 0 && (
+                            <button
+                              type="button"
+                              onClick={() => setShowPassword(!showPassword)}
+                              className={`absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded-md transition-colors ${
+                                isDark ? "text-white/[0.85] hover:text-white" : "text-gray-400 hover:text-gray-900"
+                              }`}
+                            >
+                              {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                            </button>
+                          )}
+                        </div>
+                        {!isSignUp && (
+                          <div className="flex justify-end mt-1">
+                            <button 
+                              type="button" 
+                              onClick={() => setLoginMethod("forgot")} 
+                              className={`text-xs font-medium hover:underline transition-colors ${isDark ? "text-blue-400 hover:text-blue-300" : "text-blue-600 hover:text-blue-700"}`}
+                            >
+                              Forgot password?
+                            </button>
+                          </div>
+                        )}
+                        {isSignUp && (
+                          <>
+                            <p className={`text-[11px] mt-1.5 ${isDark ? "text-white/[0.85]" : "text-gray-500"}`}>
+                              Example: Abcxyz@1234 (8+ chars, 1 Capital, 1 Number, 1 Special)
+                            </p>
+                            <div className="space-y-1 mt-4">
+                              <label className={`text-sm font-medium ${isDark ? "text-white/[0.85]" : "text-gray-700"}`}>Confirm Password <span className="text-red-500">*</span></label>
+                              <div className="relative">
+                                <Lock className={`absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 ${isDark ? "text-white/[0.85]" : "text-gray-400"}`} />
+                                <input
+                                  type={showConfirmPassword ? "text" : "password"} value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} required
+                                  placeholder="••••••••"
+                                  className={`w-full pl-10 pr-12 py-3 rounded-xl outline-none border transition-all ${
+                                    isDark ? "bg-white/5 border-white/10 focus:border-blue-500 text-white" : "bg-gray-50 border-gray-200 focus:border-blue-500 text-gray-900"
+                                  }`}
+                                />
+                                {confirmPassword.length > 0 && (
+                                  <button
+                                    type="button"
+                                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                                    className={`absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded-md transition-colors ${
+                                      isDark ? "text-white/[0.85] hover:text-white" : "text-gray-400 hover:text-gray-900"
+                                    }`}
+                                  >
+                                    {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                                  </button>
+                                )}
+                              </div>
+                            </div>
+                          </>
+                        )}
+                      </div>
+
+                      <button
+                        type="submit"
+                        disabled={isLoading}
+                        className="btn w-full mt-4"
+                      >
+                        <span>
+                          {isLoading ? (
+                            <div className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+                          ) : (
+                            <>
+                              {isSignUp ? "Create Account" : "Log In"} <ArrowRight className="w-4 h-4 ml-1" />
+                            </>
+                          )}
+                        </span>
+                      </button>
+                    </motion.div>
+                  )}
+                </form>
               </>
             ) : loginMethod === "magic" ? (
               <>
@@ -744,6 +800,12 @@ export default function LoginPage() {
                       <span>
                         {isLoading ? <div className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin" /> : "Send Magic Link"}
                       </span>
+                    </button>
+                    <button 
+                      type="button" onClick={() => setLoginMethod("standard")}
+                      className={`mt-4 w-full py-2 text-sm ${isDark ? "text-white/[0.85] hover:text-white" : "text-gray-500 hover:text-gray-900"}`}
+                    >
+                      Back to Login
                     </button>
                   </form>
                 ) : (
@@ -810,7 +872,7 @@ export default function LoginPage() {
                 onClick={() => {
                   setIsSignUp(!isSignUp); 
                   setLoginMethod("standard"); 
-                  setError(""); 
+                  setSignupStep(1);
                 }} 
                 className="text-blue-500 hover:underline font-medium"
               >
