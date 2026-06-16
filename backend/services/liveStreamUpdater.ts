@@ -60,6 +60,37 @@ async function fetchLiveVideoId(youtubeHandle: string): Promise<string | null> {
   });
 }
 
+// Fallback: search youtube for "channel name live"
+async function searchLiveVideoIdFallback(channelName: string): Promise<string | null> {
+  return new Promise((resolve) => {
+    const query = encodeURIComponent(channelName + ' live');
+    const options = {
+      hostname: 'www.youtube.com',
+      path: `/results?search_query=${query}&sp=EgJAAQ%253D%253D`,
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+        'Accept': 'text/html,application/xhtml+xml',
+        'Accept-Language': 'en-US,en;q=0.9',
+      }
+    };
+
+    const req = https.get(options, (res) => {
+      let data = '';
+      res.on('data', chunk => data += chunk);
+      res.on('end', () => {
+        const match = data.match(/"videoId":"([a-zA-Z0-9_-]{11})"/);
+        if (match && match[1]) {
+          resolve(match[1]);
+        } else {
+          resolve(null);
+        }
+      });
+    });
+    req.on('error', () => resolve(null));
+    req.setTimeout(12000, () => { req.destroy(); resolve(null); });
+  });
+}
+
 export async function updateLiveChannels() {
   console.log('[LiveStreamUpdater] Starting live stream update cycle...');
   try {
@@ -72,7 +103,14 @@ export async function updateLiveChannels() {
     }
 
     for (const channel of channels) {
-      const videoId = await fetchLiveVideoId(channel.youtubeHandle);
+      let videoId = await fetchLiveVideoId(channel.youtubeHandle);
+      
+      // If direct /live URL fails, fallback to search query
+      if (!videoId) {
+        console.log(`[LiveStreamUpdater] ${channel.name}: Direct /live failed, trying search fallback...`);
+        videoId = await searchLiveVideoIdFallback(channel.name);
+      }
+
       if (videoId) {
         channel.currentVideoId = videoId;
         channel.lastUpdated = new Date();
@@ -81,7 +119,7 @@ export async function updateLiveChannels() {
       } else {
         console.log(`[LiveStreamUpdater] ⚠️ ${channel.name}: offline or no live stream`);
       }
-      await new Promise(resolve => setTimeout(resolve, 1200));
+      await new Promise(resolve => setTimeout(resolve, 1500));
     }
     console.log('[LiveStreamUpdater] ✅ Update cycle complete.');
   } catch (err) {

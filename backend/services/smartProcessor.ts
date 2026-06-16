@@ -94,18 +94,20 @@ export async function smartProcessor(rawItems: any[], existingTitles: string[] =
   
   if (apiKey && uniqueItems.length > 0) {
     const chunks: any[][] = []
-    for (let i = 0; i < uniqueItems.length; i += 50) {
-      chunks.push(uniqueItems.slice(i, i + 50))
+    for (let i = 0; i < uniqueItems.length; i += 80) {
+      chunks.push(uniqueItems.slice(i, i + 80))
     }
 
-    console.log(`🧠 [SmartProcessor] Dispatching ${chunks.length} chunks to OpenAI in parallel...`)
+    console.log(`🧠 [SmartProcessor] Processing ${chunks.length} chunks sequentially...`)
 
-    const promises = chunks.map(async (chunk, chunkIdx) => {
-      const startIndex = chunkIdx * 50
+    // Process SEQUENTIALLY to avoid holding many large responses in memory at once
+    for (let chunkIdx = 0; chunkIdx < chunks.length; chunkIdx++) {
+      const chunk = chunks[chunkIdx]
+      const startIndex = chunkIdx * 80
       const payload = chunk.map((item, idx) => ({
         id: startIndex + idx,
-        title: item.title,
-        desc: item.description?.slice(0, 100)
+        title: item.title?.slice(0, 120),
+        desc: item.description?.slice(0, 80)
       }))
 
       try {
@@ -115,28 +117,24 @@ export async function smartProcessor(rawItems: any[], existingTitles: string[] =
             { role: "system", content: "You output valid JSON array." },
             { role: "user", content: AI_PROMPT + JSON.stringify(payload) }
           ],
-          temperature: 0.1
-        }, { headers: { Authorization: `Bearer ${apiKey}` }})
+          temperature: 0.1,
+          max_tokens: 2000
+        }, { headers: { Authorization: `Bearer ${apiKey}` }, timeout: 20000 })
 
         let content = res.data.choices[0]?.message?.content || "[]"
         content = content.replace(/```json/g, "").replace(/```/g, "").trim()
         const chunkResults = JSON.parse(content)
         if (Array.isArray(chunkResults)) {
-          return chunkResults
+          aiResults.push(...chunkResults)
         }
       } catch (e: any) {
         console.warn(`⚠️ [SmartProcessor] OpenAI failed for chunk ${chunkIdx}:`, e.message)
       }
-      return []
-    })
+      // short delay between chunks
+      if (chunkIdx < chunks.length - 1) await new Promise(r => setTimeout(r, 300))
+    }
 
-    const results = await Promise.allSettled(promises)
-    results.forEach(r => {
-      if (r.status === "fulfilled" && r.value) {
-        aiResults.push(...r.value)
-      }
-    })
-    console.log(`🧠 [SmartProcessor] Completed parallel processing of all chunks.`)
+    console.log(`🧠 [SmartProcessor] Completed sequential processing of all chunks.`)
   }
 
   // 3. APPLY CLASSIFICATION, TRANSLATION & SCORES

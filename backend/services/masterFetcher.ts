@@ -404,13 +404,13 @@ async function scrapeArticleFromUrl(url: string): Promise<{ text: string | null;
 async function fetchRss(): Promise<any[]> {
   const results: any[] = []
   // Run all RSS feeds in parallel batches of 20 for speed
-  const batchSize = 20
+  const batchSize = 5
   for (let i = 0; i < SOURCES.rss.length; i += batchSize) {
     const batch = SOURCES.rss.slice(i, i + batchSize)
     const settled = await Promise.allSettled(
       batch.map(async (feed) => {
         const parsed = await rssParser.parseURL(feed.url)
-        return parsed.items.slice(0, 8).map((item) => {
+        return parsed.items.slice(0, 5).map((item) => {
           let image = ""
           if (item.enclosure?.url) image = item.enclosure.url
           else if (item.mediaContent?.$?.url) image = item.mediaContent.$.url
@@ -421,7 +421,7 @@ async function fetchRss(): Promise<any[]> {
           return {
             title: item.title,
             url: item.link,
-            description: item.contentSnippet || item.title,
+            description: (item.contentSnippet || item.title || "").slice(0, 200),
             imageUrl: image,
             source: feed.source,
             category: feed.category,
@@ -438,6 +438,8 @@ async function fetchRss(): Promise<any[]> {
         console.warn(`[MasterFetcher] RSS failed: ${batch[idx].url}`)
       }
     })
+    // small delay between RSS batches to avoid RAM spikes on Render free tier
+    await new Promise(r => setTimeout(r, 200))
   }
   return results
 }
@@ -549,10 +551,10 @@ export async function masterFetcher() {
   console.log("📡 [MasterFetcher] Starting parallel fetch cycle...")
   console.log(`📡 [MasterFetcher] Politics sources: ${SOURCES.rss.filter(s => s.category === "Politics").length} RSS + ${SOURCES.reddit.filter(s => s.category === "Politics").length} Reddit = ${SOURCES.rss.filter(s => s.category === "Politics").length + SOURCES.reddit.filter(s => s.category === "Politics").length}+ total`)
 
-  const [rss, reddit, nitter, apis] = await Promise.allSettled([
+  const [rss, reddit, apis] = await Promise.allSettled([
     fetchRss(),
     fetchReddit(),
-    fetchNitter(),
+    // Skipping nitter — usually fails and wastes memory on free tier
     fetchFreeApis()
   ])
 
@@ -560,19 +562,18 @@ export async function masterFetcher() {
 
   if (rss.status === "fulfilled") allRawItems.push(...rss.value)
   if (reddit.status === "fulfilled") allRawItems.push(...reddit.value)
-  if (nitter.status === "fulfilled") allRawItems.push(...nitter.value)
   if (apis.status === "fulfilled") allRawItems.push(...apis.value)
 
   // Filter out invalid/removed items
   allRawItems = allRawItems.filter(i => i.title && i.title !== "[Removed]" && i.title.length > 10)
 
-  // Scrape missing descriptions (only for items with short desc)
-  const scrapeQueue = allRawItems.filter(i => (!i.description || i.description.length < 50) && i.url)
-  await Promise.allSettled(scrapeQueue.map(async (item) => {
-    const scraped = await scrapeArticleFromUrl(item.url)
-    if (scraped.text) item.description = scraped.text
-    if (scraped.image && !item.imageUrl) item.imageUrl = scraped.image
-  }))
+  // ⚡ Cap total items to 500 to prevent OOM on Render free tier
+  if (allRawItems.length > 500) {
+    allRawItems = allRawItems.slice(0, 500)
+  }
+
+  // Skip web scraping — loading full HTML into memory causes OOM on 512MB instances.
+  // Articles without descriptions use the fallback classifier instead.
 
   const politicsCount = allRawItems.filter(i => i.category === "Politics").length
   console.log(`📡 [MasterFetcher] Collected ${allRawItems.length} raw articles (${politicsCount} Politics).`)

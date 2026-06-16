@@ -64,16 +64,28 @@ export function ReelPlayer({ reel, isActive }: { reel: any; isActive: boolean })
   }
 
   return (
+    // Outer: full screen, black bg, centers the 9:16 column
     <div className="relative w-full h-full bg-black snap-start snap-always overflow-hidden flex items-center justify-center">
-      
+
+      {/* 9:16 Portrait Container — max width based on viewport height */}
+      <div
+        className="relative bg-black overflow-hidden"
+        style={{
+          // On phones: fill full width. On laptops: constrain to 9:16 using height
+          width: "min(100%, calc(100vh * 9 / 16))",
+          height: "100%",
+        }}
+      >
+
       {/* Media Player */}
       {reel.source === "youtube" ? (
         isActive ? (
           <iframe
-            src={`https://www.youtube.com/embed/${reel.youtubeId}?autoplay=${settings?.autoPlayVideos && (!settings.autoPlayOnWifiOnly || isWifi) ? 1 : 0}&mute=${settings?.muteByDefault ? 1 : 0}&controls=0&modestbranding=1&rel=0&showinfo=0&loop=1&playlist=${reel.youtubeId}&enablejsapi=1&vq=${settings?.hdOnWifi && isWifi ? "hd1080" : settings?.videoQuality === "auto" ? "auto" : settings?.videoQuality === "360p" ? "small" : settings?.videoQuality === "720p" ? "hd720" : "hd1080"}`}
-            className="absolute inset-0 w-full h-full scale-[1.3] pointer-events-none"
+            src={`https://www.youtube.com/embed/${reel.youtubeId}?autoplay=${settings?.autoPlayVideos && (!settings.autoPlayOnWifiOnly || isWifi) ? 1 : 0}&mute=${settings?.muteByDefault ? 1 : 0}&controls=1&modestbranding=1&rel=0&showinfo=0&loop=1&playlist=${reel.youtubeId}&enablejsapi=1&vq=${settings?.hdOnWifi && isWifi ? "hd1080" : settings?.videoQuality === "auto" ? "auto" : settings?.videoQuality === "360p" ? "small" : settings?.videoQuality === "720p" ? "hd720" : "hd1080"}`}
+            className="absolute inset-0 w-full h-full pointer-events-auto"
             allow="autoplay; encrypted-media"
             frameBorder="0"
+            allowFullScreen
           />
         ) : (
           <img src={reel.thumbnailUrl || reel.thumbnail} alt="thumbnail" className="absolute inset-0 w-full h-full object-cover opacity-50" />
