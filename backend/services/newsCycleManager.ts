@@ -160,11 +160,11 @@ export function startNewsCycleManager() {
     runNewsPipeline()
   })
 
-  // Every 24 hours: Deep Cleanup (delete older than 24h)
-  cron.schedule("0 0 * * *", async () => {
-    console.log("🧹 [NewsCycleManager] Running 24h deep cleanup...")
-    const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000)
-    await NewsArticle.deleteMany({ publishedAt: { $lt: oneDayAgo } })
+  // Every 12 hours: Deep Cleanup (delete older than 12h)
+  cron.schedule("0 */12 * * *", async () => {
+    console.log("🧹 [NewsCycleManager] Running 12h deep cleanup...")
+    const twelveHoursAgo = new Date(Date.now() - 12 * 60 * 60 * 1000)
+    await NewsArticle.deleteMany({ publishedAt: { $lt: twelveHoursAgo } })
   })
 
   // Run once on startup (with 10 sec delay to let DB connect)

@@ -401,6 +401,13 @@ async function scrapeArticleFromUrl(url: string): Promise<{ text: string | null;
 // FETCHERS
 // ─────────────────────────────────────────────
 
+function shuffleArray(array: any[]) {
+  for (let i = array.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [array[i], array[j]] = [array[j], array[i]];
+  }
+}
+
 async function fetchRss(): Promise<any[]> {
   const results: any[] = []
   // Run all RSS feeds in parallel batches of 20 for speed
@@ -550,6 +557,10 @@ async function fetchFreeApis(): Promise<any[]> {
 export async function masterFetcher() {
   console.log("📡 [MasterFetcher] Starting parallel fetch cycle...")
   console.log(`📡 [MasterFetcher] Politics sources: ${SOURCES.rss.filter(s => s.category === "Politics").length} RSS + ${SOURCES.reddit.filter(s => s.category === "Politics").length} Reddit = ${SOURCES.rss.filter(s => s.category === "Politics").length + SOURCES.reddit.filter(s => s.category === "Politics").length}+ total`)
+
+  // Shuffle sources to ensure all sections get fair representation within the 500 item memory cap
+  shuffleArray(SOURCES.rss);
+  shuffleArray(SOURCES.reddit);
 
   const [rss, reddit, apis] = await Promise.allSettled([
     fetchRss(),
