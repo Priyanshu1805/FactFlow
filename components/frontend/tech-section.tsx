@@ -10,6 +10,7 @@ import Link from "next/link"
 import { useSettings } from "@/lib/use-settings"
 import { PremiumBadge } from "@/components/frontend/premium-badge"
 import { LiveNewsBanner } from "@/components/frontend/live-news-banner"
+import { useVideoSettings } from "@/hooks/useVideoSettings"
 
 const TECH_FALLBACKS = [
   "https://images.unsplash.com/photo-1518770660439-4636190af475?w=600&h=400&fit=crop",
@@ -23,6 +24,8 @@ export function TechSection() {
   const { theme } = useTheme()
   const isDark = theme !== "light"
   const { settings } = useSettings()
+  const avSettings = useVideoSettings()
+  const enableAudio = avSettings.enableAudioNews
   const displayOptions = (settings?.displayOptions as any) || {
     thumbnails: true, readingTime: true, authorName: true
   }
@@ -134,7 +137,7 @@ export function TechSection() {
                         </div>
                       )}
                       <div className="flex items-center gap-1.5"><Clock className="w-3.5 h-3.5" />{featured.time}</div>
-                      {((settings as any)?.enableAudioNews) && (
+                      {enableAudio && (
                         <button
                           onClick={(e) => {
                             e.preventDefault(); e.stopPropagation();
@@ -179,7 +182,7 @@ export function TechSection() {
                     <div className="mt-auto flex items-center justify-between">
                       <div className={`flex items-center gap-1.5 text-xs font-medium ${isDark ? "text-white/40" : "text-gray-400"}`}>
                         <Clock className="w-3.5 h-3.5" />{article.time}
-                      {((settings as any)?.enableAudioNews) && (
+                      {enableAudio && (
                         <button
                           onClick={(e) => {
                             e.preventDefault(); e.stopPropagation();
