@@ -6,7 +6,7 @@ import { Sparkles, Mail, Lock, ArrowRight, User as UserIcon, Eye, EyeOff, CheckC
 import { useRouter } from "next/navigation"
 import { auth, googleProvider } from "@/lib/firebase"
 import { 
-  signInWithPopup, signInWithRedirect, getRedirectResult, signInWithEmailAndPassword, createUserWithEmailAndPassword, 
+  signInWithPopup, signInWithEmailAndPassword, createUserWithEmailAndPassword, 
   updateProfile, sendSignInLinkToEmail, isSignInWithEmailLink, signInWithEmailLink, sendPasswordResetEmail
 } from "firebase/auth"
 import { useAuthStore } from "@/store/auth-store"
@@ -82,10 +82,11 @@ export default function LoginPage() {
   const { theme } = useTheme()
   const isDark = theme !== "light"
 
-  // Check for Magic Link and Google Redirect on Mount
+  // Check for Magic Link and existing Firebase sessions on Mount
   useEffect(() => {
-    // 1. Handle Google Redirect Result and existing Firebase sessions
     const handleFirebaseSession = async (user: any) => {
+      // Prevent fetching if we already have the user in the store
+      if (useAuthStore.getState().user) return;
       setIsLoading(true)
       try {
         const profileRes = await fetchWithTimeout(`${API}/users/profile?firebaseUid=${user.uid}&email=${user.email}&name=${encodeURIComponent(user.displayName || "")}`)
@@ -111,23 +112,14 @@ export default function LoginPage() {
       }
     }
 
-    getRedirectResult(auth).then(async (result) => {
-      if (result && result.user) {
-        await handleFirebaseSession(result.user)
-      } else {
-        // Check if already logged in to Firebase but not MongoDB (e.g. previous timeout)
-        const unsubscribe = auth.onAuthStateChanged(async (user) => {
-          if (user && !useAuthStore.getState().user) {
-            await handleFirebaseSession(user)
-          }
-          unsubscribe()
-        })
+    // Check if already logged in to Firebase but not MongoDB (e.g. previous timeout)
+    const unsubscribe = auth.onAuthStateChanged(async (user) => {
+      if (user && !useAuthStore.getState().user) {
+        await handleFirebaseSession(user)
       }
-    }).catch(err => {
-      toast.error("Google sign in failed: " + err.message)
     })
 
-    // 2. Handle Magic Link
+    // Handle Magic Link
     if (isSignInWithEmailLink(auth, window.location.href)) {
       let savedEmail = window.localStorage.getItem("emailForSignIn")
       if (!savedEmail) {
@@ -215,11 +207,25 @@ export default function LoginPage() {
   }
 
   const handleGoogleLogin = async () => {
+    // MUST call signInWithPopup IMMEDIATELY without any await/promises before it,
+    // otherwise iOS Safari and mobile browsers will block the popup.
+    let result;
+    try {
+      result = await signInWithPopup(auth, googleProvider);
+    } catch (err: any) {
+      if (err.code === "auth/invalid-api-key") {
+        toast.error("Firebase API Key is missing!");
+      } else if (err.code === "auth/popup-blocked") {
+        toast.error("Popup blocked by your browser. Please allow popups or use a standard browser (like Chrome/Safari) instead of an in-app browser.");
+      } else if (err.code !== "auth/popup-closed-by-user" && err.code !== "auth/cancelled-popup-request") {
+        toast.error("Google login failed. " + err.message);
+      }
+      return;
+    }
+
+    // Now that popup succeeded, set loading state and proceed to backend
     setIsLoading(true);
     try {
-      // Always try popup first (even on mobile) to avoid cross-site tracking cookie drops which break signInWithRedirect
-      // Fallback to redirect is already handled in the catch block below if popup is blocked
-      const result = await signInWithPopup(auth, googleProvider)
       const profileRes = await fetchWithTimeout(`${API}/users/profile?firebaseUid=${result.user.uid}&email=${result.user.email}&name=${encodeURIComponent(result.user.displayName || "")}`)
       if (!profileRes.ok) throw new Error("Server returned an error. Please try again.")
       const profileData = await profileRes.json()
@@ -238,12 +244,7 @@ export default function LoginPage() {
       toast.success("Successfully logged in!")
       router.push("/")
     } catch (err: any) {
-      if (err.code === "auth/invalid-api-key") toast.error("Firebase API Key is missing!")
-      else if (err.code === "auth/popup-blocked" || err.code === "auth/popup-closed-by-user" || err.code === "auth/internal-error") {
-        // Fallback to redirect if popup fails for any reason
-        await signInWithRedirect(auth, googleProvider)
-      }
-      else toast.error("Google login failed. " + err.message)
+      toast.error("Profile sync failed: " + err.message)
       setIsLoading(false)
     }
   }
