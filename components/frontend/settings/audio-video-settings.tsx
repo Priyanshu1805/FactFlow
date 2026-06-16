@@ -4,6 +4,7 @@ import axios from "axios"
 import { Volume2, Video, Settings2 } from "lucide-react"
 import { toast } from "sonner"
 import { useAuthStore } from "@/store/auth-store"
+import { saveLocalAVSettings } from "@/hooks/useVideoSettings"
 
 const DEFAULTS = {
   autoPlayVideos: true,
@@ -33,10 +34,15 @@ export function AudioVideoSettings() {
   }, [API_URL, user?.uid])
 
   const save = async (patch: Record<string, any>) => {
+    // 1. Update localStorage immediately so all sections see the change right away
+    saveLocalAVSettings(patch)
+
+    // 2. Persist to backend if logged in
     setSaving(true)
     try {
       if (!user?.uid) {
-        toast.error("Please login to save preferences")
+        // Not logged in — localStorage update is enough for now
+        toast.success("Setting saved locally ✓")
         setSaving(false)
         return
       }

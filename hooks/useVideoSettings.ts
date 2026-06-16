@@ -16,6 +16,7 @@ export interface AudioVideoSettings {
 
 const STORAGE_KEY = "factflow_av_settings"
 
+// Default: audio OFF (user must explicitly enable it in Settings)
 const DEFAULTS: AudioVideoSettings = {
   autoPlayVideos: true,
   autoPlayOnWifiOnly: true,
@@ -23,7 +24,7 @@ const DEFAULTS: AudioVideoSettings = {
   showSubtitles: false,
   hdOnWifi: true,
   videoQuality: "auto",
-  enableAudioNews: false,
+  enableAudioNews: false,  // OFF by default
   backgroundAudio: false,
   voiceSpeed: "1x",
 }
@@ -37,10 +38,38 @@ function getLocalSettings(): AudioVideoSettings {
   return DEFAULTS
 }
 
+// Write a patch to localStorage (called by settings page on every toggle/change)
+export function saveLocalAVSettings(patch: Partial<AudioVideoSettings>) {
+  try {
+    const current = getLocalSettings()
+    const merged = { ...current, ...patch }
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(merged))
+    // Dispatch a storage event so other tabs/hooks re-read immediately
+    window.dispatchEvent(new StorageEvent("storage", {
+      key: STORAGE_KEY,
+      newValue: JSON.stringify(merged),
+    }))
+  } catch {}
+}
+
 export function useVideoSettings() {
   const [settings, setSettings] = useState<AudioVideoSettings>(getLocalSettings)
   const { user } = useAuthStore()
 
+  // Re-read from localStorage whenever the settings page updates it
+  useEffect(() => {
+    const handleStorage = (e: StorageEvent) => {
+      if (e.key === STORAGE_KEY && e.newValue) {
+        try {
+          setSettings({ ...DEFAULTS, ...JSON.parse(e.newValue) })
+        } catch {}
+      }
+    }
+    window.addEventListener("storage", handleStorage)
+    return () => window.removeEventListener("storage", handleStorage)
+  }, [])
+
+  // Also fetch from server on login to get saved preferences
   useEffect(() => {
     if (!user?.uid) return
 
@@ -50,22 +79,11 @@ export function useVideoSettings() {
       .then(res => {
         const merged = { ...DEFAULTS, ...res.data }
         setSettings(merged)
-        // Cache in localStorage so it loads instantly next visit
+        // Cache to localStorage so it loads instantly next visit
         try { localStorage.setItem(STORAGE_KEY, JSON.stringify(merged)) } catch {}
       })
-      .catch(err => {
-        console.error("Failed to load video settings", err)
-      })
+      .catch(() => {}) // Silently fail — localStorage fallback is sufficient
   }, [user?.uid])
 
   return settings
-}
-
-// Also export a setter so settings page can update the cache too
-export function saveLocalAVSettings(patch: Partial<AudioVideoSettings>) {
-  try {
-    const current = getLocalSettings()
-    const merged = { ...current, ...patch }
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(merged))
-  } catch {}
 }
