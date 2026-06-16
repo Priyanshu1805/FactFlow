@@ -11,12 +11,27 @@ import { PremiumBadge } from "@/components/frontend/premium-badge"
 import { useRegion } from "@/components/providers/region-provider"
 import { Separator } from "@/components/ui/separator"
 import { LiveNewsBanner } from "@/components/frontend/live-news-banner"
+import { Volume2, Square } from "lucide-react"
+import { useVideoSettings } from "@/hooks/useVideoSettings"
+import { useTTS } from "@/hooks/useTTS"
 
 export function NewspaperSection() {
   const { settings } = useSettings()
   const { region } = useRegion()
   const displayOptions = settings?.displayOptions || {
     thumbnails: true, readingTime: true, authorName: true, reduceAnimations: false
+  }
+
+  // TTS — same hook as read page and other sections
+  const avSettings = useVideoSettings()
+  const { speak, stop, isPlaying } = useTTS((avSettings as any)?.voiceSpeed || "1x")
+  const enableAudio = !!(avSettings as any)?.enableAudioNews
+  const [playingId, setPlayingId] = useState<string | null>(null)
+
+  const handleTTS = (e: React.MouseEvent, id: string, text: string) => {
+    e.preventDefault(); e.stopPropagation()
+    if (playingId === id) { stop(); setPlayingId(null) }
+    else { stop(); speak(text); setPlayingId(id) }
   }
 
   const [newspaperNews, setNewspaperNews] = useState<any[]>([])
@@ -157,6 +172,19 @@ export function NewspaperSection() {
                 >
                   <div className="flex justify-between items-end border-b border-[#111] pb-1 mb-2">
                     <span className="font-newspaper-body text-[10px] uppercase font-bold text-[#111]">Global Affairs</span>
+                    {enableAudio && (
+                      <button
+                        onClick={(e) => handleTTS(e, featured.id, featured.title + ". " + (featured.excerpt || ""))}
+                        className={`flex items-center gap-1 px-2 py-0.5 rounded text-[9px] font-bold border transition-all ${
+                          playingId === featured.id
+                            ? "bg-black/80 border-black/60 text-white"
+                            : "bg-[#f4f1ea] border-[#ccc] text-[#333] hover:bg-[#e5e5e5]"
+                        }`}
+                      >
+                        {playingId === featured.id ? <Square className="w-2.5 h-2.5" /> : <Volume2 className="w-2.5 h-2.5" />}
+                        {playingId === featured.id ? "Stop" : "Listen"}
+                      </button>
+                    )}
                   </div>
 
                   <h1 className="font-newspaper-headline text-2xl sm:text-3xl md:text-4xl lg:text-6xl font-normal leading-tight mb-4 group-hover:underline text-[#111]">
@@ -336,6 +364,19 @@ export function NewspaperSection() {
                     <div className="text-[10px] text-gray-500 font-medium mt-2 flex items-center gap-1.5">
                       <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
                       {article.time}
+                      {enableAudio && (
+                        <button
+                          onClick={(e) => handleTTS(e, article.id, article.title + ". " + (article.excerpt || ""))}
+                          className={`ml-1 flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[9px] font-bold border transition-all ${
+                            playingId === article.id
+                              ? "bg-gray-900 border-gray-800 text-white"
+                              : "bg-gray-100 border-gray-300 text-gray-700 hover:bg-gray-200"
+                          }`}
+                        >
+                          {playingId === article.id ? <Square className="w-2.5 h-2.5" /> : <Volume2 className="w-2.5 h-2.5" />}
+                          {playingId === article.id ? "Stop" : "Listen"}
+                        </button>
+                      )}
                     </div>
                   </div>
                   
