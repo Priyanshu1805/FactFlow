@@ -180,5 +180,6 @@ export function ReelPlayer({ reel, isActive }: { reel: any; isActive: boolean })
         </div>
       </div>
     </div>
+    </div>
   )
 }
