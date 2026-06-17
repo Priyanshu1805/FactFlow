@@ -8,16 +8,20 @@ node_modules/
 out/
 build/
 
-# Env files
+# Env files — ALL env files (including .env.render with API keys)
 .env
 .env.local
 .env.*.local
+.env.render
 
 # Build cache
 tsconfig.tsbuildinfo
 
 # Vercel
 .vercel
+
+# Large unused files
+bloomberg.html
 
 # Misc
 .DS_Store
