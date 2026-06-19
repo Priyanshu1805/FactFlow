@@ -50,7 +50,14 @@ import { startNewsCycleManager } from "./services/newsCycleManager"
 import { startEmailCronJobs } from "./services/emailCronService"
 import { startLiveStreamCron } from "./services/liveStreamUpdater"
 import liveInfoRoutes from "./routes/liveInfoRoutes"
-
+import liveChannelsRoutes from "./routes/liveChannels"
+import externalArticlesRoutes from "./routes/externalArticles"
+import adminSecurityRoutes from "./routes/admin/security"
+import adminDashboardRoutes from "./routes/adminDashboard"
+import { getHomeBalanced } from "./routes/news/homeBalanced"
+import { reclassifyArticle } from "./routes/admin/reclassify"
+import { getClassificationStats } from "./routes/admin/classificationStats"
+import { authenticate, requireRole } from "./middleware/auth"
 import { syncYoutubeReels } from "./services/youtubeService"
 
 const app = express()
@@ -254,7 +261,6 @@ app.set("trust proxy", 1)
 // API Routes
 // ─────────────────────────────────────────────
 app.use("/api/auth", authRoutes)
-import { getHomeBalanced } from "./routes/news/homeBalanced"
 app.get("/api/news/home-balanced", getHomeBalanced)
 app.use("/api/news", newsRoutes)
 app.use("/api/reels", reelsRoutes)
@@ -275,25 +281,14 @@ app.use("/api/newsfeed/prefs", newsFeedRoutes)
 app.use("/api/notifications/prefs", notificationPrefsRoutes)
 app.use("/api/ollama", ollamaRoutes)
 app.use("/api/user/preferences", userPreferencesRoutes)
-import liveChannelsRoutes from "./routes/liveChannels"
 app.use("/api/live-channels", liveChannelsRoutes)
-import externalArticlesRoutes from "./routes/externalArticles"
 app.use("/api/external-articles", externalArticlesRoutes)
 app.use("/api", preferencesRoutes)
 app.use("/api/contact", contactRoutes)
 app.use("/api/ads", adRoutes)
-
-import adminSecurityRoutes from "./routes/admin/security"
 app.use("/api/admin/security", adminSecurityRoutes)
-
-import { getHomeBalanced } from "./routes/news/homeBalanced"
-import { reclassifyArticle } from "./routes/admin/reclassify"
-import { getClassificationStats } from "./routes/admin/classificationStats"
-import { authenticate, requireRole } from "./middleware/auth"
-
 app.patch("/api/admin/articles/:id/section", authenticate, requireRole("admin", "editor"), reclassifyArticle)
 app.get("/api/admin/classification-stats", authenticate, requireRole("admin", "editor"), getClassificationStats)
-import adminDashboardRoutes from "./routes/adminDashboard"
 app.use("/api/admin-dashboard", adminDashboardRoutes)
 
 // Health check endpoint
@@ -331,7 +326,7 @@ async function start(): Promise<void> {
 
   // Render specific timeouts to prevent 502 errors
   httpServer.keepAliveTimeout = 120000; // 120 seconds
-  httpServer.headersTimeout = 120000; // 120 seconds
+  httpServer.headersTimeout = 121000;   // must be > keepAliveTimeout
 
   httpServer.listen(PORT, "0.0.0.0", () => {
     console.log("\n╔══════════════════════════════════════╗")

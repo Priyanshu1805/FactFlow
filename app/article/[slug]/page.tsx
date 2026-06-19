@@ -6,7 +6,7 @@ import { SafeImage as Image } from "@/components/frontend/safe-image"
 import Link from "next/link"
 import { useSocket } from "@/hooks/use-socket"
 import { Socket } from "socket.io-client"
-import { ArrowLeft, Clock, MapPin, Share2, Heart, Tag, BookOpen, Eye, ThumbsUp, ThumbsDown, Sparkles, ChevronDown, ChevronUp, Bookmark, DownloadCloud } from "lucide-react"
+import { ArrowLeft, Clock, MapPin, Share2, Heart, Tag, BookOpen, Eye, ThumbsUp, ThumbsDown, Sparkles, ChevronDown, ChevronUp, Bookmark, DownloadCloud, Volume2, Square } from "lucide-react"
 import { useTheme } from "@/components/theme-provider"
 import { Navbar } from "@/components/frontend/navbar"
 import { Footer } from "@/components/frontend/footer"
@@ -20,6 +20,8 @@ import { PaywallOverlay } from "@/components/frontend/paywall-overlay"
 import { useSubscription } from "@/lib/use-subscription"
 import { AISummaryButton } from "@/components/frontend/article/ai-summary-button"
 import { AdBanner } from "@/components/frontend/ad-banner"
+import { useVideoSettings } from "@/hooks/useVideoSettings"
+import { useTTS } from "@/hooks/useTTS"
 
 const ReactPlayer = dynamic(() => import("react-player")) as any
 
@@ -41,6 +43,11 @@ export default function ArticlePage() {
   const [isDisliked, setIsDisliked] = useState(false)
   const [isSaved, setIsSaved] = useState(false)
   const [mounted, setMounted] = useState(false)
+
+  // TTS Logic
+  const avSettings = useVideoSettings()
+  const { speak, stop, isPlaying } = useTTS((avSettings as any)?.voiceSpeed || "1x")
+  const enableAudio = !!(avSettings as any)?.enableAudioNews
 
   const { socket } = useSocket()
 
@@ -357,6 +364,15 @@ export default function ArticlePage() {
 
   const paragraphs = cleanContent(article.content)
 
+  const handleTTS = (e: React.MouseEvent) => {
+    e.preventDefault(); e.stopPropagation()
+    if (isPlaying) { 
+      stop(); 
+    } else { 
+      speak(article.title + ". " + article.excerpt + ". " + paragraphs.join(". ")); 
+    }
+  }
+
   return (
     <main className={`min-h-screen ${isDark ? "bg-[#0a0a0a]" : "bg-white"} transition-colors duration-500`}>
       <Navbar />
@@ -404,6 +420,24 @@ export default function ArticlePage() {
           }`}>
             {article.excerpt}
           </p>
+
+          {enableAudio && (
+            <div className="mb-6 mt-4">
+              <button
+                onClick={handleTTS}
+                className={`flex items-center gap-2 px-5 py-2.5 rounded-full font-bold text-sm transition-all border ${
+                  isPlaying
+                    ? "bg-red-500 text-white border-red-500 shadow-[0_0_15px_rgba(239,68,68,0.5)] animate-pulse"
+                    : isDark 
+                      ? "bg-white/10 text-white border-white/20 hover:bg-white/20" 
+                      : "bg-gray-100 text-gray-800 border-gray-300 hover:bg-gray-200"
+                }`}
+              >
+                {isPlaying ? <Square className="w-4 h-4 fill-current" /> : <Volume2 className="w-4 h-4" />}
+                {isPlaying ? "Stop Listening" : "Listen to Article"}
+              </button>
+            </div>
+          )}
 
           <AdBanner className="mb-6" />
 
