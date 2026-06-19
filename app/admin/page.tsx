@@ -560,19 +560,25 @@ export default function AdminDashboard() {
                 <div className={`p-6 rounded-2xl border ${isDark ? "bg-[#161616] border-zinc-800" : "bg-white border-gray-200 shadow-sm"}`}>
                   <h3 className="font-bold mb-4">Daily Engagement & Active Streams</h3>
                   <div className="h-64 flex items-end gap-3 pt-6 border-b border-zinc-700">
-                    {[30, 45, 60, 40, 80, 95, 70, 85, 90, 110, 95, 120].map((val, idx) => (
+                    {(dashboardStats?.monthlySignups || [0,0,0,0,0,0,0,0,0,0,0,0]).map((val: number, idx: number) => {
+                      const maxVal = Math.max(...(dashboardStats?.monthlySignups || [1])) || 1;
+                      const monthNames = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+                      const currentMonth = new Date().getMonth();
+                      const displayMonth = monthNames[(currentMonth - 11 + idx + 12) % 12];
+                      
+                      return (
                       <div key={idx} className="flex-1 flex flex-col items-center gap-2 group">
                         <div 
-                          style={{ height: `${(val / 120) * 180}px` }} 
+                          style={{ height: `${(val / maxVal) * 180}px` }} 
                           className="w-full bg-gradient-to-t from-red-500 to-pink-500 rounded-t-lg group-hover:from-red-400 group-hover:to-pink-400 transition-all duration-300 relative"
                         >
                           <span className="absolute -top-6 left-1/2 -translate-x-1/2 bg-black text-white text-[9px] px-1 rounded opacity-0 group-hover:opacity-100 transition-opacity">
-                            {val}k
+                            {val}
                           </span>
                         </div>
-                        <span className="text-[10px] text-gray-400">{["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][idx]}</span>
+                        <span className="text-[10px] text-gray-400">{displayMonth}</span>
                       </div>
-                    ))}
+                    )})}
                   </div>
                 </div>
               </motion.div>
@@ -930,15 +936,10 @@ export default function AdminDashboard() {
                         <h4 className="text-2xl font-black text-blue-500">₹{adStats.estimatedCustomRevenue.toLocaleString(undefined, { maximumFractionDigits: 0 })}</h4>
                         <p className="text-[10px] text-gray-400 mt-1">Based on {adStats.totalClicks} clicks & {adStats.totalViews} views</p>
                       </div>
-                      <div className={`p-4 rounded-xl border ${isDark ? "bg-black/40 border-white/5" : "bg-orange-50 border-orange-100"}`}>
-                        <p className="text-xs text-gray-500 font-bold uppercase mb-1">AdSense (Estimated)</p>
-                        <h4 className="text-2xl font-black text-orange-500">₹{adStats.estimatedAdSenseRevenue.toLocaleString(undefined, { maximumFractionDigits: 0 })}</h4>
-                        <p className="text-[10px] text-gray-400 mt-1">Fallback ad network earnings</p>
-                      </div>
                       <div className={`p-4 rounded-xl border ${isDark ? "bg-black/40 border-white/5" : "bg-green-50 border-green-100"}`}>
                         <p className="text-xs text-gray-500 font-bold uppercase mb-1">Total Ad Revenue</p>
-                        <h4 className="text-2xl font-black text-green-500">₹{(adStats.estimatedCustomRevenue + adStats.estimatedAdSenseRevenue).toLocaleString(undefined, { maximumFractionDigits: 0 })}</h4>
-                        <p className="text-[10px] text-gray-400 mt-1">All networks combined</p>
+                        <h4 className="text-2xl font-black text-green-500">₹{adStats.estimatedCustomRevenue.toLocaleString(undefined, { maximumFractionDigits: 0 })}</h4>
+                        <p className="text-[10px] text-gray-400 mt-1">Live Ad Campaigns Earnings</p>
                       </div>
                       <div className={`p-4 rounded-xl border ${isDark ? "bg-black/40 border-white/5" : "bg-purple-50 border-purple-100"}`}>
                         <p className="text-xs text-gray-500 font-bold uppercase mb-1">Total Impressions</p>
@@ -1044,11 +1045,11 @@ export default function AdminDashboard() {
                     </p>
                   </div>
                   <div className={`p-6 rounded-2xl border ${isDark ? "bg-[#161616] border-zinc-800" : "bg-white border-gray-200 shadow-sm"}`}>
-                    <h3 className="text-sm font-bold text-gray-500 uppercase mb-2">Total Ad Revenue (Estimated)</h3>
+                    <h3 className="text-sm font-bold text-gray-500 uppercase mb-2">Total Ad Revenue (Live)</h3>
                     <p className="text-3xl font-black text-blue-500">
-                      ₹{adStats ? (adStats.estimatedCustomRevenue + adStats.estimatedAdSenseRevenue).toFixed(2) : 0}
+                      ₹{adStats ? adStats.estimatedCustomRevenue.toFixed(2) : 0}
                     </p>
-                    <p className="text-xs text-gray-500 mt-2">Custom Ads: ₹{adStats?.estimatedCustomRevenue?.toFixed(2) || 0} | AdSense: ₹{adStats?.estimatedAdSenseRevenue?.toFixed(2) || 0}</p>
+                    <p className="text-xs text-gray-500 mt-2">Custom Ads (Based on {adStats?.totalViews || 0} views & {adStats?.totalClicks || 0} clicks)</p>
                   </div>
                 </div>
 

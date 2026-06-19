@@ -18,12 +18,37 @@ router.get("/stats", async (req: Request, res: Response) => {
     const payments = await Payment.find({})
     const totalRevenue = payments.reduce((acc, p: any) => acc + (p.amount || 0), 0)
 
+    // Monthly signups for the chart
+    const twelveMonthsAgo = new Date()
+    twelveMonthsAgo.setMonth(twelveMonthsAgo.getMonth() - 11)
+    twelveMonthsAgo.setDate(1)
+    twelveMonthsAgo.setHours(0, 0, 0, 0)
+
+    const monthlyData = await User.aggregate([
+      { $match: { createdAt: { $gte: twelveMonthsAgo } } },
+      { $group: { _id: { year: { $year: "$createdAt" }, month: { $month: "$createdAt" } }, count: { $sum: 1 } } },
+      { $sort: { "_id.year": 1, "_id.month": 1 } }
+    ])
+
+    const monthlySignups = Array(12).fill(0)
+    const currentMonth = new Date().getMonth() + 1
+    const currentYear = new Date().getFullYear()
+
+    monthlyData.forEach((data: any) => {
+      const monthsDiff = (currentYear - data._id.year) * 12 + (currentMonth - data._id.month)
+      const index = 11 - monthsDiff
+      if (index >= 0 && index < 12) {
+        monthlySignups[index] = data.count
+      }
+    })
+
     res.json({
       success: true,
       stats: {
         totalUsers,
         totalNews,
-        totalRevenue
+        totalRevenue,
+        monthlySignups
       }
     })
   } catch (err: any) {
@@ -62,8 +87,7 @@ router.get("/revenue", async (req: Request, res: Response) => {
       adStats: {
         totalViews: totalAdViews,
         totalClicks: totalAdClicks,
-        estimatedCustomRevenue: customAdRevenue,
-        estimatedAdSenseRevenue: ((totalAdViews * 2.5) / 1000) * 40
+        estimatedCustomRevenue: customAdRevenue
       }
     })
   } catch (err: any) {
