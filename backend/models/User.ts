@@ -14,6 +14,7 @@ export interface IUser extends Document {
   role: "admin" | "editor" | "viewer"
   isVerified: boolean
   verificationStatus: "unverified" | "pending" | "verified" | "rejected"
+  hasUsedFreeTrial: boolean
   twoFactorSecret?: string
   isTwoFactorEnabled: boolean
   deletionScheduledFor?: Date
@@ -121,6 +122,7 @@ const UserSchema = new Schema<IUser>(
     role: { type: String, enum: ["admin", "editor", "viewer"], default: "viewer" },
     isVerified: { type: Boolean, default: false },
     verificationStatus: { type: String, enum: ["unverified", "pending", "verified", "rejected"], default: "unverified" },
+    hasUsedFreeTrial: { type: Boolean, default: false },
     twoFactorSecret: { type: String },
     isTwoFactorEnabled: { type: Boolean, default: false },
     backupCodes: [{ type: String }],

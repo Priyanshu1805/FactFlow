@@ -8,6 +8,7 @@ import {
   cancelSubscription,
   subscribeNewsletter,
   getPrices,
+  startFreeTrial,
 } from "../controllers/subscriptionController";
 
 const router = Router();
@@ -24,6 +25,7 @@ router.get("/billing-history", getBillingHistory);
 router.post("/create-order",   createOrder);
 router.post("/verify-payment", verifyPayment);
 router.post("/cancel",         cancelSubscription);
+router.post("/start-trial",    startFreeTrial);
 
 export default router;
 
