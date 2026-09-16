@@ -9,6 +9,7 @@ import Link from "next/link"
 import { useRouter, usePathname } from "next/navigation"
 import { useTheme } from "@/components/theme-provider"
 import { useAuthStore } from "@/store/auth-store"
+import { auth, isFirebaseConfigured } from "@/lib/firebase"
 import { useSubscription } from "@/lib/use-subscription"
 import { PremiumBadge } from "@/components/frontend/premium-badge"
 import { NotificationBell } from "@/components/frontend/notification-bell"
@@ -410,9 +411,10 @@ export function Navbar() {
                             onClick={async () => {
                               setProfileOpen(false);
                               try {
-                                const { signOut } = await import("firebase/auth");
-                                const { auth } = await import("@/lib/firebase");
-                                await signOut(auth);
+                                if (isFirebaseConfigured) {
+                                  const { signOut } = await import("firebase/auth");
+                                  await signOut(auth);
+                                }
                                 useAuthStore.getState().logout();
                                 window.location.href = "/";
                               } catch (e) {
@@ -619,8 +621,10 @@ export function Navbar() {
                     onClick={async () => {
                       setIsOpen(false);
                       try {
-                        const { signOut } = await import("firebase/auth");
-                        await signOut(auth);
+                        if (isFirebaseConfigured) {
+                          const { signOut } = await import("firebase/auth");
+                          await signOut(auth);
+                        }
                         useAuthStore.getState().logout();
                         window.location.href = "/";
                       } catch (e) {

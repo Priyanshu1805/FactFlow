@@ -3,10 +3,12 @@ import { getAuth, GoogleAuthProvider, OAuthProvider } from "firebase/auth"
 import { getAnalytics, isSupported } from "firebase/analytics"
 
 const rawApiKey = process.env.NEXT_PUBLIC_FIREBASE_API_KEY
+
 export const isFirebaseConfigured = Boolean(
-  rawApiKey && 
-  rawApiKey.trim() !== "" && 
-  !rawApiKey.startsWith("AIzaSyA00000") && 
+  rawApiKey &&
+  rawApiKey.trim() !== "" &&
+  !rawApiKey.startsWith("AIzaSyA00000") &&
+  process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN &&
   process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID &&
   process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID !== "factflow"
 )
@@ -27,13 +29,13 @@ let googleProvider: any = null
 let appleProvider: any = null
 let analytics: any = null
 
-try {
-  if (typeof window !== "undefined" || !getApps().length) {
+if (isFirebaseConfigured) {
+  try {
     app = !getApps().length ? initializeApp(firebaseConfig) : getApp()
     auth = getAuth(app)
     googleProvider = new GoogleAuthProvider()
-    googleProvider.setCustomParameters({ prompt: 'select_account' })
-    appleProvider = new OAuthProvider('apple.com')
+    googleProvider.setCustomParameters({ prompt: "select_account" })
+    appleProvider = new OAuthProvider("apple.com")
 
     if (typeof window !== "undefined") {
       isSupported().then((supported) => {
@@ -42,9 +44,9 @@ try {
         }
       }).catch(() => {})
     }
+  } catch (e) {
+    console.warn("⚠️ Firebase client initialization failed:", e)
   }
-} catch (e) {
-  console.warn("⚠️ Firebase client initialization failed:", e)
 }
 
 export { app, auth, googleProvider, appleProvider, analytics }
