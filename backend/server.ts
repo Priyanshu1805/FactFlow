@@ -20,6 +20,7 @@ const nextApp = next({ dev, dir: process.cwd() })
 const nextHandler = nextApp.getRequestHandler()
 
 import { connectDB } from "./config/database"
+import { validateEnvironment } from "./config/env"
 import { helmetConfig } from "./config/helmetConfig"
 import { globalRateLimiter, ddosSlowDown, checkBlockedIP, geoBlocker } from "./middleware/networkProtection"
 import { dataProtectionSuite } from "./middleware/dataProtection"
@@ -59,6 +60,8 @@ import { reclassifyArticle } from "./routes/admin/reclassify"
 import { getClassificationStats } from "./routes/admin/classificationStats"
 import { authenticate, requireRole } from "./middleware/auth"
 import { syncYoutubeReels } from "./services/youtubeService"
+
+validateEnvironment()
 
 const app = express()
 const httpServer = createServer(app)

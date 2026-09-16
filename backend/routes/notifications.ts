@@ -1,5 +1,6 @@
 import { Router, Request, Response } from "express"
 import { Notification } from "../models/Notification"
+import { NewsArticle } from "../models/NewsArticle"
 import { User } from "../models/User"
 
 const router = Router()
@@ -145,17 +146,31 @@ router.post("/system", async (req: Request, res: Response) => {
 // ─────────────────────────────────────────────
 router.post("/trigger-daily-digest", async (req: Request, res: Response) => {
   try {
-    // 1. Find all users who have dailyDigest enabled
     const users = await User.find({ "settings.notifications.dailyDigest": true })
-    
-    // 2. Mock generating digest notifications for these users
-    const notifications = users.map(user => ({
+    const topArticles = await NewsArticle.find({
+      publishedAt: { $gte: new Date(Date.now() - 24 * 60 * 60 * 1000) }
+    })
+      .sort({ views: -1, publishedAt: -1 })
+      .limit(5)
+      .lean()
+
+    if (!topArticles.length) {
+      return res.json({ success: true, message: "No digest items available yet." })
+    }
+
+    const articleSummary = topArticles
+      .map((article) => article.title)
+      .slice(0, 3)
+      .join(" • ")
+
+    const notifications = users.map((user) => ({
       recipientId: user._id,
       type: "daily_digest",
-      message: "Your Daily Digest is ready: Top 5 stories of the day",
-      isRead: false
+      message: `Your Daily Digest is ready: ${articleSummary}`,
+      link: "/newspaper",
+      isRead: false,
     }))
-    
+
     if (notifications.length > 0) {
       await Notification.insertMany(notifications)
     }

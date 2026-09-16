@@ -2,8 +2,19 @@ import axios from "axios"
 import Parser from "rss-parser"
 import * as cheerio from "cheerio"
 
+const USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+
 const rssParser = new Parser({
-  timeout: 15000,
+  timeout: 20000,
+  headers: {
+    "User-Agent": USER_AGENT,
+    "Accept": "application/rss+xml, application/xml, text/xml, */*",
+  },
+  requestOptions: {
+    headers: {
+      "User-Agent": USER_AGENT,
+    },
+  },
   customFields: {
     item: [["media:content", "mediaContent"], ["enclosure", "enclosure"]],
   },
@@ -410,44 +421,86 @@ function shuffleArray(array: any[]) {
 
 async function fetchRss(): Promise<any[]> {
   const results: any[] = []
-  // Run all RSS feeds in parallel batches of 20 for speed
-  const batchSize = 5
+  // Reduced batch size to avoid connection saturation on local dev
+  const batchSize = 3
+  let successCount = 0
+  let failCount = 0
+
   for (let i = 0; i < SOURCES.rss.length; i += batchSize) {
     const batch = SOURCES.rss.slice(i, i + batchSize)
     const settled = await Promise.allSettled(
       batch.map(async (feed) => {
-        const parsed = await rssParser.parseURL(feed.url)
-        return parsed.items.slice(0, 5).map((item) => {
-          let image = ""
-          if (item.enclosure?.url) image = item.enclosure.url
-          else if (item.mediaContent?.$?.url) image = item.mediaContent.$.url
-          else {
-            const match = item.content?.match(/<img[^>]+src="([^">]+)"/)
-            if (match) image = match[1]
-          }
-          return {
-            title: item.title,
-            url: item.link,
-            description: (item.contentSnippet || item.title || "").slice(0, 200),
-            imageUrl: image,
-            source: feed.source,
-            category: feed.category,
-            publishedAt: item.isoDate || new Date().toISOString(),
-            type: "rss"
-          }
-        })
+        try {
+          // Primary: Use rss-parser with headers
+          const parsed = await rssParser.parseURL(feed.url)
+          return parsed.items.slice(0, 5).map((item) => {
+            let image = ""
+            if (item.enclosure?.url) image = item.enclosure.url
+            else if (item.mediaContent?.$?.url) image = item.mediaContent.$.url
+            else {
+              const match = item.content?.match(/<img[^>]+src="([^">]+)"/)
+              if (match) image = match[1]
+            }
+            return {
+              title: item.title,
+              url: item.link,
+              description: (item.contentSnippet || item.title || "").slice(0, 200),
+              imageUrl: image,
+              source: feed.source,
+              category: feed.category,
+              publishedAt: item.isoDate || new Date().toISOString(),
+              type: "rss"
+            }
+          })
+        } catch (primaryErr) {
+          // Fallback: Fetch raw XML via axios (handles User-Agent issues)
+          const res = await axios.get(feed.url, {
+            timeout: 15000,
+            headers: {
+              "User-Agent": USER_AGENT,
+              "Accept": "application/rss+xml, application/xml, text/xml, */*",
+            },
+            responseType: "text",
+          })
+          const parsed = await rssParser.parseString(res.data)
+          return parsed.items.slice(0, 5).map((item) => {
+            let image = ""
+            if (item.enclosure?.url) image = item.enclosure.url
+            else if (item.mediaContent?.$?.url) image = item.mediaContent.$.url
+            else {
+              const match = item.content?.match(/<img[^>]+src="([^">]+)"/)
+              if (match) image = match[1]
+            }
+            return {
+              title: item.title,
+              url: item.link,
+              description: (item.contentSnippet || item.title || "").slice(0, 200),
+              imageUrl: image,
+              source: feed.source,
+              category: feed.category,
+              publishedAt: item.isoDate || new Date().toISOString(),
+              type: "rss"
+            }
+          })
+        }
       })
     )
     settled.forEach((result, idx) => {
       if (result.status === "fulfilled") {
         results.push(...result.value)
+        successCount++
       } else {
-        console.warn(`[MasterFetcher] RSS failed: ${batch[idx].url}`)
+        failCount++
+        // Only log first 10 failures to avoid log spam
+        if (failCount <= 10) {
+          console.warn(`[MasterFetcher] RSS failed: ${batch[idx].url}`)
+        }
       }
     })
-    // small delay between RSS batches to avoid RAM spikes on Render free tier
-    await new Promise(r => setTimeout(r, 200))
+    // Increased delay between batches to let connections recover
+    await new Promise(r => setTimeout(r, 1500))
   }
+  console.log(`[MasterFetcher] RSS complete: ${successCount} succeeded, ${failCount} failed, ${results.length} items`)
   return results
 }
 
@@ -456,8 +509,8 @@ async function fetchReddit(): Promise<any[]> {
   for (const feed of SOURCES.reddit) {
     try {
       const res = await axios.get(`https://www.reddit.com/r/${feed.subreddit}/hot.json?limit=10`, {
-        headers: { "User-Agent": "FactFlow/2.0 NewsAggregator" },
-        timeout: 10000,
+        headers: { "User-Agent": USER_AGENT },
+        timeout: 12000,
       })
       const posts = res.data.data.children.map((child: any) => {
         const data = child.data
@@ -477,6 +530,8 @@ async function fetchReddit(): Promise<any[]> {
     } catch (e) {
       console.warn(`[MasterFetcher] Reddit failed: ${feed.subreddit}`)
     }
+    // Small delay between Reddit requests to avoid rate limiting
+    await new Promise(r => setTimeout(r, 500))
   }
   return results
 }

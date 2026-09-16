@@ -9,11 +9,12 @@ import { AccessibleImage as Image } from "@/components/frontend/accessible-image
 import Link from "next/link"
 import { useSocket } from "@/hooks/use-socket"
 import { useSubscription } from "@/lib/use-subscription"
+import { isAdminUser } from "@/lib/access"
 
 export function ReelsSection() {
   const { canAccess } = useSubscription()
   const { user } = useAuthStore()
-  const isOwnerOrAdmin = user?.email?.toLowerCase().trim() === "factflow1819@gmail.com" || user?.role === "admin";
+  const isOwnerOrAdmin = isAdminUser(user);
   const { theme } = useTheme()
   const isDark = theme !== "light"
   const [reels, setReels] = useState<any[]>([])

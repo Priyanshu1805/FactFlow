@@ -6,6 +6,7 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { useAuthStore } from "@/store/auth-store"
 import { useSettings } from "@/lib/use-settings"
+import { isAdminUser } from "@/lib/access"
 
 export function MobileBottomNav() {
   const pathname = usePathname()
@@ -92,7 +93,7 @@ export function MobileBottomNav() {
     { name: "Live", href: "/live", icon: PlaySquare },
     { name: "Profile", href: user ? `/u/${(user as any)?.username || user?.uid}` : "/login", icon: User },
   ]
-  if (user?.role === "admin" || user?.email === "factflow1819@gmail.com") {
+  if (isAdminUser(user)) {
     // Replace the 4th item (Profile) with Admin so it fits in 5 icons, or just add it.
     // Adding it makes 5 icons which is standard for bottom navs (e.g. Home, Search, Live, Admin, Profile)
     navItems.splice(3, 0, { name: "Admin", href: "/admin", icon: ShieldCheck })

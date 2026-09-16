@@ -13,6 +13,7 @@ import { useSubscription } from "@/lib/use-subscription"
 import { PremiumBadge } from "@/components/frontend/premium-badge"
 import { NotificationBell } from "@/components/frontend/notification-bell"
 import { useTranslation } from "@/lib/i18n/languageStore"
+import { isAdminUser } from "@/lib/access"
 
 const navLinks = [
   { name: "Home", tKey: "navHome", href: "/", icon: Home },
@@ -252,8 +253,8 @@ export function Navbar() {
           {/* Center Side: Navigation Links (hidden on mobile) */}
           <div className="hidden md:flex flex-none items-center justify-center gap-0.5 xl:gap-2 overflow-x-auto hide-scrollbar max-w-[55vw] lg:max-w-none">
             {navLinks.map((link) => {
-              // Force unlock for owner and admins
-              const isOwnerOrAdmin = user?.email?.toLowerCase().trim() === "factflow1819@gmail.com" || user?.role === "admin";
+              // Force unlock for admins or premium users
+              const isOwnerOrAdmin = isAdminUser(user);
               const isLocked = !isOwnerOrAdmin && !subLoading && !canAccess("weekly") && ["Politics", "Lifestyle", "Sports", "Tech", "Art"].includes(link.name);
               const isActive = pathname === link.href || (link.href !== "/" && pathname?.startsWith(link.href));
               
@@ -337,7 +338,7 @@ export function Navbar() {
                       <Link href="/settings" className={`flex items-center gap-2 px-3 py-2 text-sm rounded-lg ${isDark ? "hover:bg-white/10" : "hover:bg-gray-50"}`}>
                         <Settings className="w-4 h-4" /> {t("preferences")}
                       </Link>
-                      {(dbUser?.role === "admin" || user?.role === "admin" || user?.email === "factflow1819@gmail.com") && (
+                      {(dbUser?.role === "admin" || user?.role === "admin" || isAdminUser(user)) && (
                         <Link href="/admin" className={`flex items-center gap-2 px-3 py-2 text-sm rounded-lg ${isDark ? "hover:bg-white/10" : "hover:bg-gray-50"}`}>
                           <ShieldCheck className="w-4 h-4" /> {t("adminDashboard")}
                         </Link>
@@ -554,8 +555,8 @@ export function Navbar() {
                 {/* Primary Nav Links */}
                 <div className="mt-6 space-y-1">
                   {navLinks.map((link) => {
-                    // Force unlock for owner and admins
-                    const isOwnerOrAdmin = user?.email?.toLowerCase().trim() === "factflow1819@gmail.com" || user?.role === "admin";
+                    // Force unlock for admins or premium users
+                    const isOwnerOrAdmin = isAdminUser(user);
                     const isLocked = !isOwnerOrAdmin && !subLoading && !canAccess("weekly") && ["Politics", "Lifestyle", "Sports", "Tech", "Art"].includes(link.name);
                     return (
                     <Link
@@ -598,7 +599,7 @@ export function Navbar() {
                       {t("settings")}
                     </Link>
 
-                    {(user?.role === "admin" || dbUser?.role === "admin" || user?.email === "factflow1819@gmail.com") && (
+                    {(user?.role === "admin" || dbUser?.role === "admin" || isAdminUser(user)) && (
                       <Link
                         href="/admin"
                         onClick={() => setIsOpen(false)}

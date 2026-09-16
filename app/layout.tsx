@@ -54,6 +54,9 @@ export default function RootLayout({
 }: {
   children: React.ReactNode
 }) {
+  const adsenseClientId = process.env.NEXT_PUBLIC_ADSENSE_CLIENT_ID || ""
+  const hasValidAdsense = !!adsenseClientId && !adsenseClientId.includes("XXXXXXXXXXXXXXXX") && !adsenseClientId.includes("XXXXXXXXXX")
+
   return (
     <html lang="en" suppressHydrationWarning>
       <body className="overflow-x-hidden">
@@ -73,7 +76,9 @@ export default function RootLayout({
         />
         
         {/* Google AdSense Global Script */}
-        <Script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-XXXXXXXXXXXXXXXX" crossOrigin="anonymous" strategy="afterInteractive" />
+        {hasValidAdsense && (
+          <Script async src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${adsenseClientId}`} crossOrigin="anonymous" strategy="afterInteractive" />
+        )}
         <GoogleTranslate />
         <AuthProvider>
           <SocketProvider>

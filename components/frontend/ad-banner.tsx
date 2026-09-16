@@ -4,6 +4,7 @@ import { useEffect, useState } from "react"
 import { useSubscription } from "@/lib/use-subscription"
 import { useTheme } from "@/components/theme-provider"
 import { useAuthStore } from "@/store/auth-store"
+import { isAdminUser } from "@/lib/access"
 import Link from "next/link"
 
 const API = process.env.NEXT_PUBLIC_API_URL || "/api"
@@ -11,9 +12,11 @@ const API = process.env.NEXT_PUBLIC_API_URL || "/api"
 export function AdBanner({ className = "" }: { className?: string }) {
   const { user } = useAuthStore()
   const { canAccess, loading: subLoading } = useSubscription()
-  const isOwnerOrAdmin = user?.email?.toLowerCase().trim() === "factflow1819@gmail.com" || user?.role === "admin";
+  const isOwnerOrAdmin = isAdminUser(user);
   const { theme } = useTheme()
   const isDark = theme !== "light"
+  const adsenseClientId = process.env.NEXT_PUBLIC_ADSENSE_CLIENT_ID || ""
+  const hasValidAdsense = !!adsenseClientId && !adsenseClientId.includes("XXXXXXXXXXXXXXXX") && !adsenseClientId.includes("XXXXXXXXXX")
   
   const [ad, setAd] = useState<any>(null)
   const [loadingAd, setLoadingAd] = useState(true)
@@ -54,6 +57,7 @@ export function AdBanner({ className = "" }: { className?: string }) {
 
   if (subLoading || loadingAd) return null
   if (isOwnerOrAdmin || canAccess("weekly")) return null
+  if (!ad && !hasValidAdsense) return null
 
   const handleAdClick = (e: React.MouseEvent) => {
     if (ad && ad._id) {
@@ -98,7 +102,7 @@ export function AdBanner({ className = "" }: { className?: string }) {
             </div>
           </div>
         </a>
-      ) : (
+      ) : hasValidAdsense ? (
         // Google AdSense Fallback
         <div className={`w-full max-w-[728px] min-h-[90px] flex flex-col items-center justify-center rounded-lg border ${isDark ? "bg-[#111] border-[#333]" : "bg-gray-100 border-gray-300"} relative overflow-hidden group`}>
           <div className="absolute top-1 left-2 text-[10px] uppercase font-bold text-gray-500 tracking-wider z-10">Advertisement</div>
@@ -108,8 +112,8 @@ export function AdBanner({ className = "" }: { className?: string }) {
             <ins 
               className="adsbygoogle"
               style={{ display: "block", width: "100%", height: "90px" }}
-              data-ad-client="ca-pub-XXXXXXXXXXXXXXXX"
-              data-ad-slot="XXXXXXXXXX"
+              data-ad-client={adsenseClientId}
+              data-ad-slot="default"
               data-ad-format="auto"
               data-full-width-responsive="true"
             ></ins>
@@ -122,7 +126,7 @@ export function AdBanner({ className = "" }: { className?: string }) {
             </Link>
           </div>
         </div>
-      )}
+      ) : null }
     </div>
   )
 }

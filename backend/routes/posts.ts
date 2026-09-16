@@ -5,6 +5,7 @@ import { Post } from "../models/Post"
 import { User } from "../models/User"
 import { Comment } from "../models/Comment"
 import { Notification } from "../models/Notification"
+import { Report } from "../models/Report"
 import { createNotification } from "../services/notificationService"
 
 const router = Router()
@@ -443,7 +444,24 @@ router.put("/:id/comment/:commentId/action", async (req: Request, res: Response)
         await post.save()
       }
     } else if (actionType === "report") {
-      // Just mock report for now
+      const reason = typeof req.body.reason === "string" && req.body.reason.trim() ? req.body.reason.trim() : "Inappropriate content"
+      const report = await Report.create({
+        reporterId: user._id,
+        reportedItemId: comment._id,
+        itemType: "Comment",
+        reason,
+        status: "pending",
+      })
+
+      const io = req.app.get("io")
+      if (io) {
+        io.emit("report_submitted", {
+          type: "Comment",
+          reportId: report._id,
+          reportedItemId: comment._id,
+        })
+      }
+
       return res.json({ success: true, message: "Comment reported." })
     } else {
       return res.status(400).json({ error: "Invalid actionType" })

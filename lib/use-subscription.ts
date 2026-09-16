@@ -1,7 +1,8 @@
-"use client"
+﻿"use client"
 
 import { useState, useEffect, useCallback } from "react"
 import { useAuthStore } from "@/store/auth-store"
+import { isAdminUser } from "@/lib/access"
 
 export interface SubscriptionInfo {
   tier: string
@@ -20,8 +21,7 @@ export function useSubscription() {
     }
     return FREE_TIER
   })
-  
-  // Start with loading = false if we already have a cached subscription, to prevent UI flicker
+
   const [loading, setLoading] = useState(() => {
     if (typeof window !== "undefined") {
       return !localStorage.getItem("ff_sub_cache")
@@ -39,23 +39,28 @@ export function useSubscription() {
       return
     }
 
-    if (user?.email?.toLowerCase() === "factflow1819@gmail.com") {
-      const ownerSub: SubscriptionInfo = {
+    if (isAdminUser(user)) {
+      const adminSub: SubscriptionInfo = {
         tier: "yearly",
         validUntil: "Lifetime",
-        isValid: true
+        isValid: true,
       }
-      setSubscription(ownerSub)
-      if (typeof window !== "undefined") localStorage.setItem("ff_sub_cache", JSON.stringify(ownerSub))
+      setSubscription(adminSub)
+      if (typeof window !== "undefined") localStorage.setItem("ff_sub_cache", JSON.stringify(adminSub))
       setLoading(false)
       return
     }
 
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || ""}/subscription/me`, {
-        headers: { Authorization: `Bearer ${token}` },
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "/api"
+      const res = await fetch(`${apiUrl}/subscription/me`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
       })
+
       if (!res.ok) throw new Error("Fetch failed")
+
       const data = await res.json()
       if (data.success && data.data) {
         const subData = {
@@ -72,7 +77,7 @@ export function useSubscription() {
     } finally {
       setLoading(false)
     }
-  }, [isAuthenticated, token, user?.email])
+  }, [isAuthenticated, token, user])
 
   useEffect(() => {
     fetchSubscription()

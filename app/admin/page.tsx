@@ -393,7 +393,7 @@ export default function AdminDashboard() {
       try {
         const res = await fetch(`${API}/users/profile?firebaseUid=${user.uid}`)
         const data = await res.json()
-        if (data.success && (data.user?.role === "admin" || data.user?.email === "factflow1819@gmail.com" || user.email === "factflow1819@gmail.com")) {
+        if (data.success && (data.user?.role === "admin" || user?.role === "admin")) {
           setIsAdmin(true)
         } else {
           router.push("/")
@@ -1242,9 +1242,9 @@ export default function AdminDashboard() {
               </div>
 
               {/* SUPER ADMIN ONLY SECTION */}
-              {user?.email === "factflow1819@gmail.com" && (
+              {user?.role === "admin" && (
                 <div className="pt-4 border-t border-black/10 dark:border-white/10">
-                  <h4 className="text-xs font-black uppercase text-gray-500 mb-3">Owner Actions</h4>
+                  <h4 className="text-xs font-black uppercase text-gray-500 mb-3">Admin Actions</h4>
                   <button
                     onClick={async () => {
                       await handleToggleAdmin(selectedUser);
@@ -1259,7 +1259,7 @@ export default function AdminDashboard() {
                     <ShieldCheck className="w-5 h-5" />
                     {selectedUser.role === "admin" ? "Remove Admin Privileges" : "Make Admin"}
                   </button>
-                  <p className="text-[10px] text-center text-gray-500 mt-2">Only the Super Owner (factflow1819@gmail.com) can see this option.</p>
+                  <p className="text-[10px] text-center text-gray-500 mt-2">Only users with an admin role can see this option.</p>
                 </div>
               )}
             </motion.div>

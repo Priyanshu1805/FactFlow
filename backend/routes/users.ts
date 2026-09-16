@@ -51,7 +51,6 @@ router.get("/profile", async (req: Request, res: Response) => {
         email,
         phone: (req.query.phone as string) || undefined,
         avatar: req.query.avatar || defaultAvatar,
-        password: "firebase-auth-no-password", // placeholder
         isVerified: false,
         verificationStatus: "unverified",
       })
@@ -97,7 +96,6 @@ router.put("/profile", async (req: Request, res: Response) => {
         name,
         phone: phone || undefined,
         bio,
-        password: "firebase-auth-no-password",
         isVerified: false,
         verificationStatus: "unverified",
         avatar: defaultAvatar,

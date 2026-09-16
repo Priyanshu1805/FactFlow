@@ -4,6 +4,7 @@
 import { useTheme } from "@/components/theme-provider"
 import Link from "next/link"
 import { useAuthStore } from "@/store/auth-store"
+import { isAdminUser } from "@/lib/access"
 import { Suspense, useEffect, useState } from "react"
 import { useRssStore } from "@/lib/rss/rssStore"
 import { useRegion } from "@/components/providers/region-provider"
@@ -44,7 +45,7 @@ export default function HomePage() {
   const { followedTopics } = useFeedStore()
   const { canAccess } = useSubscription()
   const { user } = useAuthStore()
-  const isOwnerOrAdmin = user?.email?.toLowerCase().trim() === "factflow1819@gmail.com" || user?.role === "admin";
+  const isOwnerOrAdmin = isAdminUser(user);
 
   useEffect(() => {
     // Fetch RSS feeds on mount or region change
