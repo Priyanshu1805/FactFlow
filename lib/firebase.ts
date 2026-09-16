@@ -10,10 +10,20 @@ const firebaseConfig = {
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID
 }
 
-// Initialize Firebase only if it hasn't been initialized already
-const app = !getApps().length ? initializeApp(firebaseConfig) : getApp()
-const auth = getAuth(app)
-const googleProvider = new GoogleAuthProvider()
-const appleProvider = new OAuthProvider('apple.com')
+// Check if Firebase config is complete
+const isFirebaseConfigured = Object.values(firebaseConfig).every(val => val && typeof val === 'string')
 
-export { app, auth, googleProvider, appleProvider }
+// Initialize Firebase only if configuration is complete and not already initialized
+let app: any = null
+let auth: any = null
+let googleProvider: any = null
+let appleProvider: any = null
+
+if (isFirebaseConfigured) {
+  app = !getApps().length ? initializeApp(firebaseConfig) : getApp()
+  auth = getAuth(app)
+  googleProvider = new GoogleAuthProvider()
+  appleProvider = new OAuthProvider('apple.com')
+}
+
+export { app, auth, googleProvider, appleProvider, isFirebaseConfigured }

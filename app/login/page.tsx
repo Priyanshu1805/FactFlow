@@ -4,7 +4,7 @@ import { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { Sparkles, Mail, Lock, ArrowRight, User as UserIcon, Eye, EyeOff, CheckCircle2, XCircle, ChevronDown, ChevronLeft } from "lucide-react"
 import { useRouter } from "next/navigation"
-import { auth, googleProvider } from "@/lib/firebase"
+import { auth, googleProvider, isFirebaseConfigured } from "@/lib/firebase"
 import { 
   signInWithPopup, signInWithEmailAndPassword, createUserWithEmailAndPassword, 
   updateProfile, sendSignInLinkToEmail, isSignInWithEmailLink, signInWithEmailLink, sendPasswordResetEmail
@@ -113,14 +113,14 @@ export default function LoginPage() {
     }
 
     // Check if already logged in to Firebase but not MongoDB (e.g. previous timeout)
-    const unsubscribe = auth.onAuthStateChanged(async (user) => {
+    const unsubscribe = auth && auth.onAuthStateChanged ? auth.onAuthStateChanged(async (user) => {
       if (user && !useAuthStore.getState().user) {
         await handleFirebaseSession(user)
       }
-    })
+    }) : () => {}
 
     // Handle Magic Link
-    if (isSignInWithEmailLink(auth, window.location.href)) {
+    if (isFirebaseConfigured && isSignInWithEmailLink(auth, window.location.href)) {
       let savedEmail = window.localStorage.getItem("emailForSignIn")
       if (!savedEmail) {
         savedEmail = window.prompt("Please provide your email for confirmation")
@@ -207,6 +207,10 @@ export default function LoginPage() {
   }
 
   const handleGoogleLogin = async () => {
+    if (!isFirebaseConfigured) {
+      toast.error("Firebase is not configured. Please contact support.")
+      return
+    }
     // MUST call signInWithPopup IMMEDIATELY without any await/promises before it,
     // otherwise iOS Safari and mobile browsers will block the popup.
     let result;

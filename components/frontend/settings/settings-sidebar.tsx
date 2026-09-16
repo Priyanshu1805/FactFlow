@@ -6,7 +6,7 @@ import {
 } from "lucide-react"
 import { useAuthStore } from "@/store/auth-store"
 import { signOut } from "firebase/auth"
-import { auth } from "@/lib/firebase"
+import { auth, isFirebaseConfigured } from "@/lib/firebase"
 import { toast } from "sonner"
 import { useTranslation } from "@/lib/i18n/languageStore"
 
@@ -43,7 +43,9 @@ export function SettingsSidebar({ active, onChange }: SettingsSidebarProps) {
 
   const handleSignOut = async () => {
     try {
-      await signOut(auth);
+      if (isFirebaseConfigured && auth) {
+        await signOut(auth);
+      }
       logout();
       window.location.href = "/";
     } catch (e) {
