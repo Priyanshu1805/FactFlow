@@ -112,15 +112,17 @@ export default function LoginPage() {
       }
     }
 
-    // Check if already logged in to Firebase but not MongoDB (e.g. previous timeout)
-    const unsubscribe = auth && auth.onAuthStateChanged ? auth.onAuthStateChanged(async (user) => {
-      if (user && !useAuthStore.getState().user) {
-        await handleFirebaseSession(user)
-      }
-    }) : () => {}
+    let unsubscribe = () => {}
+    if (isFirebaseConfigured && auth?.onAuthStateChanged) {
+      unsubscribe = auth.onAuthStateChanged(async (user: any) => {
+        if (user && !useAuthStore.getState().user) {
+          await handleFirebaseSession(user)
+        }
+      })
+    }
 
     // Handle Magic Link
-    if (isFirebaseConfigured && isSignInWithEmailLink(auth, window.location.href)) {
+    if (isFirebaseConfigured && auth && typeof window !== "undefined" && isSignInWithEmailLink(auth, window.location.href)) {
       let savedEmail = window.localStorage.getItem("emailForSignIn")
       if (!savedEmail) {
         savedEmail = window.prompt("Please provide your email for confirmation")
@@ -154,6 +156,10 @@ export default function LoginPage() {
             setIsLoading(false)
           })
       }
+    }
+
+    return () => {
+      unsubscribe()
     }
   }, [router, setUser])
 
@@ -207,22 +213,28 @@ export default function LoginPage() {
   }
 
   const handleGoogleLogin = async () => {
-    if (!isFirebaseConfigured) {
-      toast.error("Firebase is not configured. Please contact support.")
-      return
+    if (!isFirebaseConfigured || !auth) {
+      toast.error("Firebase Authentication is not configured. Please provide NEXT_PUBLIC_FIREBASE_API_KEY and credentials in .env.");
+      return;
     }
+
     // MUST call signInWithPopup IMMEDIATELY without any await/promises before it,
     // otherwise iOS Safari and mobile browsers will block the popup.
     let result;
     try {
       result = await signInWithPopup(auth, googleProvider);
     } catch (err: any) {
-      if (err.code === "auth/invalid-api-key") {
-        toast.error("Firebase API Key is missing!");
+      const errMsg = err?.message || "";
+      if (err.code === "auth/invalid-api-key" || errMsg.includes("invalid-api-key")) {
+        toast.error("Firebase API Key is invalid or missing in .env!");
       } else if (err.code === "auth/popup-blocked") {
         toast.error("Popup blocked by your browser. Please allow popups or use a standard browser (like Chrome/Safari) instead of an in-app browser.");
-      } else if (err.code !== "auth/popup-closed-by-user" && err.code !== "auth/cancelled-popup-request") {
-        toast.error("Google login failed. " + err.message);
+      } else if (err.code === "auth/popup-closed-by-user" || err.code === "auth/cancelled-popup-request") {
+        // Closed intentionally
+      } else if (errMsg.includes("Pending promise") || errMsg.includes("INTERNAL ASSERTION FAILED")) {
+        toast.error("Firebase Auth connection error. Please verify your Firebase project credentials in .env.");
+      } else {
+        toast.error("Google login failed. " + errMsg);
       }
       return;
     }
@@ -264,6 +276,11 @@ export default function LoginPage() {
       if (usernameStatus !== "available") return toast.error("Please choose an available username")
       setSignupStep(2)
       return
+    }
+
+    if (!isFirebaseConfigured || !auth) {
+      toast.error("Firebase Authentication is not configured. Please add your Firebase project credentials in .env.");
+      return;
     }
 
     setIsLoading(true);
@@ -396,6 +413,10 @@ export default function LoginPage() {
   const handleSendMagicLink = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!magicEmail) return toast.error("Please enter your email")
+    if (!isFirebaseConfigured || !auth) {
+      toast.error("Firebase Authentication is not configured. Please add Firebase credentials in .env.");
+      return;
+    }
     setIsLoading(true)
     try {
       const actionCodeSettings = {
@@ -417,6 +438,10 @@ export default function LoginPage() {
   const handleResetPassword = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!resetEmail) return toast.error("Please enter your email")
+    if (!isFirebaseConfigured || !auth) {
+      toast.error("Firebase Authentication is not configured. Please add Firebase credentials in .env.");
+      return;
+    }
     setIsLoading(true)
     try {
       await sendPasswordResetEmail(auth, resetEmail)
