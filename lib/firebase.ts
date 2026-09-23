@@ -7,6 +7,7 @@ export const isFirebaseConfigured = Boolean(
   rawApiKey && 
   rawApiKey.trim() !== "" && 
   !rawApiKey.startsWith("AIzaSyA00000") && 
+  process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN &&
   process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID &&
   process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID !== "factflow"
 )
@@ -27,24 +28,26 @@ let googleProvider: any = null
 let appleProvider: any = null
 let analytics: any = null
 
-try {
-  if (typeof window !== "undefined" || !getApps().length) {
-    app = !getApps().length ? initializeApp(firebaseConfig) : getApp()
-    auth = getAuth(app)
-    googleProvider = new GoogleAuthProvider()
-    googleProvider.setCustomParameters({ prompt: 'select_account' })
-    appleProvider = new OAuthProvider('apple.com')
+if (isFirebaseConfigured) {
+  try {
+    if (typeof window !== "undefined" || !getApps().length) {
+      app = !getApps().length ? initializeApp(firebaseConfig) : getApp()
+      auth = getAuth(app)
+      googleProvider = new GoogleAuthProvider()
+      googleProvider.setCustomParameters({ prompt: 'select_account' })
+      appleProvider = new OAuthProvider('apple.com')
 
-    if (typeof window !== "undefined") {
-      isSupported().then((supported) => {
-        if (supported && firebaseConfig.measurementId) {
-          analytics = getAnalytics(app)
-        }
-      }).catch(() => {})
+      if (typeof window !== "undefined") {
+        isSupported().then((supported) => {
+          if (supported && firebaseConfig.measurementId) {
+            analytics = getAnalytics(app)
+          }
+        }).catch(() => {})
+      }
     }
+  } catch (e) {
+    console.warn("⚠️ Firebase client initialization failed:", e)
   }
-} catch (e) {
-  console.warn("⚠️ Firebase client initialization failed:", e)
 }
 
 export { app, auth, googleProvider, appleProvider, analytics }

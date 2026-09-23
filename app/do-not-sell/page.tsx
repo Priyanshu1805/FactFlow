@@ -62,7 +62,7 @@ export default function DoNotSellPage() {
                 <p className="text-xs text-muted-foreground">Send an email request to our privacy team.</p>
               </div>
               <a 
-                href="mailto:factflow1819@gmail.com?subject=Data Deletion Request" 
+                href="mailto:support@factflow.com?subject=Data Deletion Request" 
                 className="inline-flex items-center justify-center px-6 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition-colors"
               >
                 Submit Request
@@ -114,7 +114,7 @@ export default function DoNotSellPage() {
             <div className="mt-4 bg-secondary/50 border border-border rounded-xl p-5 space-y-1">
               <p><span className="text-foreground font-semibold">Grievance Officer:</span> Privacy Team, Fact Flow</p>
               <p><span className="text-foreground font-semibold">Email:</span>{" "}
-                <a href="mailto:factflow1819@gmail.com" className="text-red-500 hover:underline">factflow1819@gmail.com</a>
+                <a href="mailto:support@factflow.com" className="text-red-500 hover:underline">support@factflow.com</a>
               </p>
               <p><span className="text-foreground font-semibold">Jurisdiction:</span> India</p>
             </div>

@@ -69,7 +69,7 @@ router.post("/", async (req: Request, res: Response) => {
     // Send email to your team inbox
     await transporter.sendMail({
       from: `"Fact Flow Contact" <${process.env.SMTP_USER}>`,
-      to: process.env.CONTACT_EMAIL || process.env.SMTP_USER || "factflow1819@gmail.com",
+      to: process.env.CONTACT_EMAIL || process.env.SMTP_USER || "support@factflow.com",
       replyTo: email,
       subject: `[Contact Form] ${subject} — from ${name}`,
       html,
@@ -93,7 +93,7 @@ router.post("/", async (req: Request, res: Response) => {
                 <tr><td style="background:#ffffff; padding:40px 30px; border-radius:0 0 16px 16px; text-align:center;">
                   <h2 style="color:#111827; margin:0 0 16px;">Thanks for reaching out, ${name}!</h2>
                   <p style="color:#4b5563; font-size:15px; line-height:1.7;">We've received your message and will get back to you as soon as possible, typically within 24-48 hours.</p>
-                  <p style="color:#9ca3af; font-size:13px; margin-top:32px;">Fact Flow Team — factflow1819@gmail.com</p>
+                  <p style="color:#9ca3af; font-size:13px; margin-top:32px;">Fact Flow Team — ${process.env.CONTACT_EMAIL || "support@factflow.com"}</p>
                 </td></tr>
               </table>
             </td></tr>

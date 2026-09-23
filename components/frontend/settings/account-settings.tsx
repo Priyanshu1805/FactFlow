@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import { Mail, Phone, LogOut, Trash2, Save, X, AlertTriangle, CheckCircle, Loader2, Shield, RefreshCw, KeyRound, BadgeCheck } from "lucide-react"
 import { useAuthStore } from "@/store/auth-store"
-import { auth } from "@/lib/firebase"
+import { auth, isFirebaseConfigured } from "@/lib/firebase"
 import { signOut, sendPasswordResetEmail, EmailAuthProvider, reauthenticateWithCredential } from "firebase/auth"
 import { useRouter } from "next/navigation"
 
@@ -198,7 +198,9 @@ export function AccountSettings() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ firebaseUid: user.uid }),
       })
-      await signOut(auth)
+      if (isFirebaseConfigured && auth) {
+        await signOut(auth)
+      }
       logout()
       router.push("/login")
     } catch (err: any) {
@@ -239,11 +241,12 @@ export function AccountSettings() {
 
   // Handle Deactivation or Deletion
   const handleAccountAction = async () => {
-    if (!user?.uid || !auth.currentUser) return
+    if (!user?.uid) return
+    if (isFirebaseConfigured && !auth?.currentUser) return
     setActionLoading(true)
     setErrorMsg("")
     try {
-      if (!isGoogleProvider && actionPassword) {
+      if (!isGoogleProvider && actionPassword && auth?.currentUser) {
         try {
           const credential = EmailAuthProvider.credential(user.email!, actionPassword)
           await reauthenticateWithCredential(auth.currentUser, credential)
@@ -265,7 +268,9 @@ export function AccountSettings() {
       const data = await res.json()
       if (data.success) {
         setShowDeleteDialog(false)
-        await signOut(auth)
+        if (isFirebaseConfigured && auth) {
+          await signOut(auth)
+        }
         logout()
         router.push("/login")
       } else {
@@ -278,7 +283,7 @@ export function AccountSettings() {
     }
   }
 
-  const isGoogleProvider = auth.currentUser?.providerData?.some(p => p.providerId === 'google.com')
+  const isGoogleProvider = Boolean(isFirebaseConfigured && auth?.currentUser?.providerData?.some((p: any) => p.providerId === 'google.com'))
 
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">

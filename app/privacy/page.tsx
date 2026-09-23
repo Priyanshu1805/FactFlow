@@ -193,7 +193,7 @@ export default function PrivacyPolicyPage() {
               <li><strong className="text-foreground">Right to Nominate:</strong> Nominate an individual to exercise rights on your behalf in the event of death or incapacity.</li>
             </ul>
             <p className="mt-3">
-              To exercise any of these rights, please contact our Grievance Officer at <strong className="text-red-500">factflow1819@gmail.com</strong>. We will respond within <strong className="text-foreground">30 days</strong> of receiving your request.
+              To exercise any of these rights, please contact our Grievance Officer at <strong className="text-red-500">support@factflow.com</strong>. We will respond within <strong className="text-foreground">30 days</strong> of receiving your request.
             </p>
           </section>
 
@@ -207,7 +207,7 @@ export default function PrivacyPolicyPage() {
               We do not knowingly collect or solicit personal data from children under the age of 13 years. In compliance with the DPDPA 2023, processing of personal data of children requires verifiable parental consent.
             </p>
             <p className="mt-3">
-              If we become aware that we have inadvertently collected personal data from a child under 13 without appropriate consent, we will take immediate steps to delete such data from our records. If you believe that we may have collected data from a child under 13, please contact us immediately at <strong className="text-red-500">factflow1819@gmail.com</strong>.
+              If we become aware that we have inadvertently collected personal data from a child under 13 without appropriate consent, we will take immediate steps to delete such data from our records. If you believe that we may have collected data from a child under 13, please contact us immediately at <strong className="text-red-500">support@factflow.com</strong>.
             </p>
           </section>
 
@@ -268,8 +268,8 @@ export default function PrivacyPolicyPage() {
               <p className="font-bold text-foreground text-base mb-3">Grievance Officer — Fact Flow</p>
               <p><span className="text-foreground font-semibold">Platform:</span> Fact Flow (factflow.com)</p>
               <p><span className="text-foreground font-semibold">Email:</span>{" "}
-                <a href="mailto:factflow1819@gmail.com" className="text-red-500 hover:underline">
-                  factflow1819@gmail.com
+                <a href="mailto:support@factflow.com" className="text-red-500 hover:underline">
+                  support@factflow.com
                 </a>
               </p>
               <p><span className="text-foreground font-semibold">Subject Line:</span> "Privacy Grievance — [Your Name]"</p>

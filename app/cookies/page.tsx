@@ -291,7 +291,7 @@ export default function CookiesPage() {
               <p><span className="text-foreground font-semibold">Platform:</span> Fact Flow (factflow.com)</p>
               <p>
                 <span className="text-foreground font-semibold">Email:</span>{" "}
-                <a href="mailto:factflow1819@gmail.com" className="text-red-500 hover:underline">factflow1819@gmail.com</a>
+                <a href="mailto:support@factflow.com" className="text-red-500 hover:underline">support@factflow.com</a>
               </p>
               <p><span className="text-foreground font-semibold">Subject Line:</span> "Cookie Policy Query"</p>
               <p><span className="text-foreground font-semibold">Response Time:</span> Within 48 hours</p>

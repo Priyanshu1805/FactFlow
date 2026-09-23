@@ -97,7 +97,7 @@ export default function AccessibilityPage() {
               Did you find something difficult to use? Have a suggestion on how we can improve? We are always listening. Please report any accessibility issues to our team.
             </p>
             <div className="inline-block bg-background border border-border px-6 py-3 rounded-xl font-medium">
-              Email us at: <a href="mailto:factflow1819@gmail.com" className="text-red-500 hover:underline">factflow1819@gmail.com</a>
+              Email us at: <a href="mailto:support@factflow.com" className="text-red-500 hover:underline">support@factflow.com</a>
             </div>
           </section>
 

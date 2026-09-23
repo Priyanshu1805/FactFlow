@@ -25,7 +25,7 @@ const faqs = [
   },
   {
     q: "How do I report incorrect or inappropriate content?",
-    a: "For social posts, reels, and comments, click the three-dot menu (⋯) and select 'Report'. For regular news articles, please contact us at factflow1819@gmail.com with the article link, and our team will review it promptly.",
+    a: "For social posts, reels, and comments, click the three-dot menu (⋯) and select 'Report'. For regular news articles, please contact us at support@factflow.com with the article link, and our team will review it promptly.",
   },
   {
     q: "Can I read news in my regional language?",
@@ -37,7 +37,7 @@ const faqs = [
   },
   {
     q: "I found a bug. How do I report it?",
-    a: "Please contact us at factflow1819@gmail.com with a description of the issue and we'll fix it as soon as possible.",
+    a: "Please contact us at support@factflow.com with a description of the issue and we'll fix it as soon as possible.",
   },
 ]
 

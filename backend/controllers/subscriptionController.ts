@@ -46,6 +46,20 @@ export async function createOrder(req: AuthRequest, res: Response) {
       return;
     }
 
+    // Validate Paytm credentials before attempting payment
+    if (!process.env.PAYTM_MID || !process.env.PAYTM_MERCHANT_KEY || !process.env.FRONTEND_URL) {
+      console.error("❌ Paytm credentials not configured:", {
+        hasMID: !!process.env.PAYTM_MID,
+        hasKey: !!process.env.PAYTM_MERCHANT_KEY,
+        hasFrontend: !!process.env.FRONTEND_URL
+      });
+      res.status(503).json({
+        success: false,
+        error: "Payment service not available. Contact support or try again later."
+      });
+      return;
+    }
+
     const amount = calcAmount(plan, coupon);
     const orderId = `ff_${String(userId).slice(-8)}_${Date.now()}`;
 
@@ -391,7 +405,7 @@ export async function subscribeNewsletter(req: AuthRequest, res: Response) {
                     </a>
                     <p style="color:#9ca3af;font-size:12px;margin-top:32px;">
                       You can unsubscribe at any time from your account settings.<br/>
-                      Fact Flow · factflow1819@gmail.com · India
+                      Fact Flow · ${process.env.CONTACT_EMAIL || "support@factflow.com"} · India
                     </p>
                   </td></tr>
                 </table>

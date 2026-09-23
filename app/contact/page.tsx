@@ -3,6 +3,7 @@
 import { useState } from "react"
 import { Mail, MapPin, Send, Loader2, CheckCircle2, Instagram, Youtube, AtSign, Facebook } from "lucide-react"
 import { toast } from "sonner"
+import { CONTACT_EMAIL } from "@/lib/constants"
 import { Metadata } from "next"
 
 export default function ContactPage() {
@@ -64,8 +65,8 @@ export default function ContactPage() {
               </div>
               <h3 className="text-lg font-bold text-foreground mb-1">Email Us</h3>
               <p className="text-muted-foreground text-sm mb-3">For general queries and support</p>
-              <a href="mailto:factflow1819@gmail.com" className="text-red-500 font-medium hover:underline text-sm break-all">
-                factflow1819@gmail.com
+              <a href={`mailto:${CONTACT_EMAIL}`} className="text-red-500 font-medium hover:underline text-sm break-all">
+                {CONTACT_EMAIL}
               </a>
             </div>
 

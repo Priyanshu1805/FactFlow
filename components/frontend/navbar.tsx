@@ -14,6 +14,7 @@ import { PremiumBadge } from "@/components/frontend/premium-badge"
 import { NotificationBell } from "@/components/frontend/notification-bell"
 import { useTranslation } from "@/lib/i18n/languageStore"
 import { isAdminUser } from "@/lib/access"
+import { auth, isFirebaseConfigured } from "@/lib/firebase"
 
 const navLinks = [
   { name: "Home", tKey: "navHome", href: "/", icon: Home },
@@ -410,9 +411,10 @@ export function Navbar() {
                             onClick={async () => {
                               setProfileOpen(false);
                               try {
-                                const { signOut } = await import("firebase/auth");
-                                const { auth } = await import("@/lib/firebase");
-                                await signOut(auth);
+                                if (isFirebaseConfigured && auth) {
+                                  const { signOut } = await import("firebase/auth");
+                                  await signOut(auth);
+                                }
                                 useAuthStore.getState().logout();
                                 window.location.href = "/";
                               } catch (e) {
@@ -619,8 +621,10 @@ export function Navbar() {
                     onClick={async () => {
                       setIsOpen(false);
                       try {
-                        const { signOut } = await import("firebase/auth");
-                        await signOut(auth);
+                        if (isFirebaseConfigured && auth) {
+                          const { signOut } = await import("firebase/auth");
+                          await signOut(auth);
+                        }
                         useAuthStore.getState().logout();
                         window.location.href = "/";
                       } catch (e) {

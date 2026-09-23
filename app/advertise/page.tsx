@@ -39,12 +39,12 @@ export default function AdvertisePage() {
             Interested in advertising opportunities, sponsored content, or brand partnerships? Reach out to our team and we'll get back to you with our media kit and pricing.
           </p>
           <a
-            href="mailto:factflow1819@gmail.com?subject=Advertising Inquiry"
+            href="mailto:support@factflow.com?subject=Advertising Inquiry"
             className="inline-flex items-center justify-center px-8 py-3.5 bg-red-600 hover:bg-red-700 text-white rounded-xl font-semibold transition-colors shadow-sm"
           >
             Contact Advertising Team
           </a>
-          <p className="text-muted-foreground text-sm mt-4">factflow1819@gmail.com</p>
+          <p className="text-muted-foreground text-sm mt-4">support@factflow.com</p>
         </div>
       </div>
     </div>

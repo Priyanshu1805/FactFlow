@@ -53,7 +53,7 @@ export default function TermsPage() {
               Fact Flow operates as an intermediary platform under the Information Technology Act, 2000 ("IT Act") and its amendments, and complies with the Digital Personal Data Protection Act, 2023 ("DPDPA"). We strive to provide accurate, timely, and trustworthy news content while fostering a respectful user community.
             </p>
             <p className="mt-3">
-              For any legal communications, you may contact us at: <strong className="text-red-500">factflow1819@gmail.com</strong>
+              For any legal communications, you may contact us at: <strong className="text-red-500">support@factflow.com</strong>
             </p>
           </section>
 
@@ -98,7 +98,7 @@ export default function TermsPage() {
             </p>
             <p className="font-semibold text-foreground mt-4 mb-2">4.2 Account Security & Password Responsibility</p>
             <p>
-              You are solely responsible for maintaining the confidentiality of your account credentials, including your password. You agree to immediately notify us at <strong className="text-red-500">factflow1819@gmail.com</strong> of any unauthorized use of your account or any other security breach. Fact Flow will not be liable for any loss or damage arising from your failure to safeguard your account.
+              You are solely responsible for maintaining the confidentiality of your account credentials, including your password. You agree to immediately notify us at <strong className="text-red-500">support@factflow.com</strong> of any unauthorized use of your account or any other security breach. Fact Flow will not be liable for any loss or damage arising from your failure to safeguard your account.
             </p>
             <p className="font-semibold text-foreground mt-4 mb-2">4.3 Account Ban & Termination Policy</p>
             <p>
@@ -246,8 +246,8 @@ export default function TermsPage() {
               <p><span className="text-foreground font-semibold">Platform:</span> Fact Flow</p>
               <p><span className="text-foreground font-semibold">Website:</span> factflow.com</p>
               <p><span className="text-foreground font-semibold">Email:</span>{" "}
-                <a href="mailto:factflow1819@gmail.com" className="text-red-500 hover:underline">
-                  factflow1819@gmail.com
+                <a href="mailto:support@factflow.com" className="text-red-500 hover:underline">
+                  support@factflow.com
                 </a>
               </p>
               <p><span className="text-foreground font-semibold">Jurisdiction:</span> India</p>
